@@ -1,0 +1,308 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+/* Inter Variable, self-hosted (no font CDN): Latin and Latin Extended cover English and Kinyarwanda. */
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+    U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.75rem;
+
+  /* Brand palette: exact values from the reference screenshot */
+  --brand-ember: #e43d12;
+  --brand-rose: #d6536d;
+  --brand-blush: #ffa2b6;
+  --brand-amber: #efb11d;
+  --brand-bone: #ebe9e1;
+
+  /* Accessible companions (text and strokes) */
+  --brand-ember-strong: #c2330e; /* ember text/links on light surfaces (>= 4.5:1) */
+  --brand-rose-strong: #c24a63; /* rose fill under white text (4.72:1) */
+  --brand-amber-strong: #a87c14; /* amber strokes/icons on light surfaces (>= 3:1, graphics only) */
+  --brand-blush-strong: #b26f7e; /* blush strokes on light surfaces (>= 3:1, graphics only) */
+  --brand-blush-soft: #ffe3e9; /* calm support surfaces (mental wellness, Tier 1) */
+  --brand-amber-soft: #fbeecd; /* hover and highlight surfaces */
+
+  /* shadcn/ui semantic tokens */
+  --background: #ebe9e1; /* Bone */
+  --foreground: #2b1d16; /* Ink, 13.39:1 on Bone */
+  --card: #f7f6f3;
+  --card-foreground: #2b1d16;
+  --popover: #f7f6f3;
+  --popover-foreground: #2b1d16;
+  --primary: #d4380f; /* Ember 600, white text 4.80:1 */
+  --primary-foreground: #ffffff;
+  --secondary: #ffa2b6; /* Blush, ink text 8.60:1 */
+  --secondary-foreground: #2b1d16;
+  --muted: #e0ddd3;
+  --muted-foreground: #665c54; /* 4.79:1 on muted, 5.36:1 on Bone */
+  --accent: #fbeecd; /* Amber soft */
+  --accent-foreground: #2b1d16;
+  --destructive: #a83c53; /* Rose 700, white text 6.11:1 */
+  --destructive-foreground: #ffffff;
+  --border: #d3cec3; /* decorative separators only */
+  --input: #857f77; /* form-field borders, >= 3:1 on card and Bone */
+  --ring: #e43d12; /* focus ring, Ember, >= 3:1 on Bone and card */
+
+  --chart-1: #e43d12;
+  --chart-2: #d6536d;
+  --chart-3: #efb11d;
+  --chart-4: #ffa2b6;
+  --chart-5: #6e5e53;
+
+  --sidebar: #f7f6f3;
+  --sidebar-foreground: #2b1d16;
+  --sidebar-primary: #d4380f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #fbeecd;
+  --sidebar-accent-foreground: #2b1d16;
+  --sidebar-border: #d3cec3;
+  --sidebar-ring: #e43d12;
+
+  /* Result bands: always shown with a word and an icon, never colour alone */
+  --band-ok: #e2ddd0;
+  --band-ok-foreground: #2b1d16;
+  --band-attention: #efb11d;
+  --band-attention-foreground: #2b1d16;
+  --band-confirm: #c24a63;
+  --band-confirm-foreground: #ffffff;
+  --band-urgent: #d4380f;
+  --band-urgent-foreground: #ffffff;
+  --band-wellness: #ffe3e9;
+  --band-wellness-foreground: #2b1d16;
+}
+
+.dark {
+  --brand-ember-strong: #ee6a45;
+  --brand-rose-strong: #e58a9c;
+  --brand-amber-strong: #efb11d;
+  --brand-blush-strong: #ffa2b6;
+  --brand-blush-soft: #4a2c33;
+  --brand-amber-soft: #503b14;
+
+  --background: #1b1411;
+  --foreground: #ebe9e1;
+  --card: #241b17;
+  --card-foreground: #ebe9e1;
+  --popover: #241b17;
+  --popover-foreground: #ebe9e1;
+  --primary: #ea5a33;
+  --primary-foreground: #1b1411;
+  --secondary: #ffa2b6;
+  --secondary-foreground: #1b1411;
+  --muted: #30251f;
+  --muted-foreground: #b4a99f;
+  --accent: #503b14;
+  --accent-foreground: #ebe9e1;
+  --destructive: #e0738a;
+  --destructive-foreground: #1b1411;
+  --border: #3a2e27;
+  --input: #7d7168;
+  --ring: #ee6a45;
+
+  --chart-1: #e43d12;
+  --chart-2: #d6536d;
+  --chart-3: #efb11d;
+  --chart-4: #ffa2b6;
+  --chart-5: #b4a99f;
+
+  --sidebar: #241b17;
+  --sidebar-foreground: #ebe9e1;
+  --sidebar-primary: #ea5a33;
+  --sidebar-primary-foreground: #1b1411;
+  --sidebar-accent: #503b14;
+  --sidebar-accent-foreground: #ebe9e1;
+  --sidebar-border: #3a2e27;
+  --sidebar-ring: #ee6a45;
+
+  --band-ok: #3a2f29;
+  --band-ok-foreground: #ebe9e1;
+  --band-attention: #efb11d;
+  --band-attention-foreground: #1b1411;
+  --band-confirm: #e58a9c;
+  --band-confirm-foreground: #1b1411;
+  --band-urgent: #ea5a33;
+  --band-urgent-foreground: #1b1411;
+  --band-wellness: #4a2c33;
+  --band-wellness-foreground: #ebe9e1;
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-brand-ember: var(--brand-ember);
+  --color-brand-rose: var(--brand-rose);
+  --color-brand-blush: var(--brand-blush);
+  --color-brand-amber: var(--brand-amber);
+  --color-brand-bone: var(--brand-bone);
+  --color-brand-ember-strong: var(--brand-ember-strong);
+  --color-brand-rose-strong: var(--brand-rose-strong);
+  --color-brand-amber-strong: var(--brand-amber-strong);
+  --color-brand-blush-strong: var(--brand-blush-strong);
+  --color-brand-blush-soft: var(--brand-blush-soft);
+  --color-brand-amber-soft: var(--brand-amber-soft);
+
+  --color-band-ok: var(--band-ok);
+  --color-band-ok-foreground: var(--band-ok-foreground);
+  --color-band-attention: var(--band-attention);
+  --color-band-attention-foreground: var(--band-attention-foreground);
+  --color-band-confirm: var(--band-confirm);
+  --color-band-confirm-foreground: var(--band-confirm-foreground);
+  --color-band-urgent: var(--band-urgent);
+  --color-band-urgent-foreground: var(--band-urgent-foreground);
+  --color-band-wellness: var(--band-wellness);
+  --color-band-wellness-foreground: var(--band-wellness-foreground);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer base {
+  html {
+    font-size: 100%; /* base 16 px; respects the reader's browser text size */
+  }
+  body {
+    @apply font-sans leading-normal;
+  }
+  /* Data-saver mode (FR-31): system font instead of the downloaded Inter file. */
+  html[data-saver='on'] body {
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+  }
+}
+
+/*
+ * Glass surfaces and soft brand light (inspired by docs: health-ui-inspiration.md and the reference screenshots).
+ * Built only from Rinda tokens, so light and dark mode and the contrast table still hold. Text always sits on a
+ * surface that is at least 72% card colour.
+ */
+@utility glass {
+  background-color: color-mix(in oklab, var(--card) 72%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  box-shadow:
+    0 1px 0 0 color-mix(in oklab, var(--card) 60%, transparent) inset,
+    0 12px 32px -12px color-mix(in oklab, var(--foreground) 14%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+@utility glass-strong {
+  background-color: color-mix(in oklab, var(--card) 86%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+  box-shadow: 0 18px 40px -16px color-mix(in oklab, var(--foreground) 20%, transparent);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+}
+
+/* Calm brand light behind dashboards: blush, amber and ember glows on Bone. Decorative only. */
+@utility bg-mesh {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(
+      40rem 28rem at 8% -10%,
+      color-mix(in oklab, var(--brand-blush) 28%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      36rem 26rem at 100% 0%,
+      color-mix(in oklab, var(--brand-amber) 18%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      44rem 30rem at 60% 110%,
+      color-mix(in oklab, var(--brand-ember) 10%, transparent),
+      transparent 70%
+    );
+  background-attachment: fixed;
+}
+
+/* Hero illustration disc: an ember-to-blush glow for the large icon on the participant home. */
+@utility hero-orb {
+  background-image: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in oklab, var(--brand-blush) 70%, var(--card)),
+    color-mix(in oklab, var(--brand-ember) 85%, var(--card)) 70%
+  );
+  box-shadow: 0 24px 60px -18px color-mix(in oklab, var(--brand-ember) 55%, transparent);
+}
