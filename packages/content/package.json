@@ -1,0 +1,23 @@
+{
+  "name": "@rinda/content",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./rulesets/*": "./rulesets/*",
+    "./en/*": "./en/*",
+    "./rw/*": "./rw/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2"
+  },
+  "dependencies": {
+    "@rinda/rules": "*",
+    "zod": "^4.6.5"
+  }
+}
