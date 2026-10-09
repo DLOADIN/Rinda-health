@@ -1,0 +1,986 @@
+{
+  "ruleset": "1.0.0",
+  "cases": [
+    {
+      "id": "bmi-170cm-53.1kg",
+      "domain": "bmi",
+      "input": {
+        "sex": "female",
+        "heightCm": 170,
+        "weightKg": 53.1
+      },
+      "expected": {
+        "band": "underweight",
+        "value": 18.4
+      }
+    },
+    {
+      "id": "bmi-170cm-53.4kg",
+      "domain": "bmi",
+      "input": {
+        "sex": "female",
+        "heightCm": 170,
+        "weightKg": 53.4
+      },
+      "expected": {
+        "band": "normal",
+        "value": 18.5
+      }
+    },
+    {
+      "id": "bmi-170cm-71.9kg",
+      "domain": "bmi",
+      "input": {
+        "sex": "female",
+        "heightCm": 170,
+        "weightKg": 71.9
+      },
+      "expected": {
+        "band": "normal",
+        "value": 24.9
+      }
+    },
+    {
+      "id": "bmi-170cm-72.2kg",
+      "domain": "bmi",
+      "input": {
+        "sex": "female",
+        "heightCm": 170,
+        "weightKg": 72.2
+      },
+      "expected": {
+        "band": "overweight",
+        "value": 25
+      }
+    },
+    {
+      "id": "bmi-170cm-86.3kg",
+      "domain": "bmi",
+      "input": {
+        "sex": "female",
+        "heightCm": 170,
+        "weightKg": 86.3
+      },
+      "expected": {
+        "band": "overweight",
+        "value": 29.9
+      }
+    },
+    {
+      "id": "bmi-170cm-86.6kg",
+      "domain": "bmi",
+      "input": {
+        "sex": "female",
+        "heightCm": 170,
+        "weightKg": 86.6
+      },
+      "expected": {
+        "band": "obesity",
+        "value": 30
+      }
+    },
+    {
+      "id": "bmi-200cm-99.8kg",
+      "domain": "bmi",
+      "input": {
+        "sex": "female",
+        "heightCm": 200,
+        "weightKg": 99.8
+      },
+      "expected": {
+        "band": "overweight",
+        "value": 25
+      }
+    },
+    {
+      "id": "bmi-160cm-41.6kg",
+      "domain": "bmi",
+      "input": {
+        "sex": "female",
+        "heightCm": 160,
+        "weightKg": 41.6
+      },
+      "expected": {
+        "band": "underweight",
+        "value": 16.3
+      }
+    },
+    {
+      "id": "bmi-184cm-105.8kg",
+      "domain": "bmi",
+      "input": {
+        "sex": "female",
+        "heightCm": 184,
+        "weightKg": 105.8
+      },
+      "expected": {
+        "band": "obesity",
+        "value": 31.3
+      }
+    },
+    {
+      "id": "bmi-height-skipped",
+      "domain": "bmi",
+      "input": {
+        "sex": "female",
+        "weightKg": 60
+      },
+      "expected": {
+        "band": "insufficient",
+        "value": null,
+        "completeness": "partial"
+      }
+    },
+    {
+      "id": "bmi-both-skipped",
+      "domain": "bmi",
+      "input": {
+        "sex": "female"
+      },
+      "expected": {
+        "band": "insufficient",
+        "value": null,
+        "completeness": "none"
+      }
+    },
+    {
+      "id": "waist-male-93",
+      "domain": "waist",
+      "input": {
+        "sex": "male",
+        "waistCm": 93
+      },
+      "expected": {
+        "band": "not_increased",
+        "value": 93
+      }
+    },
+    {
+      "id": "waist-male-94",
+      "domain": "waist",
+      "input": {
+        "sex": "male",
+        "waistCm": 94
+      },
+      "expected": {
+        "band": "increased",
+        "value": 94
+      }
+    },
+    {
+      "id": "waist-male-101",
+      "domain": "waist",
+      "input": {
+        "sex": "male",
+        "waistCm": 101
+      },
+      "expected": {
+        "band": "increased",
+        "value": 101
+      }
+    },
+    {
+      "id": "waist-male-102",
+      "domain": "waist",
+      "input": {
+        "sex": "male",
+        "waistCm": 102
+      },
+      "expected": {
+        "band": "substantially_increased",
+        "value": 102
+      }
+    },
+    {
+      "id": "waist-female-79",
+      "domain": "waist",
+      "input": {
+        "sex": "female",
+        "waistCm": 79
+      },
+      "expected": {
+        "band": "not_increased",
+        "value": 79
+      }
+    },
+    {
+      "id": "waist-female-80",
+      "domain": "waist",
+      "input": {
+        "sex": "female",
+        "waistCm": 80
+      },
+      "expected": {
+        "band": "increased",
+        "value": 80
+      }
+    },
+    {
+      "id": "waist-female-87",
+      "domain": "waist",
+      "input": {
+        "sex": "female",
+        "waistCm": 87
+      },
+      "expected": {
+        "band": "increased",
+        "value": 87
+      }
+    },
+    {
+      "id": "waist-female-88",
+      "domain": "waist",
+      "input": {
+        "sex": "female",
+        "waistCm": 88
+      },
+      "expected": {
+        "band": "substantially_increased",
+        "value": 88
+      }
+    },
+    {
+      "id": "waist-not_stated-79",
+      "domain": "waist",
+      "input": {
+        "sex": "not_stated",
+        "waistCm": 79
+      },
+      "expected": {
+        "band": "not_increased",
+        "value": 79
+      }
+    },
+    {
+      "id": "waist-not_stated-80",
+      "domain": "waist",
+      "input": {
+        "sex": "not_stated",
+        "waistCm": 80
+      },
+      "expected": {
+        "band": "increased",
+        "value": 80
+      }
+    },
+    {
+      "id": "waist-skipped",
+      "domain": "waist",
+      "input": {
+        "sex": "male"
+      },
+      "expected": {
+        "band": "insufficient",
+        "completeness": "none"
+      }
+    },
+    {
+      "id": "bp-129-84",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 129,
+        "diastolic": 84
+      },
+      "expected": {
+        "band": "normal"
+      }
+    },
+    {
+      "id": "bp-130-84",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 130,
+        "diastolic": 84
+      },
+      "expected": {
+        "band": "high_normal"
+      }
+    },
+    {
+      "id": "bp-129-85",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 129,
+        "diastolic": 85
+      },
+      "expected": {
+        "band": "high_normal"
+      }
+    },
+    {
+      "id": "bp-139-89",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 139,
+        "diastolic": 89
+      },
+      "expected": {
+        "band": "high_normal"
+      }
+    },
+    {
+      "id": "bp-140-89",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 140,
+        "diastolic": 89
+      },
+      "expected": {
+        "band": "hypertension_range"
+      }
+    },
+    {
+      "id": "bp-139-90",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 139,
+        "diastolic": 90
+      },
+      "expected": {
+        "band": "hypertension_range"
+      }
+    },
+    {
+      "id": "bp-179-109",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 179,
+        "diastolic": 109
+      },
+      "expected": {
+        "band": "hypertension_range"
+      }
+    },
+    {
+      "id": "bp-180-109",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 180,
+        "diastolic": 109
+      },
+      "expected": {
+        "band": "seek_care_today"
+      }
+    },
+    {
+      "id": "bp-179-110",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 179,
+        "diastolic": 110
+      },
+      "expected": {
+        "band": "seek_care_today"
+      }
+    },
+    {
+      "id": "bp-182-70",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 182,
+        "diastolic": 70
+      },
+      "expected": {
+        "band": "seek_care_today"
+      }
+    },
+    {
+      "id": "bp-120-112",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 120,
+        "diastolic": 112
+      },
+      "expected": {
+        "band": "seek_care_today"
+      }
+    },
+    {
+      "id": "bp-diastolic-skipped",
+      "domain": "bp",
+      "input": {
+        "sex": "female",
+        "systolic": 120
+      },
+      "expected": {
+        "band": "insufficient",
+        "completeness": "partial"
+      }
+    },
+    {
+      "id": "auditc-male-3",
+      "domain": "alcohol",
+      "input": {
+        "sex": "male",
+        "auditC": [1, 2, 0]
+      },
+      "expected": {
+        "band": "lower_risk",
+        "value": 3
+      }
+    },
+    {
+      "id": "auditc-male-4",
+      "domain": "alcohol",
+      "input": {
+        "sex": "male",
+        "auditC": [1, 3, 0]
+      },
+      "expected": {
+        "band": "attention",
+        "value": 4
+      }
+    },
+    {
+      "id": "auditc-female-2",
+      "domain": "alcohol",
+      "input": {
+        "sex": "female",
+        "auditC": [1, 1, 0]
+      },
+      "expected": {
+        "band": "lower_risk",
+        "value": 2
+      }
+    },
+    {
+      "id": "auditc-female-3",
+      "domain": "alcohol",
+      "input": {
+        "sex": "female",
+        "auditC": [1, 2, 0]
+      },
+      "expected": {
+        "band": "attention",
+        "value": 3
+      }
+    },
+    {
+      "id": "auditc-not_stated-2",
+      "domain": "alcohol",
+      "input": {
+        "sex": "not_stated",
+        "auditC": [1, 1, 0]
+      },
+      "expected": {
+        "band": "lower_risk",
+        "value": 2
+      }
+    },
+    {
+      "id": "auditc-not_stated-3",
+      "domain": "alcohol",
+      "input": {
+        "sex": "not_stated",
+        "auditC": [1, 2, 0]
+      },
+      "expected": {
+        "band": "attention",
+        "value": 3
+      }
+    },
+    {
+      "id": "auditc-item1-never",
+      "domain": "alcohol",
+      "input": {
+        "sex": "male",
+        "auditC": [0, "NOT_APPLICABLE", "NOT_APPLICABLE"]
+      },
+      "expected": {
+        "band": "lower_risk",
+        "value": 0
+      }
+    },
+    {
+      "id": "auditc-item2-skipped",
+      "domain": "alcohol",
+      "input": {
+        "sex": "male",
+        "auditC": [2, null, 1]
+      },
+      "expected": {
+        "band": "insufficient",
+        "completeness": "partial"
+      }
+    },
+    {
+      "id": "auditc-all-skipped",
+      "domain": "alcohol",
+      "input": {
+        "sex": "male"
+      },
+      "expected": {
+        "band": "insufficient",
+        "completeness": "none"
+      }
+    },
+    {
+      "id": "activity-149-0",
+      "domain": "activity",
+      "input": {
+        "sex": "female",
+        "moderateMinutes": 149,
+        "vigorousMinutes": 0
+      },
+      "expected": {
+        "band": "below",
+        "value": 149
+      }
+    },
+    {
+      "id": "activity-150-0",
+      "domain": "activity",
+      "input": {
+        "sex": "female",
+        "moderateMinutes": 150,
+        "vigorousMinutes": 0
+      },
+      "expected": {
+        "band": "meets",
+        "value": 150
+      }
+    },
+    {
+      "id": "activity-70-40",
+      "domain": "activity",
+      "input": {
+        "sex": "female",
+        "moderateMinutes": 70,
+        "vigorousMinutes": 40
+      },
+      "expected": {
+        "band": "meets",
+        "value": 150
+      }
+    },
+    {
+      "id": "activity-120-vigorous-skipped",
+      "domain": "activity",
+      "input": {
+        "sex": "female",
+        "moderateMinutes": 120
+      },
+      "expected": {
+        "band": "insufficient",
+        "completeness": "partial"
+      }
+    },
+    {
+      "id": "diet-4",
+      "domain": "diet",
+      "input": {
+        "sex": "female",
+        "servingsPerDay": 4
+      },
+      "expected": {
+        "band": "below",
+        "value": 4
+      }
+    },
+    {
+      "id": "diet-5",
+      "domain": "diet",
+      "input": {
+        "sex": "female",
+        "servingsPerDay": 5
+      },
+      "expected": {
+        "band": "meets",
+        "value": 5
+      }
+    },
+    {
+      "id": "diet-salt-flag",
+      "domain": "diet",
+      "input": {
+        "sex": "female",
+        "servingsPerDay": 5,
+        "addsSaltAtTable": true
+      },
+      "expected": {
+        "band": "meets",
+        "value": 5,
+        "factors": ["adds_salt_at_table"]
+      }
+    },
+    {
+      "id": "diet-skipped",
+      "domain": "diet",
+      "input": {
+        "sex": "female"
+      },
+      "expected": {
+        "band": "insufficient",
+        "completeness": "none"
+      }
+    },
+    {
+      "id": "tobacco-yes",
+      "domain": "tobacco",
+      "input": {
+        "sex": "male",
+        "tobaccoUse": true
+      },
+      "expected": {
+        "band": "attention"
+      }
+    },
+    {
+      "id": "tobacco-no",
+      "domain": "tobacco",
+      "input": {
+        "sex": "male",
+        "tobaccoUse": false
+      },
+      "expected": {
+        "band": "no_reported_risk"
+      }
+    },
+    {
+      "id": "tobacco-skipped",
+      "domain": "tobacco",
+      "input": {
+        "sex": "male"
+      },
+      "expected": {
+        "band": "insufficient",
+        "completeness": "none"
+      }
+    },
+    {
+      "id": "phq9-4",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 1, 0, 0, 0, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "minimal",
+        "value": 4
+      }
+    },
+    {
+      "id": "phq9-5",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 2, 0, 0, 0, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "mild",
+        "value": 5
+      }
+    },
+    {
+      "id": "phq9-9",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 3, 3, 0, 0, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "mild",
+        "value": 9
+      }
+    },
+    {
+      "id": "phq9-10",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 3, 3, 1, 0, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "moderate",
+        "value": 10
+      }
+    },
+    {
+      "id": "phq9-14",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 3, 3, 3, 2, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "moderate",
+        "value": 14
+      }
+    },
+    {
+      "id": "phq9-15",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 3, 3, 3, 3, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "moderately_severe",
+        "value": 15
+      }
+    },
+    {
+      "id": "phq9-19",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 3, 3, 3, 3, 3, 1, 0, 0]
+      },
+      "expected": {
+        "band": "moderately_severe",
+        "value": 19
+      }
+    },
+    {
+      "id": "phq9-20",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 3, 3, 3, 3, 3, 2, 0, 0]
+      },
+      "expected": {
+        "band": "severe",
+        "value": 20
+      }
+    },
+    {
+      "id": "phq9-one-skipped-item9-1",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [null, 2, 0, 0, 0, 0, 0, 0, 1]
+      },
+      "expected": {
+        "band": "insufficient",
+        "completeness": "partial",
+        "tier": 2
+      }
+    },
+    {
+      "id": "phq9-item9-0",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "minimal",
+        "tier": null
+      }
+    },
+    {
+      "id": "phq9-item9-1",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [2, 0, 0, 0, 0, 0, 0, 0, 1]
+      },
+      "expected": {
+        "band": "minimal",
+        "tier": 2
+      }
+    },
+    {
+      "id": "phq9-declined",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED"
+        ],
+        "gad7": [
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED",
+          "MODULE_DECLINED"
+        ]
+      },
+      "expected": {
+        "band": "insufficient",
+        "completeness": "none",
+        "tier": null
+      }
+    },
+    {
+      "id": "gad7-4",
+      "domain": "gad7",
+      "input": {
+        "sex": "female",
+        "gad7": [3, 1, 0, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "minimal",
+        "value": 4
+      }
+    },
+    {
+      "id": "gad7-5",
+      "domain": "gad7",
+      "input": {
+        "sex": "female",
+        "gad7": [3, 2, 0, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "mild",
+        "value": 5
+      }
+    },
+    {
+      "id": "gad7-9",
+      "domain": "gad7",
+      "input": {
+        "sex": "female",
+        "gad7": [3, 3, 3, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "mild",
+        "value": 9
+      }
+    },
+    {
+      "id": "gad7-10",
+      "domain": "gad7",
+      "input": {
+        "sex": "female",
+        "gad7": [3, 3, 3, 1, 0, 0, 0]
+      },
+      "expected": {
+        "band": "moderate",
+        "value": 10
+      }
+    },
+    {
+      "id": "gad7-14",
+      "domain": "gad7",
+      "input": {
+        "sex": "female",
+        "gad7": [3, 3, 3, 3, 2, 0, 0]
+      },
+      "expected": {
+        "band": "moderate",
+        "value": 14
+      }
+    },
+    {
+      "id": "gad7-15",
+      "domain": "gad7",
+      "input": {
+        "sex": "female",
+        "gad7": [3, 3, 3, 3, 3, 0, 0]
+      },
+      "expected": {
+        "band": "severe",
+        "value": 15
+      }
+    },
+    {
+      "id": "tier1-phq9-9",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 3, 3, 0, 0, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "mild",
+        "tier": null
+      }
+    },
+    {
+      "id": "tier1-phq9-10",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 3, 3, 1, 0, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "moderate",
+        "tier": 1
+      }
+    },
+    {
+      "id": "tier1-gad7-9",
+      "domain": "gad7",
+      "input": {
+        "sex": "female",
+        "gad7": [3, 3, 3, 0, 0, 0, 0]
+      },
+      "expected": {
+        "band": "mild",
+        "tier": null
+      }
+    },
+    {
+      "id": "tier1-gad7-10",
+      "domain": "gad7",
+      "input": {
+        "sex": "female",
+        "gad7": [3, 3, 3, 1, 0, 0, 0]
+      },
+      "expected": {
+        "band": "moderate",
+        "tier": 1
+      }
+    },
+    {
+      "id": "phq9-item9-2",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [1, 0, 0, 0, 0, 0, 0, 0, 2]
+      },
+      "expected": {
+        "band": "minimal",
+        "value": 3,
+        "tier": 2
+      }
+    },
+    {
+      "id": "phq9-item9-3",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [0, 0, 0, 0, 0, 0, 0, 0, 3]
+      },
+      "expected": {
+        "band": "minimal",
+        "value": 3,
+        "tier": 2
+      }
+    },
+    {
+      "id": "phq9-total-12-item9-1-tier2-wins",
+      "domain": "phq9",
+      "input": {
+        "sex": "female",
+        "phq9": [3, 3, 3, 1, 1, 0, 0, 0, 1]
+      },
+      "expected": {
+        "band": "moderate",
+        "value": 12,
+        "tier": 2
+      }
+    }
+  ]
+}

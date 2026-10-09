@@ -1,0 +1,218 @@
+{
+  "ruleset": "1.0.0",
+  "cases": [
+    {
+      "id": "P1",
+      "input": {
+        "sex": "female",
+        "tobaccoUse": false,
+        "auditC": [1, 1, 1],
+        "moderateMinutes": 60,
+        "vigorousMinutes": 0,
+        "servingsPerDay": 3,
+        "heightCm": 170,
+        "weightKg": 65,
+        "waistCm": 75,
+        "systolic": 120,
+        "diastolic": 80
+      },
+      "expected": {
+        "urgent": false,
+        "keepGoing": false,
+        "focus": [
+          {
+            "id": "alcohol"
+          },
+          {
+            "id": "activity",
+            "target": {
+              "kind": "activity_split",
+              "minutesPerDay": 20,
+              "days": 3
+            }
+          },
+          {
+            "id": "diet",
+            "target": {
+              "kind": "diet_servings",
+              "servings": 2
+            }
+          }
+        ],
+        "other": []
+      }
+    },
+    {
+      "id": "P2",
+      "input": {
+        "sex": "female",
+        "tobaccoUse": true,
+        "auditC": [1, 0, 0],
+        "moderateMinutes": 100,
+        "vigorousMinutes": 10,
+        "servingsPerDay": 4,
+        "heightCm": 170,
+        "weightKg": 65,
+        "waistCm": 75,
+        "systolic": 142,
+        "diastolic": 91
+      },
+      "expected": {
+        "urgent": false,
+        "keepGoing": false,
+        "focus": [
+          {
+            "id": "bp_confirm"
+          },
+          {
+            "id": "tobacco"
+          },
+          {
+            "id": "activity",
+            "target": {
+              "kind": "activity_split",
+              "minutesPerDay": 10,
+              "days": 3
+            }
+          }
+        ],
+        "other": [
+          {
+            "id": "diet"
+          }
+        ]
+      }
+    },
+    {
+      "id": "P3",
+      "input": {
+        "sex": "female",
+        "tobaccoUse": false,
+        "auditC": [1, 0, 0],
+        "moderateMinutes": 150,
+        "vigorousMinutes": 0,
+        "servingsPerDay": 5,
+        "heightCm": 170,
+        "weightKg": 65,
+        "waistCm": 75,
+        "systolic": 185,
+        "diastolic": 100
+      },
+      "expected": {
+        "urgent": true,
+        "keepGoing": false,
+        "focus": [],
+        "other": []
+      }
+    },
+    {
+      "id": "P4",
+      "input": {
+        "sex": "female",
+        "tobaccoUse": false,
+        "auditC": [1, 0, 0],
+        "moderateMinutes": 150,
+        "vigorousMinutes": 0,
+        "servingsPerDay": 5,
+        "heightCm": 170,
+        "weightKg": 65,
+        "waistCm": 75,
+        "systolic": 120,
+        "diastolic": 80
+      },
+      "expected": {
+        "urgent": false,
+        "keepGoing": true,
+        "focus": [],
+        "other": []
+      }
+    },
+    {
+      "id": "P5",
+      "input": {
+        "sex": "female",
+        "tobaccoUse": false,
+        "auditC": [1, 0, 0],
+        "moderateMinutes": null,
+        "vigorousMinutes": 0,
+        "servingsPerDay": 2,
+        "heightCm": 170,
+        "weightKg": 65,
+        "waistCm": 75,
+        "systolic": 120,
+        "diastolic": 80
+      },
+      "expected": {
+        "urgent": false,
+        "keepGoing": false,
+        "focus": [
+          {
+            "id": "diet",
+            "target": {
+              "kind": "diet_servings",
+              "servings": 2
+            }
+          }
+        ],
+        "other": []
+      }
+    },
+    {
+      "id": "P6",
+      "input": {
+        "sex": "female",
+        "tobaccoUse": false,
+        "auditC": [1, 0, 0],
+        "moderateMinutes": 150,
+        "vigorousMinutes": 0,
+        "servingsPerDay": 5,
+        "heightCm": 170,
+        "weightKg": 89.6,
+        "waistCm": 90,
+        "systolic": 120,
+        "diastolic": 80
+      },
+      "expected": {
+        "urgent": false,
+        "keepGoing": false,
+        "focus": [
+          {
+            "id": "body_substantial",
+            "domains": ["waist", "bmi"]
+          }
+        ],
+        "other": []
+      }
+    },
+    {
+      "id": "P-activity-140",
+      "input": {
+        "sex": "female",
+        "tobaccoUse": false,
+        "auditC": [1, 0, 0],
+        "moderateMinutes": 140,
+        "vigorousMinutes": 0,
+        "servingsPerDay": 5,
+        "heightCm": 170,
+        "weightKg": 65,
+        "waistCm": 75,
+        "systolic": 120,
+        "diastolic": 80
+      },
+      "expected": {
+        "urgent": false,
+        "keepGoing": false,
+        "focus": [
+          {
+            "id": "activity",
+            "target": {
+              "kind": "activity_week",
+              "minutes": 10
+            }
+          }
+        ],
+        "other": []
+      }
+    }
+  ]
+}
