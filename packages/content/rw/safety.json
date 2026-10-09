@@ -1,0 +1,16 @@
+{
+  "contentType": "safety",
+  "key": "safety",
+  "version": "0.1.0",
+  "language": "rw",
+  "status": "draft",
+  "reviewers": ["mental_health", "language"],
+  "entries": {
+    "safety.gethelp.title": "TODO(content): Kinyarwanda by the bilingual key informant",
+    "safety.gethelp.intro": "TODO(content): Kinyarwanda by the bilingual key informant",
+    "safety.screen.title": "TODO(content): Kinyarwanda by the bilingual key informant",
+    "safety.screen.body": "TODO(content): Kinyarwanda by the bilingual key informant",
+    "safety.tier1.body": "TODO(content): Kinyarwanda by the bilingual key informant",
+    "safety.bp.seek_care_today": "TODO(content): Kinyarwanda by the bilingual key informant"
+  }
+}
