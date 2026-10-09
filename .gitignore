@@ -15,9 +15,6 @@ apps/web/dev-dist/
 *.tsbuildinfo
 .vite/
 .vscode/
-/docs
 
-explanation.md
-.env.example
 # Design reference copy of github.com/Codehagen/Badget (not part of this app)
 Badget-main/
