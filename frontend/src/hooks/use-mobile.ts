@@ -1,0 +1,19 @@
+// Used by the shadcn Sidebar to switch to a sheet on phones.
+import { useSyncExternalStore } from 'react';
+
+const MOBILE_BREAKPOINT = 768;
+const query = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`;
+
+const subscribe = (notify: () => void) => {
+  const mql = window.matchMedia(query);
+  mql.addEventListener('change', notify);
+  return () => mql.removeEventListener('change', notify);
+};
+
+export function useIsMobile(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(query).matches,
+    () => false,
+  );
+}
