@@ -1,0 +1,575 @@
+{
+  "app": {
+    "name": "Rinda",
+    "skipToContent": "Skip to main content",
+    "tagline": "A private, educational check of your everyday health habits"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "rw": "Ikinyarwanda"
+  },
+  "shell": {
+    "exit": "Exit",
+    "exitLabel": "Exit to a neutral screen",
+    "getHelp": "Get help now",
+    "call": "Call {{phone}}",
+    "close": "Close",
+    "unverified": "Not yet verified",
+    "verifiedOn": "Checked on {{date}}"
+  },
+  "status": {
+    "offline": "Offline: answers saved on this phone",
+    "online": "Online"
+  },
+  "welcome": {
+    "start": "Start",
+    "comingSoon": "The questionnaire arrives in Milestone 1."
+  },
+  "landing": {
+    "login": "Sign in",
+    "signup": "Create an account",
+    "educational": "Educational, not a diagnosis. Not an emergency service."
+  },
+  "neutral": {
+    "back": "Back to start"
+  },
+  "update": {
+    "available": "A new version of Rinda is ready.",
+    "now": "Update now"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "notFound": "This page does not exist."
+  },
+  "apiErrors": {
+    "VALIDATION_FAILED": "Some details are missing or not in the right format.",
+    "UNAUTHENTICATED": "Please sign in again.",
+    "FORBIDDEN": "You do not have access to this.",
+    "NOT_FOUND": "We could not find this.",
+    "RATE_LIMITED": "Too many attempts. Please wait a minute and try again.",
+    "LOCKED": "Too many wrong attempts. Please try again in 15 minutes.",
+    "INVALID_CREDENTIALS": "The email, phone number or password is not right.",
+    "ALREADY_EXISTS": "An account with this email or phone number already exists.",
+    "DB_UNAVAILABLE": "The service is not connected to its database yet.",
+    "NOT_CONFIGURED": "This sign-in option is not set up yet.",
+    "IDEMPOTENCY_MISMATCH": "This check-up was already sent with different answers.",
+    "CONFLICT": "This change is not allowed right now.",
+    "FLAG_GUARD": "This feature needs an approved ethics amendment first.",
+    "OFFLINE": "You are offline. Please connect and try again.",
+    "INTERNAL": "Something went wrong. Please try again."
+  },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in with your email address or phone number.",
+    "signupTitle": "Create your account",
+    "signupSubtitle": "Choose how you will use Rinda, then add your email or phone number.",
+    "identifier": "Email or phone number",
+    "identifierHint": "For example name@gmail.com or 0788 123 456",
+    "identifierInvalid": "Enter a valid email address or phone number.",
+    "password": "Password",
+    "passwordHint": "At least 8 characters.",
+    "passwordShort": "Your password needs at least 8 characters.",
+    "displayName": "What should we call you? (optional)",
+    "role": "I am joining as",
+    "roles": {
+      "participant": "Participant",
+      "facilitator": "Facilitator",
+      "researcher_admin": "Researcher-admin",
+      "reviewer": "Reviewer"
+    },
+    "roleHelp": {
+      "participant": "Take the health check-up and see your results.",
+      "facilitator": "Run study sessions and support participants.",
+      "researcher_admin": "Manage accounts, content and study data.",
+      "reviewer": "Review and approve health content."
+    },
+    "submitLogin": "Sign in",
+    "submitSignup": "Create account",
+    "google": "Continue with Google",
+    "or": "or",
+    "noAccount": "No account yet?",
+    "haveAccount": "Already have an account?",
+    "callbackErrors": {
+      "google": "Google sign-in did not finish. Please try again.",
+      "google_no_account": "No account uses this Google email yet. Create an account first.",
+      "account_off": "This account is turned off. Please contact the research team."
+    },
+    "loginHeading": "Sign in to Rinda",
+    "signupHeading": "Join Rinda"
+  },
+  "nav": {
+    "home": "Home",
+    "checkup": "Check-up",
+    "results": "Results",
+    "help": "Get help",
+    "profile": "Profile",
+    "participants": "Participants",
+    "sessions": "Sessions",
+    "safety": "Safety",
+    "users": "Users",
+    "content": "Content",
+    "reviews": "Reviews",
+    "deletions": "Deletions",
+    "audit": "Audit log",
+    "flags": "Features",
+    "more": "More",
+    "menu": "Main menu",
+    "logout": "Sign out",
+    "account": "Account menu"
+  },
+  "dashboard": {
+    "greeting": "Hi, {{name}}!",
+    "greetingNoName": "Hi there!",
+    "subtitle": {
+      "participant": "Your check-ups and next steps, kept private.",
+      "facilitator": "Your sessions and the participants you support.",
+      "researcher_admin": "The study at a glance.",
+      "reviewer": "Content waiting for your review."
+    },
+    "metrics": {
+      "checkups_total": "Check-ups done",
+      "areas_to_focus": "Areas to focus on",
+      "areas_ok": "Areas in the recommended range",
+      "participants_total": "Participants",
+      "sessions_today": "My sessions today",
+      "sessions_open": "Open sessions",
+      "safety_events_7d": "Safety events (7 days)",
+      "users_total": "Accounts",
+      "checkups_7d": "Check-ups (7 days)",
+      "deletions_pending": "Deletion requests waiting",
+      "content_drafts": "Content drafts",
+      "content_published": "Published content",
+      "reviews_waiting": "Waiting for my review",
+      "reviews_done": "My reviews"
+    },
+    "latest": "Your latest check-up",
+    "noCheckups": "You have not done a check-up yet.",
+    "startCheckup": "Start a check-up",
+    "viewResult": "See the full result",
+    "recentSessions": "Recent sessions",
+    "noSessions": "No sessions yet.",
+    "usersByRole": "Accounts by role",
+    "safetyByTier": "Safety events by tier (30 days)",
+    "tier": "Tier {{tier}}",
+    "noSafety": "No safety events in the last 30 days.",
+    "waitingReviews": "Waiting for your review",
+    "nothingWaiting": "Nothing is waiting for you.",
+    "viewAll": "View all",
+    "deletionRequested": "You asked us to delete your data. We will finish within 14 days.",
+    "hints": {
+      "checkups_total": "Every check-up you have saved",
+      "areas_to_focus": "From your latest check-up",
+      "areas_ok": "From your latest check-up",
+      "participants_total": "Everyone taking part in the study",
+      "sessions_today": "Sessions you started today",
+      "sessions_open": "Sessions not yet ended",
+      "safety_events_7d": "Recorded in the last 7 days",
+      "users_total": "All roles, active and turned off",
+      "checkups_7d": "Saved in the last 7 days",
+      "deletions_pending": "Complete each within 14 days",
+      "content_drafts": "Waiting for two approvals",
+      "content_published": "Live for participants",
+      "reviews_waiting": "Drafts you have not reviewed",
+      "reviews_done": "Approvals and change requests"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "details": "My details",
+    "displayName": "Name",
+    "email": "Email",
+    "phone": "Phone number",
+    "language": "Preferred language",
+    "save": "Save changes",
+    "saved": "Saved.",
+    "role": "Role",
+    "signInMethods": "Sign-in methods",
+    "methodPassword": "Password",
+    "methodGoogle": "Google",
+    "passwordTitle": "Change password",
+    "setPasswordTitle": "Set a password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "changePassword": "Update password",
+    "passwordChanged": "Your password was changed. Other devices were signed out.",
+    "about": "About me (bands only)",
+    "aboutHint": "These help the app read some results. You can leave them as they are.",
+    "ageBand": "Age group",
+    "sex": "Sex",
+    "sexes": {
+      "female": "Female",
+      "male": "Male",
+      "not_stated": "Prefer not to say"
+    },
+    "district": "District",
+    "notSet": "Not set",
+    "deleteTitle": "Withdraw and delete my data",
+    "deleteBody": "You can leave the study at any time. We will delete your check-ups and details within 14 days.",
+    "deleteRequest": "Ask to delete my data",
+    "deleteConfirm": "Do you want us to delete your data? This cannot be undone once it is done.",
+    "deleteRequested": "Request received on {{date}}. We will finish within 14 days.",
+    "signOut": "Sign out",
+    "districts": {
+      "gasabo": "Gasabo",
+      "kicukiro": "Kicukiro",
+      "nyarugenge": "Nyarugenge",
+      "other": "Another district"
+    }
+  },
+  "checkup": {
+    "title": "Health check-up",
+    "intro": "Answer what you can. You can skip any question. Skipping never counts against you.",
+    "skip": "Skip this question",
+    "skipped": "Skipped",
+    "yes": "Yes",
+    "no": "No",
+    "sections": {
+      "tobacco": "Tobacco",
+      "alcohol": "Alcohol",
+      "activity": "Physical activity",
+      "diet": "Fruit and vegetables",
+      "body": "Body measurements",
+      "bp": "Blood pressure"
+    },
+    "source": "Were these measured today?",
+    "sources": {
+      "in_session": "Measured today",
+      "recalled": "From memory or a recent reading"
+    },
+    "units": {
+      "cm": "cm",
+      "kg": "kg",
+      "mmHg": "mmHg",
+      "minutes": "minutes a week",
+      "servings": "servings a day"
+    },
+    "issues": {
+      "out_of_range": "This reading looks outside the usual range. Please check it.",
+      "height_in_metres": "Height is in centimetres, for example 165.",
+      "weight_check": "Please check this weight. It should be in kilograms.",
+      "systolic_not_above_diastolic": "The top number should be higher than the bottom number."
+    },
+    "submit": "See my results",
+    "sending": "Working out your results…",
+    "mentalWellnessLater": "Questions about mood and stress will be added after review."
+  },
+  "results": {
+    "title": "My results",
+    "empty": "No results yet.",
+    "checkupOn": "Check-up on {{date}}",
+    "version": "Rules version {{version}}",
+    "view": "View",
+    "delete": "Delete this check-up",
+    "deleteConfirm": "Delete this check-up and its results? This cannot be undone.",
+    "deleted": "Check-up deleted.",
+    "educational": "These results are educational, not a diagnosis. They are not an emergency service.",
+    "nextSteps": "Your next steps",
+    "otherResults": "Your other results",
+    "keepGoing": "All the areas you answered are in the recommended range. Keep going.",
+    "urgent": "Your blood pressure reading is very high. Please get help today.",
+    "areas": "Your areas",
+    "source": "Source: {{source}}",
+    "value": {
+      "activity": "{{value}} minutes a week",
+      "diet": "{{value}} servings a day",
+      "bmi": "BMI {{value}}",
+      "waist": "{{value}} cm",
+      "alcohol": "AUDIT-C score {{value}}"
+    },
+    "targets": {
+      "activity_split": "About {{minutesPerDay}} more minutes on {{days}} days this week",
+      "activity_week": "About {{minutes}} more minutes this week",
+      "diet_servings": "Add {{servings}} servings of fruit or vegetables a day"
+    },
+    "details": "Details",
+    "yourValue": "Your value",
+    "rule": "Rule and source",
+    "rulesetVersion": "Rules version {{version}}",
+    "nextStep": "Your next step",
+    "noStep": "No change needed here. Keep going.",
+    "askAbout": "Ask Rinda about this",
+    "open": "Open details for {{area}}"
+  },
+  "domains": {
+    "tobacco": "Tobacco",
+    "alcohol": "Alcohol",
+    "activity": "Physical activity",
+    "diet": "Fruit and vegetables",
+    "bmi": "Body mass index (BMI)",
+    "waist": "Waist",
+    "bp": "Blood pressure",
+    "phq9": "Mood",
+    "gad7": "Stress and worry"
+  },
+  "help": {
+    "title": "Get help",
+    "intro": "Free and confidential services you can call."
+  },
+  "participants": {
+    "title": "Participants",
+    "intro": "Participants are shown by a masked email or phone number only.",
+    "who": "Participant",
+    "order": "Order",
+    "joined": "Joined",
+    "checkups": "Check-ups",
+    "empty": "No participants yet.",
+    "startSession": "Start session"
+  },
+  "sessions": {
+    "title": "Sessions",
+    "new": "New session",
+    "participant": "Participant",
+    "choose": "Choose a participant",
+    "device": "Study phone (optional)",
+    "devicePlaceholder": "For example Phone 2",
+    "start": "Start session",
+    "started": "Started",
+    "ended": "Ended",
+    "open": "In progress",
+    "end": "End session",
+    "delete": "Delete session",
+    "deleteConfirm": "Delete this session and its task results?",
+    "empty": "No sessions yet.",
+    "tasks": "Tasks",
+    "task": {
+      "signin": "Sign in",
+      "consent": "Consent",
+      "questionnaire": "Questionnaire",
+      "measurements": "Measurements",
+      "results": "Results",
+      "get_help": "Find help"
+    },
+    "outcome": "Outcome",
+    "outcomes": {
+      "completed": "Completed",
+      "completed_with_help": "Completed with help",
+      "not_completed": "Not completed"
+    },
+    "minutes": "Minutes",
+    "saveTask": "Save",
+    "taskSaved": "Task saved.",
+    "notRecorded": "Not recorded",
+    "orderReadOnly": "Order {{order}} (set by the study, cannot be changed)"
+  },
+  "safety": {
+    "title": "Safety events",
+    "intro": "Records hold the tier, trigger and actions only, never answers or scores.",
+    "record": "Record distress",
+    "participant": "Participant",
+    "tier": "Tier",
+    "tiers": {
+      "2": "Tier 2: observed or disclosed distress",
+      "3": "Tier 3: plan or intent, or cannot keep safe"
+    },
+    "trigger": "What happened",
+    "triggers": {
+      "item9": "Mood question 9",
+      "score_threshold": "Score threshold",
+      "observed": "Observed distress",
+      "disclosed": "Disclosed distress"
+    },
+    "actions": "Actions taken",
+    "actionLabels": {
+      "safety_screen_shown": "Safety screen shown",
+      "referral_list_shown": "Referral list shown",
+      "facilitator_checkin": "Facilitator check-in",
+      "warm_handover_offered": "Warm handover offered",
+      "warm_handover_done": "Warm handover done",
+      "called_912": "Called 912",
+      "called_112": "Called 112",
+      "oncall_contacted": "On-call professional contacted",
+      "supervisor_informed": "Supervisor informed"
+    },
+    "save": "Save safety event",
+    "saved": "Safety event recorded.",
+    "when": "When",
+    "empty": "No safety events recorded."
+  },
+  "users": {
+    "title": "Users",
+    "add": "Add user",
+    "search": "Search by name, email or phone",
+    "allRoles": "All roles",
+    "name": "Name",
+    "contact": "Email or phone",
+    "role": "Role",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Turned off",
+    "lastSignIn": "Last sign-in",
+    "never": "Never",
+    "edit": "Edit user",
+    "turnOff": "Turn off",
+    "turnOn": "Turn on",
+    "delete": "Delete user",
+    "deleteConfirm": "Delete this account and all its data? This cannot be undone.",
+    "created": "User added.",
+    "updated": "User updated.",
+    "deleted": "User deleted.",
+    "empty": "No users match."
+  },
+  "content": {
+    "title": "Content",
+    "reviewTitle": "Content reviews",
+    "intro": "Every version needs approval from two different people before it is published.",
+    "new": "New draft",
+    "type": "Type",
+    "key": "Key",
+    "version": "Version",
+    "language": "Language",
+    "languageNone": "Any language",
+    "body": "Content (JSON)",
+    "bodyInvalid": "This is not valid JSON.",
+    "status": "Status",
+    "statuses": {
+      "draft": "Draft",
+      "published": "Published",
+      "retired": "Retired"
+    },
+    "approvals": "{{count}} of 2 approvals",
+    "approve": "Approve",
+    "requestChanges": "Request changes",
+    "notes": "Notes for the author (optional)",
+    "publish": "Publish",
+    "edit": "Edit draft",
+    "delete": "Delete draft",
+    "deleteConfirm": "Delete this draft?",
+    "saved": "Draft saved.",
+    "published": "Published.",
+    "reviewed": "Review saved.",
+    "yourDraft": "You wrote this draft, so someone else must review it.",
+    "myDecision": "Your decision: {{decision}}",
+    "decisions": {
+      "approved": "Approved",
+      "changes_requested": "Changes requested"
+    },
+    "empty": "No content versions yet."
+  },
+  "deletions": {
+    "title": "Deletion requests",
+    "intro": "Complete each request within 14 days. Completing removes the participant's data and contact details.",
+    "requested": "Requested",
+    "due": "Due by",
+    "complete": "Complete deletion",
+    "completeConfirm": "Delete this participant's check-ups, profile and contact details now? This cannot be undone.",
+    "completed": "Completed",
+    "done": "Deletion completed.",
+    "empty": "No deletion requests."
+  },
+  "audit": {
+    "title": "Audit log",
+    "intro": "Every staff action, in order. Entries can never be changed.",
+    "when": "When",
+    "who": "Who",
+    "action": "Action",
+    "target": "Target",
+    "empty": "No entries yet."
+  },
+  "flags": {
+    "title": "Features",
+    "intro": "Turn optional features on or off for this environment. Every change is recorded.",
+    "saved": "Feature updated.",
+    "names": {
+      "offlineSync": "Offline saving and sync",
+      "guideDeterministic": "Rinda guide (rule-based)",
+      "guideGenerative": "Rinda guide (AI rewording, needs ethics amendment)",
+      "measurementCoach": "Measurement coach",
+      "progressTrends": "Progress trends",
+      "whatIf": "What-if simulator",
+      "careNavigator": "Care directory",
+      "careGeolocation": "Nearby services by location",
+      "clinicCard": "Clinic summary card",
+      "sharedDeviceMode": "Shared-phone mode",
+      "readAloud": "Read aloud",
+      "usabilityEvents": "Screen timing for research",
+      "pilotInsights": "Pilot insights",
+      "messaging": "WhatsApp notices"
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "confirm": "Yes, continue",
+    "close": "Close",
+    "loading": "Loading…",
+    "actions": "Actions",
+    "back": "Back",
+    "none": "None",
+    "optional": "optional"
+  },
+  "format": {
+    "months": "January,February,March,April,May,June,July,August,September,October,November,December"
+  },
+  "charts": {
+    "activityTitle": "Weekly activity",
+    "activityAlt": "{{value}} of {{target}} minutes a week",
+    "activityUnit": "of {{target}} min",
+    "bpTitle": "Blood pressure over time",
+    "bpAlt": "Blood pressure readings, oldest first: {{list}}",
+    "bpEmpty": "Add a blood pressure reading in your next check-up to see it here.",
+    "dietTitle": "Fruit and vegetables over time",
+    "dietAlt": "Servings a day, oldest first: {{list}}",
+    "dietEmpty": "Your fruit and vegetable servings will appear here.",
+    "top": "Top",
+    "bottom": "Bottom",
+    "servings": "Servings",
+    "checkupsTitle": "Check-ups, last 14 days",
+    "signupsTitle": "New accounts, last 14 days",
+    "sessionsTitle": "My sessions, last 14 days",
+    "seriesAlt": "{{total}} in the last 14 days",
+    "count": "Count"
+  },
+  "home": {
+    "heroTitle": "Let's look after your everyday health",
+    "heroSubtitle": "Small steps add up. Here is where you stand today.",
+    "lastCheckup": "Last check-up {{date}}",
+    "firstCheckup": "Start with a short check-up. It takes about five minutes.",
+    "askRinda": "Ask Rinda"
+  },
+  "guidePanel": {
+    "title": "Ask Rinda",
+    "intro": "Pick a question. Rinda answers from your own results.",
+    "needCheckup": "Do a check-up first so Rinda can answer.",
+    "loading": "Rinda is thinking…",
+    "helpful": "Was this helpful?",
+    "yes": "Yes",
+    "no": "No",
+    "thanks": "Thank you for telling us.",
+    "sources": "Sources",
+    "offline": "You are offline, so Rinda answered from approved guidance on this phone."
+  },
+  "offline": {
+    "savedOnPhone": "Saved on this phone, not sent yet",
+    "sending": "Sending…",
+    "waiting": "{{count}} waiting to send",
+    "sendNow": "Send now",
+    "provisionalTitle": "Your results, worked out on this phone",
+    "provisionalBody": "You are offline. These results will be checked again and saved when you are back online."
+  },
+  "whatsapp": {
+    "title": "WhatsApp notices",
+    "body": "Get a WhatsApp message when your check-up summary is ready. The message never includes your results.",
+    "toggle": "Send me WhatsApp notices",
+    "needPhone": "Add your phone number in \"My details\" to use this.",
+    "unavailable": "WhatsApp notices are not switched on yet.",
+    "saved": "Your choice was saved."
+  },
+  "install": {
+    "title": "Install Rinda",
+    "body": "Add Rinda to your home screen so it opens like an app and keeps working without internet.",
+    "button": "Install app",
+    "ios": "On iPhone: tap the Share button, then \"Add to Home Screen\".",
+    "installed": "Rinda is installed on this device."
+  },
+  "aiOptIn": {
+    "title": "AI explanations",
+    "body": "Let an AI service reword the approved explanation of your results. It receives only your result words and numbers, never your name, contact details or mental-wellness answers. You can switch this off at any time.",
+    "toggle": "Use AI to explain my results",
+    "unavailable": "AI explanations are not switched on yet. You still get the approved explanations.",
+    "saved": "Your choice was saved."
+  }
+}

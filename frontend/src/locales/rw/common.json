@@ -1,0 +1,575 @@
+{
+  "app": {
+    "name": "Rinda",
+    "skipToContent": "Jya ku bikubiyemo by'ingenzi",
+    "tagline": "Isuzuma ryihariye kandi ry'inyigisho ry'imibereho yawe ya buri munsi"
+  },
+  "language": {
+    "label": "Ururimi",
+    "en": "English",
+    "rw": "Ikinyarwanda"
+  },
+  "shell": {
+    "exit": "Sohoka",
+    "exitLabel": "Sohoka ujye ku ipaji itarimo amakuru y'ubuzima",
+    "getHelp": "Shaka ubufasha ubu",
+    "call": "Hamagara {{phone}}",
+    "close": "Funga",
+    "unverified": "Ntibiragenzurwa",
+    "verifiedOn": "Byagenzuwe ku wa {{date}}"
+  },
+  "status": {
+    "offline": "Nta interineti: ibisubizo bibitswe kuri iyi telefoni",
+    "online": "Kuri interineti"
+  },
+  "welcome": {
+    "start": "Tangira",
+    "comingSoon": "Ibibazo bizaza mu cyiciro cya mbere."
+  },
+  "landing": {
+    "login": "Injira",
+    "signup": "Fungura konti",
+    "educational": "Ni iby'inyigisho, si isuzuma rya muganga. Si serivisi y'ubutabazi bwihuse."
+  },
+  "neutral": {
+    "back": "Subira ahabanza"
+  },
+  "update": {
+    "available": "Hari verisiyo nshya ya Rinda yiteguye.",
+    "now": "Vugurura ubu"
+  },
+  "errors": {
+    "generic": "Habaye ikibazo. Ongera ugerageze.",
+    "notFound": "Iyi paji ntibaho."
+  },
+  "apiErrors": {
+    "VALIDATION_FAILED": "Hari amakuru abura cyangwa atanditse neza.",
+    "UNAUTHENTICATED": "Ongera winjire.",
+    "FORBIDDEN": "Nta burenganzira ufite kuri ibi.",
+    "NOT_FOUND": "Ntitwabibonye.",
+    "RATE_LIMITED": "Wagerageje inshuro nyinshi. Tegereza umunota umwe wongere ugerageze.",
+    "LOCKED": "Wibeshye inshuro nyinshi. Ongera ugerageze nyuma y'iminota 15.",
+    "INVALID_CREDENTIALS": "Imeyili, nimero ya telefoni cyangwa ijambo ry'ibanga si byo.",
+    "ALREADY_EXISTS": "Hari konti isanzwe ikoresha iyi meyili cyangwa iyi nimero.",
+    "DB_UNAVAILABLE": "Serivisi ntiraguhuzwa n'ububiko bwayo bw'amakuru.",
+    "NOT_CONFIGURED": "Ubu buryo bwo kwinjira ntiburashyirwaho.",
+    "IDEMPOTENCY_MISMATCH": "Iri suzuma ryari ryoherejwe n'ibisubizo bitandukanye.",
+    "CONFLICT": "Iyi mpinduka ntiyemewe ubu.",
+    "FLAG_GUARD": "Iki gikorwa kibanza gukenera uruhushya rushya rw'akanama k'imyitwarire.",
+    "OFFLINE": "Nta interineti ufite. Ihuze wongere ugerageze.",
+    "INTERNAL": "Habaye ikibazo. Ongera ugerageze."
+  },
+  "auth": {
+    "loginTitle": "Murakaza neza",
+    "loginSubtitle": "Injira ukoresheje imeyili cyangwa nimero ya telefoni.",
+    "signupTitle": "Fungura konti yawe",
+    "signupSubtitle": "Hitamo uko uzakoresha Rinda, hanyuma wandike imeyili cyangwa nimero ya telefoni.",
+    "identifier": "Imeyili cyangwa nimero ya telefoni",
+    "identifierHint": "Urugero: izina@gmail.com cyangwa 0788 123 456",
+    "identifierInvalid": "Andika imeyili cyangwa nimero ya telefoni nyayo.",
+    "password": "Ijambo ry'ibanga",
+    "passwordHint": "Nibura inyuguti 8.",
+    "passwordShort": "Ijambo ry'ibanga rigomba kugira nibura inyuguti 8.",
+    "displayName": "Twakwita nde? (si ngombwa)",
+    "role": "Ninjira nka",
+    "roles": {
+      "participant": "Uwitabiriye",
+      "facilitator": "Umuhuzabikorwa",
+      "researcher_admin": "Umushakashatsi-umuyobozi",
+      "reviewer": "Umugenzuzi"
+    },
+    "roleHelp": {
+      "participant": "Kora isuzuma ry'ubuzima urebe ibisubizo byawe.",
+      "facilitator": "Kuyobora ibikorwa by'ubushakashatsi no gufasha abitabiriye.",
+      "researcher_admin": "Gucunga konti, ibikubiyemo n'amakuru y'ubushakashatsi.",
+      "reviewer": "Gusuzuma no kwemeza ibikubiyemo byerekeye ubuzima."
+    },
+    "submitLogin": "Injira",
+    "submitSignup": "Fungura konti",
+    "google": "Komeza ukoresheje Google",
+    "or": "cyangwa",
+    "noAccount": "Nta konti ufite?",
+    "haveAccount": "Usanzwe ufite konti?",
+    "callbackErrors": {
+      "google": "Kwinjira ukoresheje Google ntibyarangiye. Ongera ugerageze.",
+      "google_no_account": "Nta konti ikoresha iyi meyili ya Google. Banza ufungure konti.",
+      "account_off": "Iyi konti yarahagaritswe. Vugana n'itsinda ry'ubushakashatsi."
+    },
+    "loginHeading": "Injira muri Rinda",
+    "signupHeading": "Iyandikishe muri Rinda"
+  },
+  "nav": {
+    "home": "Ahabanza",
+    "checkup": "Isuzuma",
+    "results": "Ibisubizo",
+    "help": "Ubufasha",
+    "profile": "Umwirondoro",
+    "participants": "Abitabiriye",
+    "sessions": "Ibikorwa",
+    "safety": "Umutekano",
+    "users": "Abakoresha",
+    "content": "Ibikubiyemo",
+    "reviews": "Isuzuma ry'ibikubiyemo",
+    "deletions": "Gusiba amakuru",
+    "audit": "Igitabo cy'ibikorwa",
+    "flags": "Ibiranga porogaramu",
+    "more": "Ibindi",
+    "menu": "Urutonde nyamukuru",
+    "logout": "Sohoka muri konti",
+    "account": "Urutonde rwa konti"
+  },
+  "dashboard": {
+    "greeting": "Muraho, {{name}}!",
+    "greetingNoName": "Muraho!",
+    "subtitle": {
+      "participant": "Amasuzuma yawe n'intambwe zikurikira, bibitswe mu ibanga.",
+      "facilitator": "Ibikorwa byawe n'abitabiriye ufasha.",
+      "researcher_admin": "Incamake y'ubushakashatsi.",
+      "reviewer": "Ibikubiyemo bitegereje isuzuma ryawe."
+    },
+    "metrics": {
+      "checkups_total": "Amasuzuma yakozwe",
+      "areas_to_focus": "Ibyo kwitaho",
+      "areas_ok": "Ibiri mu rugero rwasabwe",
+      "participants_total": "Abitabiriye",
+      "sessions_today": "Ibikorwa byanjye by'uyu munsi",
+      "sessions_open": "Ibikorwa bigikomeje",
+      "safety_events_7d": "Ibibazo by'umutekano (iminsi 7)",
+      "users_total": "Konti",
+      "checkups_7d": "Amasuzuma (iminsi 7)",
+      "deletions_pending": "Ibisabwa byo gusiba bitegereje",
+      "content_drafts": "Inyandiko z'agateganyo",
+      "content_published": "Ibikubiyemo byatangajwe",
+      "reviews_waiting": "Bitegereje isuzuma ryanjye",
+      "reviews_done": "Amasuzuma nakoze"
+    },
+    "latest": "Isuzuma ryawe riheruka",
+    "noCheckups": "Ntabwo urakora isuzuma.",
+    "startCheckup": "Tangira isuzuma",
+    "viewResult": "Reba ibisubizo byose",
+    "recentSessions": "Ibikorwa biheruka",
+    "noSessions": "Nta bikorwa birabaho.",
+    "usersByRole": "Konti hakurikijwe uruhare",
+    "safetyByTier": "Ibibazo by'umutekano hakurikijwe urwego (iminsi 30)",
+    "tier": "Urwego {{tier}}",
+    "noSafety": "Nta kibazo cy'umutekano mu minsi 30 ishize.",
+    "waitingReviews": "Bitegereje isuzuma ryawe",
+    "nothingWaiting": "Nta kigutegereje.",
+    "viewAll": "Reba byose",
+    "deletionRequested": "Wadusabye gusiba amakuru yawe. Tuzabirangiza mu minsi 14.",
+    "hints": {
+      "checkups_total": "Amasuzuma yose wabitse",
+      "areas_to_focus": "Bivuye mu isuzuma riheruka",
+      "areas_ok": "Bivuye mu isuzuma riheruka",
+      "participants_total": "Abitabiriye ubushakashatsi bose",
+      "sessions_today": "Ibikorwa watangiye uyu munsi",
+      "sessions_open": "Ibikorwa bitarasozwa",
+      "safety_events_7d": "Byanditswe mu minsi 7 ishize",
+      "users_total": "Inshingano zose, izikora n’izahagaritswe",
+      "checkups_7d": "Byabitswe mu minsi 7 ishize",
+      "deletions_pending": "Rangiza buri cyifuzo mu minsi 14",
+      "content_drafts": "Bitegereje kwemezwa n’abantu babiri",
+      "content_published": "Bigaragara ku bitabiriye",
+      "reviews_waiting": "Inyandiko utarasuzuma",
+      "reviews_done": "Ibyo wemeje n’impinduka wasabye"
+    }
+  },
+  "profile": {
+    "title": "Umwirondoro",
+    "details": "Amakuru yanjye",
+    "displayName": "Izina",
+    "email": "Imeyili",
+    "phone": "Nimero ya telefoni",
+    "language": "Ururimi nkunda",
+    "save": "Bika impinduka",
+    "saved": "Byabitswe.",
+    "role": "Uruhare",
+    "signInMethods": "Uburyo bwo kwinjira",
+    "methodPassword": "Ijambo ry'ibanga",
+    "methodGoogle": "Google",
+    "passwordTitle": "Hindura ijambo ry'ibanga",
+    "setPasswordTitle": "Shyiraho ijambo ry'ibanga",
+    "currentPassword": "Ijambo ry'ibanga risanzwe",
+    "newPassword": "Ijambo ry'ibanga rishya",
+    "changePassword": "Vugurura ijambo ry'ibanga",
+    "passwordChanged": "Ijambo ry'ibanga ryahinduwe. Izindi telefoni na mudasobwa byasohowe.",
+    "about": "Ibinyerekeye (mu byiciro gusa)",
+    "aboutHint": "Bifasha porogaramu gusobanura bimwe mu bisubizo. Ushobora kubireka uko biri.",
+    "ageBand": "Icyiciro cy'imyaka",
+    "sex": "Igitsina",
+    "sexes": {
+      "female": "Gore",
+      "male": "Gabo",
+      "not_stated": "Sinshaka kubivuga"
+    },
+    "district": "Akarere",
+    "notSet": "Ntibyashyizweho",
+    "deleteTitle": "Kuva mu bushakashatsi no gusiba amakuru yanjye",
+    "deleteBody": "Ushobora kuva mu bushakashatsi igihe icyo ari cyo cyose. Tuzasiba amasuzuma yawe n'amakuru yawe mu minsi 14.",
+    "deleteRequest": "Saba ko amakuru yanjye asibwa",
+    "deleteConfirm": "Urashaka ko dusiba amakuru yawe? Nimara gusibwa ntibishobora gusubizwaho.",
+    "deleteRequested": "Icyifuzo cyakiriwe ku wa {{date}}. Tuzarangiza mu minsi 14.",
+    "signOut": "Sohoka muri konti",
+    "districts": {
+      "gasabo": "Gasabo",
+      "kicukiro": "Kicukiro",
+      "nyarugenge": "Nyarugenge",
+      "other": "Akandi karere"
+    }
+  },
+  "checkup": {
+    "title": "Isuzuma ry'ubuzima",
+    "intro": "Subiza ibyo ushoboye. Ushobora gusimbuka ikibazo icyo ari cyo cyose. Gusimbuka nta ngaruka mbi bigira.",
+    "skip": "Simbuka iki kibazo",
+    "skipped": "Cyasimbutswe",
+    "yes": "Yego",
+    "no": "Oya",
+    "sections": {
+      "tobacco": "Itabi",
+      "alcohol": "Inzoga",
+      "activity": "Imyitozo ngororamubiri",
+      "diet": "Imbuto n'imboga",
+      "body": "Ibipimo by'umubiri",
+      "bp": "Umuvuduko w'amaraso"
+    },
+    "source": "Ibi bipimo byafashwe uyu munsi?",
+    "sources": {
+      "in_session": "Byapimwe uyu munsi",
+      "recalled": "Ndabyibuka cyangwa ni ibyo napimwe vuba"
+    },
+    "units": {
+      "cm": "cm",
+      "kg": "kg",
+      "mmHg": "mmHg",
+      "minutes": "iminota mu cyumweru",
+      "servings": "ibipimo ku munsi"
+    },
+    "issues": {
+      "out_of_range": "Iki gipimo gisa n'aho kiri hanze y'urugero rusanzwe. Ongera ukirebe.",
+      "height_in_metres": "Uburebure bwandikwa muri santimetero, urugero 165.",
+      "weight_check": "Ongera urebe ibiro. Bigomba kwandikwa mu kilogarama.",
+      "systolic_not_above_diastolic": "Umubare wo hejuru ugomba kuruta uwo hasi."
+    },
+    "submit": "Reba ibisubizo byanjye",
+    "sending": "Turimo gutegura ibisubizo byawe…",
+    "mentalWellnessLater": "Ibibazo byerekeye imitekerereze n'umunaniro bizongerwaho nyuma yo gusuzumwa."
+  },
+  "results": {
+    "title": "Ibisubizo byanjye",
+    "empty": "Nta bisubizo birabaho.",
+    "checkupOn": "Isuzuma ryo ku wa {{date}}",
+    "version": "Verisiyo y'amategeko {{version}}",
+    "view": "Reba",
+    "delete": "Siba iri suzuma",
+    "deleteConfirm": "Urashaka gusiba iri suzuma n'ibisubizo byaryo? Ntibishobora gusubizwaho.",
+    "deleted": "Isuzuma ryasibwe.",
+    "educational": "Ibi bisubizo ni iby'inyigisho, si isuzuma rya muganga. Si serivisi y'ubutabazi bwihuse.",
+    "nextSteps": "Intambwe zawe zikurikira",
+    "otherResults": "Ibindi bisubizo byawe",
+    "keepGoing": "Ibyo washubije byose biri mu rugero rwasabwe. Komereza aho.",
+    "urgent": "Umuvuduko w'amaraso wawe uri hejuru cyane. Shaka ubufasha uyu munsi.",
+    "areas": "Ibyo twasuzumye",
+    "source": "Inkomoko: {{source}}",
+    "value": {
+      "activity": "Iminota {{value}} mu cyumweru",
+      "diet": "Ibipimo {{value}} ku munsi",
+      "bmi": "BMI {{value}}",
+      "waist": "{{value}} cm",
+      "alcohol": "Amanota ya AUDIT-C {{value}}"
+    },
+    "targets": {
+      "activity_split": "Iminota igera kuri {{minutesPerDay}} yiyongera mu minsi {{days}} muri iki cyumweru",
+      "activity_week": "Iminota igera kuri {{minutes}} yiyongera muri iki cyumweru",
+      "diet_servings": "Ongeraho ibipimo {{servings}} by'imbuto cyangwa imboga ku munsi"
+    },
+    "details": "Ibisobanuro",
+    "yourValue": "Umubare wawe",
+    "rule": "Itegeko n'inkomoko yaryo",
+    "rulesetVersion": "Verisiyo y'amategeko {{version}}",
+    "nextStep": "Intambwe ikurikira",
+    "noStep": "Nta mpinduka ikenewe hano. Komereza aho.",
+    "askAbout": "Baza Rinda kuri ibi",
+    "open": "Fungura ibisobanuro bya {{area}}"
+  },
+  "domains": {
+    "tobacco": "Itabi",
+    "alcohol": "Inzoga",
+    "activity": "Imyitozo ngororamubiri",
+    "diet": "Imbuto n'imboga",
+    "bmi": "Igipimo cy'ibiro n'uburebure (BMI)",
+    "waist": "Umuzenguruko w'inda",
+    "bp": "Umuvuduko w'amaraso",
+    "phq9": "Imitekerereze",
+    "gad7": "Umunaniro n'impungenge"
+  },
+  "help": {
+    "title": "Shaka ubufasha",
+    "intro": "Serivisi z'ubuntu kandi z'ibanga ushobora guhamagara."
+  },
+  "participants": {
+    "title": "Abitabiriye",
+    "intro": "Abitabiriye bagaragazwa gusa n'imeyili cyangwa nimero bihishe igice.",
+    "who": "Uwitabiriye",
+    "order": "Uko bikurikirana",
+    "joined": "Yinjiye",
+    "checkups": "Amasuzuma",
+    "empty": "Nta bitabiriye barabaho.",
+    "startSession": "Tangira igikorwa"
+  },
+  "sessions": {
+    "title": "Ibikorwa",
+    "new": "Igikorwa gishya",
+    "participant": "Uwitabiriye",
+    "choose": "Hitamo uwitabiriye",
+    "device": "Telefoni y'ubushakashatsi (si ngombwa)",
+    "devicePlaceholder": "Urugero: Telefoni ya 2",
+    "start": "Tangira igikorwa",
+    "started": "Cyatangiye",
+    "ended": "Cyarangiye",
+    "open": "Kirakomeje",
+    "end": "Soza igikorwa",
+    "delete": "Siba igikorwa",
+    "deleteConfirm": "Urashaka gusiba iki gikorwa n'ibisubizo by'imirimo yacyo?",
+    "empty": "Nta bikorwa birabaho.",
+    "tasks": "Imirimo",
+    "task": {
+      "signin": "Kwinjira",
+      "consent": "Kwemera",
+      "questionnaire": "Ibibazo",
+      "measurements": "Ibipimo",
+      "results": "Ibisubizo",
+      "get_help": "Gushaka ubufasha"
+    },
+    "outcome": "Uko byagenze",
+    "outcomes": {
+      "completed": "Byarangiye",
+      "completed_with_help": "Byarangiye hifashishijwe undi",
+      "not_completed": "Ntibyarangiye"
+    },
+    "minutes": "Iminota",
+    "saveTask": "Bika",
+    "taskSaved": "Umurimo wabitswe.",
+    "notRecorded": "Ntibyanditswe",
+    "orderReadOnly": "Uko bikurikirana: {{order}} (byashyizweho n'ubushakashatsi, ntibihindurwa)"
+  },
+  "safety": {
+    "title": "Ibibazo by'umutekano",
+    "intro": "Byandika urwego, icyabiteye n'ibyakozwe gusa, ntibyandika ibisubizo cyangwa amanota.",
+    "record": "Andika ikibazo cy'agahinda",
+    "participant": "Uwitabiriye",
+    "tier": "Urwego",
+    "tiers": {
+      "2": "Urwego rwa 2: agahinda kagaragaye cyangwa kavuzwe",
+      "3": "Urwego rwa 3: umugambi cyangwa ubushake, cyangwa ntashobora kwirinda"
+    },
+    "trigger": "Icyabaye",
+    "triggers": {
+      "item9": "Ikibazo cya 9 cy'imitekerereze",
+      "score_threshold": "Amanota yarenze urugero",
+      "observed": "Agahinda kagaragaye",
+      "disclosed": "Agahinda kavuzwe"
+    },
+    "actions": "Ibyakozwe",
+    "actionLabels": {
+      "safety_screen_shown": "Ipaji y'umutekano yeretswe",
+      "referral_list_shown": "Urutonde rwa serivisi rwerekanywe",
+      "facilitator_checkin": "Umuhuzabikorwa yaganiriye na we",
+      "warm_handover_offered": "Yahawe amahirwe yo guhuzwa n'umunyamwuga",
+      "warm_handover_done": "Yahujwe n'umunyamwuga",
+      "called_912": "Hahamagawe 912",
+      "called_112": "Hahamagawe 112",
+      "oncall_contacted": "Umunyamwuga uri ku izamu yamenyeshejwe",
+      "supervisor_informed": "Umuyobozi w'ubushakashatsi yamenyeshejwe"
+    },
+    "save": "Bika ikibazo cy'umutekano",
+    "saved": "Ikibazo cy'umutekano cyanditswe.",
+    "when": "Ryari",
+    "empty": "Nta kibazo cy'umutekano cyanditswe."
+  },
+  "users": {
+    "title": "Abakoresha",
+    "add": "Ongeraho umukoresha",
+    "search": "Shakisha ukoresheje izina, imeyili cyangwa telefoni",
+    "allRoles": "Inshingano zose",
+    "name": "Izina",
+    "contact": "Imeyili cyangwa telefoni",
+    "role": "Uruhare",
+    "status": "Uko ihagaze",
+    "active": "Irakora",
+    "inactive": "Yahagaritswe",
+    "lastSignIn": "Yinjiye bwa nyuma",
+    "never": "Ntarinjira",
+    "edit": "Hindura umukoresha",
+    "turnOff": "Hagarika",
+    "turnOn": "Ongera ukoreshe",
+    "delete": "Siba umukoresha",
+    "deleteConfirm": "Urashaka gusiba iyi konti n'amakuru yayo yose? Ntibishobora gusubizwaho.",
+    "created": "Umukoresha yongeweho.",
+    "updated": "Umukoresha yavuguruwe.",
+    "deleted": "Umukoresha yasibwe.",
+    "empty": "Nta mukoresha uhuye n'ibyo washakishije."
+  },
+  "content": {
+    "title": "Ibikubiyemo",
+    "reviewTitle": "Isuzuma ry'ibikubiyemo",
+    "intro": "Buri verisiyo ikenera kwemezwa n'abantu babiri batandukanye mbere yo gutangazwa.",
+    "new": "Inyandiko nshya",
+    "type": "Ubwoko",
+    "key": "Izina ry'ikiranga",
+    "version": "Verisiyo",
+    "language": "Ururimi",
+    "languageNone": "Ururimi urwo ari rwo rwose",
+    "body": "Ibikubiyemo (JSON)",
+    "bodyInvalid": "Iyi si JSON yanditse neza.",
+    "status": "Uko bihagaze",
+    "statuses": {
+      "draft": "Agateganyo",
+      "published": "Byatangajwe",
+      "retired": "Byavanyweho"
+    },
+    "approvals": "Byemejwe na {{count}} kuri 2",
+    "approve": "Emeza",
+    "requestChanges": "Saba impinduka",
+    "notes": "Ubutumwa ku wanditse (si ngombwa)",
+    "publish": "Tangaza",
+    "edit": "Hindura inyandiko",
+    "delete": "Siba inyandiko",
+    "deleteConfirm": "Urashaka gusiba iyi nyandiko y'agateganyo?",
+    "saved": "Inyandiko yabitswe.",
+    "published": "Byatangajwe.",
+    "reviewed": "Isuzuma ryabitswe.",
+    "yourDraft": "Ni wowe wanditse iyi nyandiko, bityo undi muntu agomba kuyisuzuma.",
+    "myDecision": "Icyemezo cyawe: {{decision}}",
+    "decisions": {
+      "approved": "Byemejwe",
+      "changes_requested": "Hasabwe impinduka"
+    },
+    "empty": "Nta verisiyo y'ibikubiyemo irabaho."
+  },
+  "deletions": {
+    "title": "Ibisabwa byo gusiba amakuru",
+    "intro": "Rangiza buri cyifuzo mu minsi 14. Kurangiza bisiba amakuru y'uwitabiriye n'uburyo bwo kumuvugisha.",
+    "requested": "Cyasabwe",
+    "due": "Kigomba kurangira bitarenze",
+    "complete": "Rangiza gusiba",
+    "completeConfirm": "Urashaka gusiba ubu amasuzuma, umwirondoro n'uburyo bwo kuvugisha uyu witabiriye? Ntibishobora gusubizwaho.",
+    "completed": "Byarangiye",
+    "done": "Gusiba byarangiye.",
+    "empty": "Nta cyifuzo cyo gusiba gihari."
+  },
+  "audit": {
+    "title": "Igitabo cy'ibikorwa",
+    "intro": "Buri gikorwa cy'abakozi, uko byakurikiranye. Ibyanditswe ntibishobora guhindurwa.",
+    "when": "Ryari",
+    "who": "Nde",
+    "action": "Igikorwa",
+    "target": "Icyakorewe",
+    "empty": "Nta cyanditswe kirabaho."
+  },
+  "flags": {
+    "title": "Ibiranga porogaramu",
+    "intro": "Fungura cyangwa ufunge ibice bitari ngombwa muri iyi porogaramu. Buri mpinduka irandikwa.",
+    "saved": "Byavuguruwe.",
+    "names": {
+      "offlineSync": "Kubika nta interineti no kohereza nyuma",
+      "guideDeterministic": "Umujyanama wa Rinda (ukurikiza amategeko)",
+      "guideGenerative": "Umujyanama wa Rinda (AI, bisaba uruhushya rw'akanama k'imyitwarire)",
+      "measurementCoach": "Umujyanama mu gupima",
+      "progressTrends": "Uko ugenda utera imbere",
+      "whatIf": "Igerageza rya \"bigenze bite\"",
+      "careNavigator": "Urutonde rwa serivisi z'ubuvuzi",
+      "careGeolocation": "Serivisi ziri hafi hakurikijwe aho uri",
+      "clinicCard": "Ikarita y'incamake yo kwereka muganga",
+      "sharedDeviceMode": "Telefoni isangiwe",
+      "readAloud": "Gusoma mu ijwi riranguruye",
+      "usabilityEvents": "Igihe kimara kuri buri paji (ubushakashatsi)",
+      "pilotInsights": "Incamake y'igerageza",
+      "messaging": "Ubutumwa kuri WhatsApp"
+    }
+  },
+  "common": {
+    "save": "Bika",
+    "cancel": "Reka",
+    "delete": "Siba",
+    "edit": "Hindura",
+    "create": "Kora",
+    "confirm": "Yego, komeza",
+    "close": "Funga",
+    "loading": "Biratunganywa…",
+    "actions": "Ibikorwa",
+    "back": "Subira inyuma",
+    "none": "Nta na kimwe",
+    "optional": "si ngombwa"
+  },
+  "format": {
+    "months": "Mutarama,Gashyantare,Werurwe,Mata,Gicurasi,Kamena,Nyakanga,Kanama,Nzeri,Ukwakira,Ugushyingo,Ukuboza"
+  },
+  "charts": {
+    "activityTitle": "Imyitozo y'icyumweru",
+    "activityAlt": "Iminota {{value}} kuri {{target}} mu cyumweru",
+    "activityUnit": "kuri {{target}} min",
+    "bpTitle": "Umuvuduko w'amaraso uko wagiye uhinduka",
+    "bpAlt": "Ibipimo by'umuvuduko w'amaraso, uhereye ku bya kera: {{list}}",
+    "bpEmpty": "Ongeraho igipimo cy'umuvuduko w'amaraso mu isuzuma rikurikira kugira ngo ukibone hano.",
+    "dietTitle": "Imbuto n'imboga uko byagiye bihinduka",
+    "dietAlt": "Ibipimo ku munsi, uhereye ku bya kera: {{list}}",
+    "dietEmpty": "Ibipimo by'imbuto n'imboga urya bizagaragara hano.",
+    "top": "Hejuru",
+    "bottom": "Hasi",
+    "servings": "Ibipimo",
+    "checkupsTitle": "Amasuzuma, iminsi 14 ishize",
+    "signupsTitle": "Konti nshya, iminsi 14 ishize",
+    "sessionsTitle": "Ibikorwa byanjye, iminsi 14 ishize",
+    "seriesAlt": "{{total}} mu minsi 14 ishize",
+    "count": "Umubare"
+  },
+  "home": {
+    "heroTitle": "Reka twite ku buzima bwawe bwa buri munsi",
+    "heroSubtitle": "Intambwe nto ziriyongera. Dore aho uhagaze uyu munsi.",
+    "lastCheckup": "Isuzuma riheruka {{date}}",
+    "firstCheckup": "Tangira isuzuma rigufi. Rimara iminota igera kuri itanu.",
+    "askRinda": "Baza Rinda"
+  },
+  "guidePanel": {
+    "title": "Baza Rinda",
+    "intro": "Hitamo ikibazo. Rinda isubiza ishingiye ku bisubizo byawe.",
+    "needCheckup": "Banza ukore isuzuma kugira ngo Rinda ibashe gusubiza.",
+    "loading": "Rinda irimo gutekereza…",
+    "helpful": "Ibi byagufashije?",
+    "yes": "Yego",
+    "no": "Oya",
+    "thanks": "Murakoze kutubwira.",
+    "sources": "Inkomoko",
+    "offline": "Nta interineti ufite, bityo Rinda yasubije ikoresheje inyigisho zemejwe ziri kuri iyi telefoni."
+  },
+  "offline": {
+    "savedOnPhone": "Byabitswe kuri iyi telefoni, ntibiroherezwa",
+    "sending": "Biroherezwa…",
+    "waiting": "{{count}} bitegereje koherezwa",
+    "sendNow": "Ohereza ubu",
+    "provisionalTitle": "Ibisubizo byawe, byabazwe kuri iyi telefoni",
+    "provisionalBody": "Nta interineti ufite. Ibi bisubizo bizongera kugenzurwa no kubikwa nugaruka kuri interineti."
+  },
+  "whatsapp": {
+    "title": "Ubutumwa kuri WhatsApp",
+    "body": "Akira ubutumwa kuri WhatsApp igihe incamake y'isuzuma ryawe yiteguye. Ubutumwa ntibujya bushyiramo ibisubizo byawe.",
+    "toggle": "Nyoherereza ubutumwa kuri WhatsApp",
+    "needPhone": "Ongeraho nimero ya telefoni yawe muri \"Amakuru yanjye\" kugira ngo ukoreshe ibi.",
+    "unavailable": "Ubutumwa kuri WhatsApp ntiburatangira gukora.",
+    "saved": "Icyemezo cyawe cyabitswe."
+  },
+  "install": {
+    "title": "Shyira Rinda kuri telefoni",
+    "body": "Shyira Rinda ku rupapuro rw'ibanze rwa telefoni kugira ngo ifunguke nka porogaramu kandi ikore nta interineti.",
+    "button": "Shyiraho porogaramu",
+    "ios": "Kuri iPhone: kanda buto yo Gusangiza, hanyuma \"Add to Home Screen\".",
+    "installed": "Rinda yashyizwe kuri iki gikoresho."
+  },
+  "aiOptIn": {
+    "title": "Ibisobanuro bya AI",
+    "body": "Emerera serivisi ya AI gusubiramo mu yandi magambo ibisobanuro byemejwe by'ibisubizo byawe. Yakira gusa amagambo n'imibare by'ibisubizo byawe, ntijya yakira izina ryawe, aho twakubona cyangwa ibisubizo by'ubuzima bwo mu mutwe. Ushobora kubihagarika igihe icyo ari cyo cyose.",
+    "toggle": "Koresha AI gusobanura ibisubizo byanjye",
+    "unavailable": "Ibisobanuro bya AI ntibiratangira gukora. Uzakomeza kubona ibisobanuro byemejwe.",
+    "saved": "Icyemezo cyawe cyabitswe."
+  }
+}
