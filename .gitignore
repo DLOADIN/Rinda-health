@@ -1,0 +1,23 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+apps/api/src/generated/
+.env
+.env.*
+!.env.example
+secrets/
+*.log
+.DS_Store
+apps/web/dev-dist/
+**/node_modules/.tmp/
+*.tsbuildinfo
+.vite/
+.vscode/
+/docs
+
+explanation.md
+.env.example
+# Design reference copy of github.com/Codehagen/Badget (not part of this app)
+Badget-main/
