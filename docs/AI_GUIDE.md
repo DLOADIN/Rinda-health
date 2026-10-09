@@ -61,7 +61,9 @@ Mental-wellness domains have no chips. Their pages show approved support content
 
 **Where.** `backend/server.ts` section 5b (`explainWithGemini`), behind `POST /api/v1/guide/explain` (see [API.md](API.md)). The API key never reaches the browser.
 
-**Model.** `gemini-2.5-flash` by default, overridable with `GEMINI_MODEL`. The answer is requested as structured JSON (`responseMimeType: application/json` with a response schema). A blocked, empty or malformed reply shows the template.
+**Answer once.** A passing answer is saved in `guide_answers` per check-up, question and language and served again without calling Gemini; withdrawing the AI opt-in deletes the saved answers. Numbers that already appear in the approved answer, as digits or words, are allowed.
+
+**Model.** `gemini-3.5-flash` by default, overridable with `GEMINI_MODEL`. The answer is requested as structured JSON (`responseMimeType: application/json` with a response schema). A blocked, empty or malformed reply shows the template.
 
 **What is sent** (and nothing else):
 

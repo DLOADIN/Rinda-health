@@ -14,6 +14,7 @@ import {
   FLAG_DEFAULTS,
   loadConfig,
   maskIdentifier,
+  numbersIn,
   migrate,
   type Db,
 } from './server.ts';
@@ -46,6 +47,12 @@ describe('without a database', () => {
     );
     // Phone notices stay off in the pilot profile until the ethics committee knows (FR-58).
     expect(FLAG_DEFAULTS.pilot.messaging).toBe(false);
+  });
+
+  it('finds numbers written as digits or words (guide validator)', () => {
+    expect(numbersIn('One small step: about 20 more minutes on three days, 2.5 km.')).toEqual([
+      20, 2.5, 1, 3,
+    ]);
   });
 
   it('health says the database is not configured', async () => {
@@ -488,6 +495,13 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       paragraphs: [{ text: 'Walk 45 minutes a day.', sourceIds: ['guide.tpl.first_step'] }],
       followUpChipIds: [],
     };
+    // Asked again: the saved answer comes back and Gemini is not called a second time.
+    outbound.length = 0;
+    const again = await ask('first_step');
+    expect(again.body).toMatchObject({ source: 'generated', paragraphs: generated.body.paragraphs });
+    expect(outbound.some((o) => o.url.includes('generativelanguage'))).toBe(false);
+    await db.query('DELETE FROM guide_answers');
+
     const changedNumber = await ask('first_step');
     expect(changedNumber.body.source).toBe('template');
     expect(changedNumber.body.paragraphs[0].text).toContain('about 20 more minutes of activity on 3 days');
@@ -511,6 +525,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     expect(log.rows.map((r) => r.validator_outcome)).toEqual([
       'templates_only',
       'pass',
+      'saved',
       'numbers',
       'scope',
       'templates_only',

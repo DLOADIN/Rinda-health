@@ -1,13 +1,3 @@
-// Rinda Health API: the whole backend in one file (ADR-016). Plain SQL through `pg`, no ORM.
-//
-//   npx tsx server.ts            start the API (default)
-//   npx tsx server.ts migrate    apply db/migrations/*.sql that have not run yet
-//   npx tsx server.ts seed       add synthetic demo accounts and data (refuses APP_ENV=pilot)
-//   npx tsx server.ts db-check   test the database connection
-//
-// Sections: 1 configuration · 2 logging and errors · 3 database · 4 sessions and passwords · 5 Google sign-in
-// · 6 middleware · 7 feature flags · 8 routes (system, auth, profile, participant, facilitator, admin, content,
-// dashboard) · 9 app factory · 10 command line.
 import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -83,10 +73,6 @@ import { z, ZodError } from 'zod';
 export const API_VERSION = '0.2.0';
 const HERE = import.meta.dirname;
 
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// 1. Configuration. Every variable is checked with Zod at start-up. Values are never logged.
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-
 const emptyAsUndefined = (v: unknown) => (v === '' ? undefined : v);
 const optionalText = z.preprocess(emptyAsUndefined, z.string().optional());
 
@@ -96,11 +82,8 @@ const EnvSchema = z
     PORT: z.coerce.number().int().positive().default(3000),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'silent']).default('info'),
     TRUST_PROXY: z.coerce.number().int().min(0).default(0),
-    /** Neon pooled connection (host contains "-pooler"). Optional in development and test only. */
     DATABASE_URL: z.preprocess(emptyAsUndefined, z.url({ protocol: /^postgres(ql)?$/ }).optional()),
-    /** Neon direct connection, used for migrations and seeding. */
     DIRECT_URL: z.preprocess(emptyAsUndefined, z.url({ protocol: /^postgres(ql)?$/ }).optional()),
-    /** Optional schema name, used by the tests to work in a throwaway schema. */
     DB_SCHEMA: z.preprocess(
       emptyAsUndefined,
       z
@@ -111,24 +94,20 @@ const EnvSchema = z
     SESSION_SECRET: z.string().min(32, 'must be at least 32 characters'),
     SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(72).default(12),
     SESSION_IDLE_HOURS: z.coerce.number().int().min(1).max(72).default(8),
-    /** Where people open the app. Google redirects back to PUBLIC_URL/api/v1/auth/google/callback. */
     PUBLIC_URL: z.url().default('http://localhost:5173'),
     GOOGLE_CLIENT_ID: optionalText,
     GOOGLE_CLIENT_SECRET: optionalText,
-    /** Rinda Guide AI explainer (FR-36, ADR-019): Google Gemini. Off unless ETHICS_AMENDMENT_REF is also set. */
     GEMINI_API_KEY: optionalText,
-    GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
+    GEMINI_MODEL: z.string().default('gemini-3.5-flash'),
     ETHICS_AMENDMENT_REF: optionalText,
     /** Set to true only for a paid Gemini tier whose terms say prompts are not used for training (needed in the pilot). */
     GEMINI_PAID_TIER: z.preprocess(emptyAsUndefined, z.enum(['true', 'false']).default('false')),
-    /** WhatsApp Cloud API (ADR-020): notices only, never results. */
     WHATSAPP_TOKEN: optionalText,
     WHATSAPP_PHONE_NUMBER_ID: optionalText,
     WHATSAPP_TEMPLATE: z.string().default('rinda_summary_ready'),
     WHATSAPP_TEMPLATE_LANGUAGE_EN: z.string().default('en'),
     WHATSAPP_TEMPLATE_LANGUAGE_RW: z.string().default('en'),
     WHATSAPP_API_VERSION: z.string().default('v21.0'),
-    /** Ethics approval reference for phone notices; the pilot refuses to switch messaging on without it. */
     MESSAGING_APPROVAL_REF: optionalText,
     SEED_PASSWORD: optionalText,
   })
@@ -140,7 +119,6 @@ const EnvSchema = z
         message: `is required when APP_ENV=${env.APP_ENV}`,
       });
     }
-    // A placeholder amendment reference for synthetic development data must never switch the AI on in the pilot.
     if (env.APP_ENV === 'pilot' && env.ETHICS_AMENDMENT_REF?.toUpperCase().startsWith('SYNTHETIC')) {
       ctx.addIssue({
         code: 'custom',
@@ -164,7 +142,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const appEnv = env['APP_ENV'] ?? 'development';
   const input: Record<string, string | undefined> = { ...env };
   let generatedSecret = false;
-  // Development convenience: a temporary secret when .env has none. Staging and pilot must set a real one.
   if ((appEnv === 'development' || appEnv === 'test') && !input['SESSION_SECRET']) {
     input['SESSION_SECRET'] = randomBytes(48).toString('base64url');
     generatedSecret = true;
@@ -178,16 +155,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
 }
 
 const googleConfigured = (c: AppConfig) => Boolean(c.GOOGLE_CLIENT_ID && c.GOOGLE_CLIENT_SECRET);
-// Free-tier prompts may be used by Google to improve its products, so the pilot also needs a paid, no-training tier.
 const generativeGuideAllowed = (c: AppConfig) =>
   Boolean(c.ETHICS_AMENDMENT_REF && c.GEMINI_API_KEY) &&
   (c.APP_ENV !== 'pilot' || c.GEMINI_PAID_TIER === 'true');
 const whatsappConfigured = (c: AppConfig) => Boolean(c.WHATSAPP_TOKEN && c.WHATSAPP_PHONE_NUMBER_ID);
-
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// 2. Logging and errors (FR-15, NFR-12). One technical line per request; never bodies, query strings, tokens,
-//    identifiers or IP addresses. The redaction list is a second line of defence.
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const SENSITIVE_KEYS = [
   'pin',
@@ -239,7 +210,6 @@ export function createLogger(level: string, destination?: DestinationStream): Lo
   );
 }
 
-/** An error with a stable code. Its message is plain words and never contains a submitted value. */
 export class AppError extends Error {
   constructor(
     readonly status: number,
@@ -253,10 +223,6 @@ export class AppError extends Error {
 
 const notFound = () => new AppError(404, 'NOT_FOUND', 'Not found.');
 const forbidden = () => new AppError(403, 'FORBIDDEN', 'You do not have access to this.');
-
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// 3. Database: a `pg` pool, a transaction helper and the migration runner.
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 export type Db = pg.Pool;
 type Queryable = pg.Pool | pg.PoolClient;
@@ -302,11 +268,6 @@ async function tx<T>(db: Db, fn: (client: pg.PoolClient) => Promise<T>): Promise
   }
 }
 
-/**
- * The direct (unpooled) connection for migrations, seeding and tests. On Neon it is the pooled URL with
- * "-pooler" removed from the host, so DIRECT_URL is optional. Schema-level settings such as search_path need it,
- * because the pooler (PgBouncer, transaction mode) does not keep session settings between transactions.
- */
 export function directUrlOf(config: Pick<AppConfig, 'DIRECT_URL' | 'DATABASE_URL'>): string | undefined {
   if (config.DIRECT_URL) return config.DIRECT_URL;
   if (!config.DATABASE_URL) return undefined;
@@ -384,7 +345,6 @@ const toMe = (u: UserRow): Me => ({
   createdAt: u.created_at.toISOString(),
 });
 
-/** Staff see participants by a masked identifier only: a•••@gmail.com, +250 7•• ••• 123. */
 export function maskIdentifier(email: string | null, phone: string | null): string {
   if (email) {
     const [local = '', domain = ''] = email.split('@');
@@ -415,10 +375,6 @@ async function audit(
     ],
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// 4. Passwords and sessions. Argon2id for passwords; a random cookie token whose SHA-256 hash is stored.
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const ARGON2 = { type: argon2.argon2id, memoryCost: 19_456, timeCost: 2, parallelism: 1 } as const;
 const hashPassword = (password: string) => argon2.hash(password, ARGON2);
@@ -479,11 +435,6 @@ declare module 'express-serve-static-core' {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// 5. Google sign-in: OpenID Connect authorisation-code flow with PKCE, done on the server (FR-51).
-//    The state, nonce and PKCE verifier travel in a short-lived signed cookie. Scopes: openid and email only.
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-
 const OAUTH_COOKIE = 'rinda_oauth';
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -531,10 +482,6 @@ const GoogleClaims = z.object({
   email_verified: z.literal(true),
 });
 
-/**
- * The ID token comes straight from Google's token endpoint over TLS in exchange for our code and PKCE verifier,
- * so OpenID Connect Core 3.1.3.7 lets us check its claims without verifying the signature.
- */
 function readIdToken(idToken: string, clientId: string, nonce: string) {
   const payload = idToken.split('.')[1];
   if (!payload) return null;
@@ -547,12 +494,6 @@ function readIdToken(idToken: string, clientId: string, nonce: string) {
     return null;
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// 5b. Rinda Guide explainer (FR-36, ADR-019). Google Gemini rewrites the rule-based answer; a deterministic
-//     validator checks every answer, and anything that fails falls back to the approved template. Nothing that
-//     identifies a person, no dates and no mental-wellness data are ever sent.
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const GUIDE_SYSTEM_PROMPT = `You are the guide inside Rinda Health, an educational app that helps young adults in Rwanda
 (aged 18 to 35) understand everyday risk factors for non-communicable diseases.
@@ -618,6 +559,16 @@ const OUT_OF_SCOPE = /\b(mood|stress\w*|anxi\w*|depress\w*|mental|worr\w*|PHQ|GA
 const LINK_OR_PHONE = /https?:\/\/|www\.|\+?\d[\d\s-]{6,}\d/;
 
 /** Deterministic checks on a generated answer (docs/AI_GUIDE.md "Validator"). Returns the first failure, or pass. */
+/** Every number in a text, written as digits ("20") or as a word ("one", "three"). */
+export function numbersIn(text: string): number[] {
+  return [
+    ...[...text.matchAll(/\d+(?:[.,]\d+)?/g)].map((m) => Number(m[0].replace(',', '.'))),
+    ...[...text.toLowerCase().matchAll(/\b[a-z]+\b/g)].flatMap((m) =>
+      m[0] in NUMBER_WORDS ? [NUMBER_WORDS[m[0]] as number] : [],
+    ),
+  ];
+}
+
 export function validateGuideAnswer(
   answer: GuideAnswer,
   allowed: readonly number[],
@@ -627,13 +578,7 @@ export function validateGuideAnswer(
   if (text.split(/\s+/).filter(Boolean).length > 150) return 'length';
   if (LINK_OR_PHONE.test(text) || BANNED.test(text)) return 'banned';
   if (OUT_OF_SCOPE.test(text)) return 'scope';
-  const numbers = [
-    ...[...text.matchAll(/\d+(?:[.,]\d+)?/g)].map((m) => Number(m[0].replace(',', '.'))),
-    ...[...text.toLowerCase().matchAll(/\b[a-z]+\b/g)].flatMap((m) =>
-      m[0] in NUMBER_WORDS ? [NUMBER_WORDS[m[0]] as number] : [],
-    ),
-  ];
-  if (numbers.some((n) => !allowed.includes(n))) return 'numbers';
+  if (numbersIn(text).some((n) => !allowed.includes(n))) return 'numbers';
   if (answer.paragraphs.some((p) => p.sourceIds.some((id) => !library.has(id)))) return 'sources';
   return 'pass';
 }
@@ -731,10 +676,6 @@ function valuesOf(input: AssessmentInput) {
   };
 }
 
-/**
- * Sends "your summary is ready" by WhatsApp (ADR-020) to a participant who opted in. The message never holds
- * results; message_events keeps only the channel, status and error code.
- */
 async function sendSummaryNotice(
   db: Db,
   config: AppConfig,
@@ -778,7 +719,6 @@ async function sendSummaryNotice(
   );
 }
 
-/** Meta WhatsApp Cloud API: an approved template with no parameters, so no results can be included. */
 function sendWhatsApp(config: AppConfig, fetchFn: typeof fetch, phone: string, language: 'en' | 'rw') {
   return fetchFn(
     `https://graph.facebook.com/${config.WHATSAPP_API_VERSION}/${config.WHATSAPP_PHONE_NUMBER_ID}/messages`,
@@ -801,10 +741,6 @@ function sendWhatsApp(config: AppConfig, fetchFn: typeof fetch, phone: string, l
     },
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// 6. Middleware
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const requestId = (): RequestHandler => (req, res, next) => {
   req.id = randomBytes(12).toString('hex'); // always server-made, so no client value reaches the logs
@@ -889,10 +825,6 @@ function errorHandler(logger: Logger): ErrorRequestHandler {
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// 7. Feature flags (FR-50). Defaults per environment, overridden by rows in feature_flags.
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-
 const DEVELOPMENT_FLAGS: Flags = {
   offlineSync: true,
   guideDeterministic: true,
@@ -939,10 +871,6 @@ async function currentFlags(db: Db | null, config: AppConfig): Promise<Flags> {
   flags.guideGenerative = flags.guideGenerative && generativeGuideAllowed(config);
   return flags;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// 8. Routes
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 export interface AppDeps {
   config: AppConfig;
@@ -1129,7 +1057,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     },
   });
 
-  // ── 8.1 System ──────────────────────────────────────────────────────────────────────────────────────────────────
   const system = Router();
   system.get('/health', async (_req, res) => {
     let database: 'ok' | 'not_configured' | 'unreachable' = 'not_configured';
@@ -2427,9 +2354,11 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     const content = BUNDLED_CONTENT[body.language];
     const lookup = (id: string) => content.text[id] ?? id;
     const draft = composeGuideAnswer(chipId, row.results, row.plan, lookup);
+    // Numbers in the approved answer are allowed too, including words such as "One small step".
     const allowed = allowedNumbers(row.results, row.plan, draft, [
       ruleset.domains.activity.meetsAt,
       ruleset.domains.diet.meetsAt,
+      ...numbersIn(draft.paragraphs.map((p) => p.text).join(' ')),
     ]);
 
     // Templates only for urgent results, any safety event, Kinyarwanda (until a reviewed evaluation), when the
@@ -2460,7 +2389,22 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       inputTokens: null,
       outputTokens: null,
     };
-    if (!templatesOnly) {
+    // Each AI answer is written once per check-up, question and language, then the saved answer is reused.
+    const saved = templatesOnly
+      ? null
+      : await one<{
+          paragraphs: GuideAnswer['paragraphs'];
+          follow_up_chip_ids: GuideAnswer['followUpChipIds'];
+        }>(
+          database,
+          'SELECT paragraphs, follow_up_chip_ids FROM guide_answers WHERE assessment_id = $1 AND chip_id = $2 AND language = $3',
+          [body.assessmentId, chipId, body.language],
+        );
+    if (saved) {
+      answer = { paragraphs: saved.paragraphs, followUpChipIds: saved.follow_up_chip_ids };
+      source = 'generated';
+      outcome = 'saved';
+    } else if (!templatesOnly) {
       const library = Object.fromEntries(
         Object.entries(content.text).filter(
           ([id]) => (id.startsWith('guide.') || id.startsWith('band.')) && !/^band\.(phq9|gad7)\./.test(id),
@@ -2489,6 +2433,18 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         if (result.answer) {
           answer = result.answer;
           source = 'generated';
+          await database.query(
+            `INSERT INTO guide_answers (assessment_id, chip_id, language, paragraphs, follow_up_chip_ids, model)
+             VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
+            [
+              body.assessmentId,
+              chipId,
+              body.language,
+              JSON.stringify(answer.paragraphs),
+              JSON.stringify(answer.followUpChipIds),
+              config.GEMINI_MODEL,
+            ],
+          );
         }
       } catch {
         outcome = 'error';
@@ -2503,7 +2459,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         chipId,
         source,
         outcome,
-        templatesOnly ? null : config.GEMINI_MODEL,
+        templatesOnly || saved ? null : config.GEMINI_MODEL,
         Date.now() - started,
         tokens.inputTokens,
         tokens.outputTokens,
@@ -2604,6 +2560,12 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
        VALUES ($1, 'ai_explanations', $2, 'ai-guide-0.1.0', $3)`,
       [me(req).id, body.ai, user?.preferred_language ?? 'en'],
     );
+    if (!body.ai) {
+      await database.query(
+        'DELETE FROM guide_answers WHERE assessment_id IN (SELECT id FROM assessments WHERE user_id = $1)',
+        [me(req).id],
+      );
+    }
     res.json(body);
   });
   mount('/api/v1/participant/ai-explanations', aiOptIn);
@@ -2614,10 +2576,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   app.use(errorHandler(logger));
   return app;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// 9. Synthetic seed (C-08): demo accounts for every role, a few check-ups and a draft for review.
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 export async function seed(
   db: Db,
@@ -2707,10 +2665,6 @@ export async function seed(
     accounts: accounts.map((a) => `${a.role.padEnd(16)} ${a.email}`),
   };
 }
-
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// 10. Command line: serve (default), migrate, seed, db-check.
-// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 async function main() {
   let config: AppConfig;
