@@ -1,0 +1,180 @@
+{
+  "version": "1.0.0",
+  "status": "proposed",
+  "statusNote": "Transcribed from SRS Section 5 and docs/SCORING_RULES.md. Awaiting approval by the clinician and mental-health key informants and the supervisor (FR-20, FR-46).",
+  "domains": {
+    "tobacco": { "ruleId": "tobacco.current_use", "source": "WHO STEPS (2024)" },
+    "alcohol": {
+      "ruleId": "alcohol.auditc",
+      "source": "Bush et al. (1998); Bradley et al. (2007)",
+      "attentionAt": { "male": 4, "female": 3, "not_stated": 3 }
+    },
+    "activity": {
+      "ruleId": "activity.moderate_equivalent",
+      "source": "Bull et al. (2020)",
+      "vigorousMultiplier": 2,
+      "meetsAt": 150
+    },
+    "diet": { "ruleId": "diet.fruit_veg_servings", "source": "WHO (2020); WHO (2012)", "meetsAt": 5 },
+    "bmi": {
+      "ruleId": "bmi.who_adult",
+      "source": "WHO (2000)",
+      "bandsX10": [
+        { "band": "underweight", "min": 0 },
+        { "band": "normal", "min": 185 },
+        { "band": "overweight", "min": 250 },
+        { "band": "obesity", "min": 300 }
+      ]
+    },
+    "waist": {
+      "ruleId": "waist.who_sex_specific",
+      "source": "WHO (2011)",
+      "bands": {
+        "male": [
+          { "band": "not_increased", "min": 0 },
+          { "band": "increased", "min": 94 },
+          { "band": "substantially_increased", "min": 102 }
+        ],
+        "female": [
+          { "band": "not_increased", "min": 0 },
+          { "band": "increased", "min": 80 },
+          { "band": "substantially_increased", "min": 88 }
+        ],
+        "not_stated": [
+          { "band": "not_increased", "min": 0 },
+          { "band": "increased", "min": 80 },
+          { "band": "substantially_increased", "min": 88 }
+        ]
+      }
+    },
+    "bp": {
+      "ruleId": "bp.higher_category",
+      "source": "Unger et al. (2020); WHO (2021b)",
+      "bands": [
+        { "band": "normal", "systolic": 0, "diastolic": 0 },
+        { "band": "high_normal", "systolic": 130, "diastolic": 85 },
+        { "band": "hypertension_range", "systolic": 140, "diastolic": 90 },
+        { "band": "seek_care_today", "systolic": 180, "diastolic": 110 }
+      ]
+    },
+    "phq9": {
+      "ruleId": "phq9.total",
+      "source": "Kroenke et al. (2001)",
+      "variant": "PHQ-9",
+      "bands": [
+        { "band": "minimal", "min": 0 },
+        { "band": "mild", "min": 5 },
+        { "band": "moderate", "min": 10 },
+        { "band": "moderately_severe", "min": 15 },
+        { "band": "severe", "min": 20 }
+      ]
+    },
+    "gad7": {
+      "ruleId": "gad7.total",
+      "source": "Spitzer et al. (2006)",
+      "items": 7,
+      "bands": [
+        { "band": "minimal", "min": 0 },
+        { "band": "mild", "min": 5 },
+        { "band": "moderate", "min": 10 },
+        { "band": "severe", "min": 15 }
+      ]
+    }
+  },
+  "safety": { "tier1At": { "phq9": 10, "gad7": 10 } },
+  "severity": {
+    "tobacco": { "no_reported_risk": "ok", "attention": "attention" },
+    "alcohol": { "lower_risk": "ok", "attention": "attention" },
+    "activity": { "meets": "ok", "below": "attention" },
+    "diet": { "meets": "ok", "below": "attention" },
+    "bmi": { "underweight": "attention", "normal": "ok", "overweight": "attention", "obesity": "confirm" },
+    "waist": { "not_increased": "ok", "increased": "attention", "substantially_increased": "confirm" },
+    "bp": {
+      "normal": "ok",
+      "high_normal": "attention",
+      "hypertension_range": "confirm",
+      "seek_care_today": "urgent"
+    },
+    "phq9": {
+      "minimal": "ok",
+      "mild": "wellness",
+      "moderate": "wellness",
+      "moderately_severe": "wellness",
+      "severe": "wellness"
+    },
+    "gad7": { "minimal": "ok", "mild": "wellness", "moderate": "wellness", "severe": "wellness" }
+  },
+  "planner": {
+    "maxFocus": 3,
+    "urgent": { "domain": "bp", "band": "seek_care_today", "contentId": "safety.bp.seek_care_today" },
+    "order": [
+      {
+        "id": "bp_confirm",
+        "when": [{ "domain": "bp", "bands": ["hypertension_range"] }],
+        "recommendationId": "rec.bp.hypertension_range"
+      },
+      {
+        "id": "tobacco",
+        "when": [{ "domain": "tobacco", "bands": ["attention"] }],
+        "recommendationId": "rec.tobacco.attention"
+      },
+      {
+        "id": "alcohol",
+        "when": [{ "domain": "alcohol", "bands": ["attention"] }],
+        "recommendationId": "rec.alcohol.attention"
+      },
+      {
+        "id": "activity",
+        "when": [{ "domain": "activity", "bands": ["below"] }],
+        "recommendationId": "rec.activity.below"
+      },
+      {
+        "id": "diet",
+        "when": [{ "domain": "diet", "bands": ["below"] }],
+        "recommendationId": "rec.diet.below"
+      },
+      {
+        "id": "body_substantial",
+        "when": [
+          { "domain": "waist", "bands": ["substantially_increased"] },
+          { "domain": "bmi", "bands": ["obesity"] }
+        ],
+        "recommendationId": "rec.body.substantial"
+      },
+      {
+        "id": "body_increased",
+        "when": [
+          { "domain": "waist", "bands": ["increased"] },
+          { "domain": "bmi", "bands": ["overweight", "underweight"] }
+        ],
+        "recommendationId": "rec.body.increased"
+      },
+      {
+        "id": "bp_high_normal",
+        "when": [{ "domain": "bp", "bands": ["high_normal"] }],
+        "recommendationId": "rec.bp.high_normal"
+      }
+    ],
+    "keepGoingId": "rec.plan.keep_going",
+    "targets": {
+      "activity": { "stepCap": 60, "roundTo": 10, "splitAt": 30, "splitDays": 3, "splitRoundTo": 5 },
+      "diet": { "stepCap": 2 }
+    }
+  },
+  "validation": {
+    "height": { "unit": "cm", "min": 120, "max": 220 },
+    "weight": { "unit": "kg", "min": 30, "max": 250 },
+    "waist": { "unit": "cm", "min": 40, "max": 200 },
+    "systolic": { "unit": "mmHg", "min": 70, "max": 260 },
+    "diastolic": { "unit": "mmHg", "min": 40, "max": 160 },
+    "moderateMinutes": { "unit": "minutes a week", "min": 0, "max": 3000 },
+    "vigorousMinutes": { "unit": "minutes a week", "min": 0, "max": 3000 },
+    "servingsPerDay": { "unit": "servings a day", "min": 0, "max": 20 }
+  },
+  "plausibility": {
+    "pulsePressure": { "min": 20, "max": 100 },
+    "bpRecheck": { "systolic": 180, "diastolic": 110 },
+    "bmi": { "min": 15, "max": 50 },
+    "heightMetres": { "min": 1.2, "max": 2.2 }
+  }
+}
