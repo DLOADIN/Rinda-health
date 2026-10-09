@@ -1,0 +1,55 @@
+{
+  "contentType": "referral_list",
+  "key": "referral-list",
+  "version": "0.1.0",
+  "language": "en",
+  "status": "draft",
+  "reviewers": ["community", "researcher_admin"],
+  "entries": [
+    {
+      "id": "ref.hotline.112",
+      "phone": "112",
+      "type": "emergency",
+      "name": "TODO(content): community reviewer",
+      "hours": "TODO(content): community reviewer",
+      "verifiedOn": null,
+      "verifiedBy": null
+    },
+    {
+      "id": "ref.hotline.912",
+      "phone": "912",
+      "type": "ambulance",
+      "name": "TODO(content): community reviewer",
+      "hours": "TODO(content): community reviewer",
+      "verifiedOn": null,
+      "verifiedBy": null
+    },
+    {
+      "id": "ref.hotline.114",
+      "phone": "114",
+      "type": "health_hotline",
+      "name": "TODO(content): community reviewer",
+      "hours": "TODO(content): community reviewer",
+      "verifiedOn": null,
+      "verifiedBy": null
+    },
+    {
+      "id": "ref.hotline.3512",
+      "phone": "3512",
+      "type": "support_line",
+      "name": "TODO(content): community reviewer",
+      "hours": "TODO(content): community reviewer",
+      "verifiedOn": null,
+      "verifiedBy": null
+    },
+    {
+      "id": "ref.hotline.3029",
+      "phone": "3029",
+      "type": "support_line",
+      "name": "TODO(content): community reviewer",
+      "hours": "TODO(content): community reviewer",
+      "verifiedOn": null,
+      "verifiedBy": null
+    }
+  ]
+}
