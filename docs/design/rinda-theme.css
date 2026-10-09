@@ -1,0 +1,220 @@
+/*
+ * Rinda Health theme for shadcn/ui (Tailwind CSS v4).
+ * Palette: "Vibrant but Calm" (Loket Design #10)
+ *   Ember #E43D12 · Rose #D6536D · Blush #FFA2B6 · Amber #EFB11D · Bone #EBE9E1
+ * Derived shades exist only where a brand colour cannot reach WCAG 2.2 AA
+ * contrast on its own. Every text/background pair is checked in
+ * docs/DESIGN_SYSTEM.md (Contrast table). Do not add colours outside this file.
+ *
+ * Use: after `npx shadcn@latest init`, replace the generated :root, .dark and
+ * @theme inline blocks in apps/web/src/index.css with the contents of this file
+ * (keep the @import lines shadcn generated at the top). shadcn ships oklch
+ * values; hex works the same way and keeps the palette exact.
+ */
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.75rem;
+
+  /* Brand palette: exact values from the reference screenshot */
+  --brand-ember: #E43D12;
+  --brand-rose: #D6536D;
+  --brand-blush: #FFA2B6;
+  --brand-amber: #EFB11D;
+  --brand-bone: #EBE9E1;
+
+  /* Accessible companions (text and strokes) */
+  --brand-ember-strong: #C2330E; /* ember text/links on light surfaces (>= 4.5:1) */
+  --brand-rose-strong: #C24A63;  /* rose fill under white text (4.72:1) */
+  --brand-amber-strong: #A87C14; /* amber strokes/icons on light surfaces (>= 3:1, graphics only) */
+  --brand-blush-strong: #B26F7E; /* blush strokes on light surfaces (>= 3:1, graphics only) */
+  --brand-blush-soft: #FFE3E9;   /* calm support surfaces (mental wellness, Tier 1) */
+  --brand-amber-soft: #FBEECD;   /* hover and highlight surfaces */
+
+  /* shadcn/ui semantic tokens */
+  --background: #EBE9E1;          /* Bone */
+  --foreground: #2B1D16;          /* Ink, 13.39:1 on Bone */
+  --card: #F7F6F3;
+  --card-foreground: #2B1D16;
+  --popover: #F7F6F3;
+  --popover-foreground: #2B1D16;
+  --primary: #D4380F;             /* Ember 600, white text 4.80:1 */
+  --primary-foreground: #FFFFFF;
+  --secondary: #FFA2B6;           /* Blush, ink text 8.60:1 */
+  --secondary-foreground: #2B1D16;
+  --muted: #E0DDD3;
+  --muted-foreground: #665C54;    /* 4.79:1 on muted, 5.36:1 on Bone */
+  --accent: #FBEECD;              /* Amber soft */
+  --accent-foreground: #2B1D16;
+  --destructive: #A83C53;         /* Rose 700, white text 6.11:1 */
+  --destructive-foreground: #FFFFFF;
+  --border: #D3CEC3;              /* decorative separators only */
+  --input: #857F77;               /* form-field borders, >= 3:1 on card and Bone */
+  --ring: #E43D12;                /* focus ring, Ember, >= 3:1 on Bone and card */
+
+  --chart-1: #E43D12;
+  --chart-2: #D6536D;
+  --chart-3: #EFB11D;
+  --chart-4: #FFA2B6;
+  --chart-5: #6E5E53;
+
+  --sidebar: #F7F6F3;
+  --sidebar-foreground: #2B1D16;
+  --sidebar-primary: #D4380F;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #FBEECD;
+  --sidebar-accent-foreground: #2B1D16;
+  --sidebar-border: #D3CEC3;
+  --sidebar-ring: #E43D12;
+
+  /* Result bands: always shown with a word and an icon, never colour alone */
+  --band-ok: #E2DDD0;
+  --band-ok-foreground: #2B1D16;
+  --band-attention: #EFB11D;
+  --band-attention-foreground: #2B1D16;
+  --band-confirm: #C24A63;
+  --band-confirm-foreground: #FFFFFF;
+  --band-urgent: #D4380F;
+  --band-urgent-foreground: #FFFFFF;
+  --band-wellness: #FFE3E9;
+  --band-wellness-foreground: #2B1D16;
+}
+
+.dark {
+  --brand-ember-strong: #EE6A45;
+  --brand-rose-strong: #E58A9C;
+  --brand-amber-strong: #EFB11D;
+  --brand-blush-strong: #FFA2B6;
+  --brand-blush-soft: #4A2C33;
+  --brand-amber-soft: #503B14;
+
+  --background: #1B1411;
+  --foreground: #EBE9E1;
+  --card: #241B17;
+  --card-foreground: #EBE9E1;
+  --popover: #241B17;
+  --popover-foreground: #EBE9E1;
+  --primary: #EA5A33;
+  --primary-foreground: #1B1411;
+  --secondary: #FFA2B6;
+  --secondary-foreground: #1B1411;
+  --muted: #30251F;
+  --muted-foreground: #B4A99F;
+  --accent: #503B14;
+  --accent-foreground: #EBE9E1;
+  --destructive: #E0738A;
+  --destructive-foreground: #1B1411;
+  --border: #3A2E27;
+  --input: #7D7168;
+  --ring: #EE6A45;
+
+  --chart-1: #E43D12;
+  --chart-2: #D6536D;
+  --chart-3: #EFB11D;
+  --chart-4: #FFA2B6;
+  --chart-5: #B4A99F;
+
+  --sidebar: #241B17;
+  --sidebar-foreground: #EBE9E1;
+  --sidebar-primary: #EA5A33;
+  --sidebar-primary-foreground: #1B1411;
+  --sidebar-accent: #503B14;
+  --sidebar-accent-foreground: #EBE9E1;
+  --sidebar-border: #3A2E27;
+  --sidebar-ring: #EE6A45;
+
+  --band-ok: #3A2F29;
+  --band-ok-foreground: #EBE9E1;
+  --band-attention: #EFB11D;
+  --band-attention-foreground: #1B1411;
+  --band-confirm: #E58A9C;
+  --band-confirm-foreground: #1B1411;
+  --band-urgent: #EA5A33;
+  --band-urgent-foreground: #1B1411;
+  --band-wellness: #4A2C33;
+  --band-wellness-foreground: #EBE9E1;
+}
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-brand-ember: var(--brand-ember);
+  --color-brand-rose: var(--brand-rose);
+  --color-brand-blush: var(--brand-blush);
+  --color-brand-amber: var(--brand-amber);
+  --color-brand-bone: var(--brand-bone);
+  --color-brand-ember-strong: var(--brand-ember-strong);
+  --color-brand-rose-strong: var(--brand-rose-strong);
+  --color-brand-amber-strong: var(--brand-amber-strong);
+  --color-brand-blush-strong: var(--brand-blush-strong);
+  --color-brand-blush-soft: var(--brand-blush-soft);
+  --color-brand-amber-soft: var(--brand-amber-soft);
+
+  --color-band-ok: var(--band-ok);
+  --color-band-ok-foreground: var(--band-ok-foreground);
+  --color-band-attention: var(--band-attention);
+  --color-band-attention-foreground: var(--band-attention-foreground);
+  --color-band-confirm: var(--band-confirm);
+  --color-band-confirm-foreground: var(--band-confirm-foreground);
+  --color-band-urgent: var(--band-urgent);
+  --color-band-urgent-foreground: var(--band-urgent-foreground);
+  --color-band-wellness: var(--band-wellness);
+  --color-band-wellness-foreground: var(--band-wellness-foreground);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
