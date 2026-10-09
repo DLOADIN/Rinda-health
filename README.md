@@ -42,7 +42,7 @@ You need **Node.js 22.12 or newer** (24 recommended).
    npm run db:migrate   # create the tables (skips ones already created)
    npm run db:seed      # synthetic demo accounts for every role
    ```
-4. Start: `npm run dev`, then open http://localhost:5173
+4. Start: `npm run dev`, then open http://localhost:5173, to be changed in the future
 
 | Command | Does |
 | --- | --- |
@@ -65,9 +65,4 @@ e2e/               browser tests
 
 A file-by-file guide is in [explanation.md](explanation.md). The full requirements are in [docs/SRS.md](docs/SRS.md).
 
-## Before the pilot
 
-- Ethics committee approval. Until then, only synthetic data is used.
-- Close or moderate open sign-up for staff roles.
-- Key informant approval of the scoring rules, the health and safety wording, and the Kinyarwanda translations.
-- Add the live web address to the Google OAuth client after deployment.
