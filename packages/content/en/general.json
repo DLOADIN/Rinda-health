@@ -1,0 +1,13 @@
+{
+  "contentType": "general",
+  "key": "general",
+  "version": "0.1.0",
+  "language": "en",
+  "status": "draft",
+  "reviewers": ["supervisor", "language"],
+  "entries": {
+    "purpose.title": "Welcome to Rinda",
+    "purpose.body": "Rinda helps you learn about everyday habits that affect your health. It is educational, not a diagnosis, and it is not an emergency service. You can skip any question.",
+    "neutral.title": "You can close this page."
+  }
+}
