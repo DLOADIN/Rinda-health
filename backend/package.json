@@ -1,0 +1,39 @@
+{
+  "name": "@rinda/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --import tsx server.ts",
+    "start": "tsx server.ts",
+    "typecheck": "tsc --noEmit -p .",
+    "db:migrate": "tsx server.ts migrate",
+    "db:seed": "tsx server.ts seed",
+    "db:check": "tsx server.ts db-check"
+  },
+  "dependencies": {
+    "@rinda/content": "*",
+    "@rinda/rules": "*",
+    "@rinda/schemas": "*",
+    "argon2": "^0.45.1",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "pg": "^8.23.1",
+    "pino": "^10.4.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.19.1",
+    "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.3.1",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.2",
+    "vitest": "^5.0.3"
+  }
+}
