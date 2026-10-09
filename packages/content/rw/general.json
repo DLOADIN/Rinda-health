@@ -1,0 +1,13 @@
+{
+  "contentType": "general",
+  "key": "general",
+  "version": "0.1.0",
+  "language": "rw",
+  "status": "draft",
+  "reviewers": ["supervisor", "language"],
+  "entries": {
+    "purpose.title": "Murakaza neza kuri Rinda",
+    "purpose.body": "Rinda igufasha kumenya imyitwarire ya buri munsi igira ingaruka ku buzima bwawe. Ni iy'inyigisho, si isuzuma rya muganga, kandi si serivisi y'ubutabazi bwihuse. Ushobora gusimbuka ikibazo icyo ari cyo cyose.",
+    "neutral.title": "Ushobora gufunga iyi paji."
+  }
+}
