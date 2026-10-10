@@ -8,6 +8,11 @@
   "entries": {
     "purpose.title": "Welcome to Rinda",
     "purpose.body": "Rinda helps you learn about everyday habits that affect your health. It is educational, not a diagnosis, and it is not an emergency service. You can skip any question.",
-    "neutral.title": "You can close this page."
+    "neutral.title": "You can close this page.",
+    "email.report.subject": "Your Rinda check-up summary",
+    "email.report.greeting": "Hello. Here is a summary of your latest Rinda check-up. Each area is looked at on its own.",
+    "email.report.disclaimer": "This summary is educational, not a diagnosis, and Rinda is not an emergency service. If you feel unwell or worried, talk to a health worker.",
+    "email.report.open": "Open Rinda to read the full explanation",
+    "email.report.optout": "You get this email because you switched on email reports in your Rinda Profile. You can switch them off there at any time."
   }
 }
