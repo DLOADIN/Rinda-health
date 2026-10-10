@@ -12,7 +12,7 @@ Frame: Rwanda's Law No. 058/2021 on the protection of personal data and privacy,
 | Consent events (scope, version, language, time) | API database | Consent record | Kept with the consent records |
 | Safety events (tier, trigger, actions, times; no answers) | API database | Safety record | Kept with the consent records |
 | Feedback and task outcomes | API database | Research data | Same as health data |
-| Participant email or phone number (E.164), used to sign in (ADR-017); opt-in notice choices | API database; the phone number goes to Meta (WhatsApp, ADR-020) only when the person opted in, with a fixed "summary is ready" text and never results. `message_events` keeps channel, status and error code only | Contact identifier | Deleted with the account; the transfer outside Rwanda must be recorded and covered by the ethics approval (MESSAGING_APPROVAL_REF) before the pilot |
+| Participant email or phone number (E.164), used to sign in (ADR-017); email report choice | API database; with the participant's opt-in, the email address and an NCD result summary go to Brevo (ADR-020) to send the report. `message_events` keeps channel, status and error code only | Contact identifier | Deleted with the account; the transfer must be covered by the ethics approval (MESSAGING_APPROVAL_REF) before the pilot |
 | Staff email, phone number (E.164), Google subject ID, break-glass password hash (Argon2id), hashed sessions and SMS codes | API database; email goes to Google and phone number to the SMS provider at sign-in only (SRS Section 12, NFR-19) | Staff identifier | Duration of the project; SMS codes expire after 5 minutes |
 | Technical logs (route, status, duration, correlation ID) | Log store | Operational | 14 days |
 

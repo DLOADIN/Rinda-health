@@ -55,7 +55,7 @@
 | FR-53 | Role-based, deny-by-default authorisation for every staff route (permission matrix, SRS 12.4) | Must | api: middleware/require-role, lib/permissions · web: staff route guards | api (every route x every role) | Planned |
 | FR-54 | Researcher-admins invite, change and deactivate staff accounts; no public sign-up | Must | api: routes/admin/staff · web: staff/team | api, e2e | Planned |
 | FR-55 | Staff sessions: HttpOnly cookie, 8 h idle, 12 h absolute, fresh sign-in for sensitive actions | Must | api: middleware/staff-session | api | Planned |
-| FR-58 | WhatsApp notice that a summary is ready, never results (opt-in) | Should | backend/server.ts sendSummaryNotice, sendWhatsApp, messaging routes · frontend profile NoticesCard | backend/server.test.ts (WhatsApp notices) | In progress |
+| FR-58 | Email reports with results, opt-in only, never mental wellness | Should | backend/server.ts composeReportEmail, sendReportEmail, email-reports routes · migration 007 · frontend profile EmailReportsCard, result EmailReportButton | backend/server.test.ts (email reports) | In progress |
 | FR-59 | Participant and staff charts with text alternatives | Should | frontend/src/features/dashboard/charts.tsx | visual tour; axe in e2e | In progress |
 
 ## Non-functional requirements

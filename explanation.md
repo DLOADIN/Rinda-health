@@ -203,7 +203,7 @@ Do not delete anything in `docs/`, `README.md` or `.env`. `Badget-main/` can be 
 
 ---
 
-## 8. Added on 9 October 2026: AI guide, WhatsApp notices, offline, new look
+## 8. Added on 9 and 10 October 2026: AI guide, email reports, offline, new look
 
 ### 8.1 Ask Rinda (the AI guide)
 
@@ -227,20 +227,21 @@ Each participant must also switch on **"Use AI to explain my results"** in Profi
 
 Only Gemini is wired in. Switching provider means changing `explainWithGemini` in `server.ts`; the checker and fallback stay the same.
 
-### 8.2 WhatsApp notices
+### 8.2 Email reports (ADR-020)
 
-- A participant turns them on in **Profile, WhatsApp notices**. They are off by default, and every change is saved as a consent record.
-- After each new check-up, an opted-in participant with a phone number gets an approved WhatsApp template saying their summary is ready. **The message never contains results.**
-- The backend records only "sent", "failed" or "skipped" in `message_events`, never the text or the number.
-- The `messaging` feature is **off in the pilot profile** until the ethics committee knows about it.
+- A participant turns them on in **Profile, Email reports**. They are off by default, need an account with an email address, and every change is saved as a consent record.
+- After each new check-up, an opted-in participant gets an email with the result word for each area, one small first step, the educational notice and a link to the result. A result page also has **Email me this summary** (up to 5 a day).
+- Mental-wellness results are never emailed. The backend records only "sent", "failed" or "skipped" in `message_events`, never the address or the text.
+- WhatsApp and SMS were removed on 10 October 2026 and may come back later.
 
-To set it up:
+To set it up (Brevo, free 300 emails a day):
 
-1. Create an app at developers.facebook.com, add **WhatsApp**, and note the **Phone number ID** and a **permanent access token** (System User token in Business Settings).
-2. In WhatsApp Manager, create a template named `rinda_summary_ready` (category Utility), with a body such as: "Your Rinda check-up summary is ready. Open the Rinda app to see it." Wait for approval.
-3. Put `WHATSAPP_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` in `.env`. While testing, add your own number as a test recipient in the Meta dashboard.
+1. Sign up at brevo.com. Go to **Senders, Domains & Dedicated IPs > Senders** and add and verify the address emails come from (your Gmail works).
+2. Go to **SMTP & API > API Keys** and create a v3 API key (not an SMTP key).
+3. In `.env`: `BREVO_API_KEY=<key>`, `EMAIL_FROM=<verified address>`, and optionally `EMAIL_FROM_NAME=Rinda Health`. Restart `npm run dev`.
+4. Sign in as a participant whose account uses that email, switch on **Email me my check-up summaries** in Profile, and do a check-up or press **Email me this summary** on a result.
 
-SMS needs a provider that delivers in Rwanda (for example Africa's Talking or Pindo) and is not built yet. In the pilot, the admin cannot switch on the `messaging` flag until `MESSAGING_APPROVAL_REF` in `.env` holds the ethics approval reference for phone notices.
+In the pilot, the admin cannot switch on the `messaging` flag until `MESSAGING_APPROVAL_REF` in `.env` holds the ethics approval reference for emailing results.
 
 ### 8.3 Working offline (PWA)
 
@@ -270,7 +271,7 @@ SMS needs a provider that delivers in Rwanda (for example Africa's Talking or Pi
 
 | File | What it does |
 | --- | --- |
-| `backend/db/migrations/002_guide_and_messaging.sql` | Guide request log, message log, WhatsApp consent scope |
+| `backend/db/migrations/002_guide_and_messaging.sql` | Guide request log and message log |
 | `packages/rules/src/guide.ts` | Rule-based guide answers (works offline) |
 | `packages/content/en/guide.json`, `rw/guide.json` | Draft guide wording for your reviewers |
 | `frontend/src/features/guide/guide-panel.tsx`, `guide-button.tsx` | The Ask Rinda drawer and button |

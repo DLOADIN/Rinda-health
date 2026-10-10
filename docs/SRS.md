@@ -11,7 +11,7 @@ Trauma-informed NCD and mental-wellness risk-screening progressive web app. Deri
 | 1.0 | 1 Oct 2026 | Delivered as Rinda_Health_SRS.docx. |
 | 1.1 | 4 Oct 2026 | Section 9 stack now names shadcn/ui as the only component library. NFR-04 verification no longer cites Lighthouse PWA audits, which Lighthouse 12 removed. Added Section 11: six standout features (FR-28 to FR-50, NFR-15 to NFR-18). |
 | 1.2 | 5 Oct 2026 | C-07 and NFR-14: pilot data on supervisor-approved Neon hosting instead of Rwanda or Article 50 (ADR-014). |
-| 1.5 | 9 Oct 2026 | Section 14: WhatsApp notices without results (FR-58), charts (FR-59), Gemini for Ask Rinda (ADR-019), offline check-ups. |
+| 1.5 | 9 Oct 2026 | Section 14: email reports (FR-58, revised 10 Oct 2026), charts (FR-59), Gemini for Ask Rinda (ADR-019), offline check-ups. |
 | 1.4 | 7 Oct 2026 | Section 13: open sign-up for every role with email or phone and a password or Google (replaces study codes, PINs and invite-only staff accounts); plain SQL on PostgreSQL instead of Prisma; `frontend/` and `backend/` folders with a single-file API; role dashboards. C-06 and FR-03 updated. See ADR-016 to ADR-018. |
 | 1.3 | 6 Oct 2026 | Added Section 12: staff sign-in with Google or an SMS one-time code, role-based authorisation, staff account management and staff sessions (FR-51 to FR-55, NFR-19). Section 3.4 admin auth routes and Section 7.1 AdminUser updated. Participants keep study code and PIN (FR-03, C-06 unchanged). See ADR-015. |
 
@@ -527,7 +527,7 @@ Requested on 9 October 2026. Decisions in ADR-019 and ADR-020.
 
 | ID | Requirement | Priority | Acceptance criteria |
 | --- | --- | --- | --- |
-| FR-58 | Send an opted-in participant a WhatsApp notice that their check-up summary is ready. The notice never contains results. | Should | No message without a current opt-in; the message payload holds only the approved template name and language; `message_events` stores status only; the `messaging` flag is off in the pilot profile (tests). |
+| FR-58 | Email an opted-in participant a summary of each check-up (each NCD area's result word, the first small step and the educational notice), and let them send one again from the result. Never include mental-wellness results. | Should | No email without a current `email_reports` opt-in; only approved content; `message_events` stores status only; the `messaging` flag is off in the pilot profile and needs `MESSAGING_APPROVAL_REF` (tests). |
 | FR-59 | Show participant charts (weekly activity ring, blood pressure over time, fruit and vegetables over time) and staff charts (14-day check-ups, sign-ups and sessions), each with a text alternative. | Should | Every chart is `aria-hidden` and paired with a sentence carrying the same numbers. Charts load on demand. |
 
 FR-36 (Ask Rinda) uses Google Gemini (ADR-019); its acceptance criteria are unchanged. Offline check-ups (FR-29, FR-30) are implemented: scored on the phone, kept in an encrypted outbox, and sent once when the network returns.
