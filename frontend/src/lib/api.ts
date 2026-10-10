@@ -51,10 +51,10 @@ export interface AiStatus {
   available: boolean;
 }
 
-export interface MessagingStatus {
-  whatsapp: boolean;
-  whatsappAvailable: boolean;
-  hasPhone: boolean;
+export interface EmailReportStatus {
+  email: boolean;
+  available: boolean;
+  hasEmail: boolean;
 }
 export interface MetricCard {
   key: string;
@@ -238,20 +238,23 @@ export const api = createApi({
       invalidatesTags: ['Deletions', 'Dashboard'],
     }),
 
-    // Rinda Guide and WhatsApp notices
+    // Rinda Guide and email reports
     explain: b.mutation<GuideResponse, { assessmentId: string; chipId: string; language: 'en' | 'rw' }>({
       query: (body) => ({ url: '/guide/explain', method: 'POST', body }),
     }),
     guideFeedback: b.mutation<void, { requestId: string; helpful: boolean }>({
       query: (body) => ({ url: '/guide/feedback', method: 'POST', body }),
     }),
-    messaging: b.query<MessagingStatus, void>({
-      query: () => '/participant/messaging',
+    emailReports: b.query<EmailReportStatus, void>({
+      query: () => '/participant/email-reports',
       providesTags: ['Messaging'],
     }),
-    setMessaging: b.mutation<{ whatsapp: boolean }, { whatsapp: boolean }>({
-      query: (body) => ({ url: '/participant/messaging', method: 'PUT', body }),
+    setEmailReports: b.mutation<{ email: boolean }, { email: boolean }>({
+      query: (body) => ({ url: '/participant/email-reports', method: 'PUT', body }),
       invalidatesTags: ['Messaging'],
+    }),
+    sendEmailReport: b.mutation<{ status: 'sent' | 'failed' }, { assessmentId: string }>({
+      query: (body) => ({ url: '/participant/email-reports/send', method: 'POST', body }),
     }),
 
     aiOptIn: b.query<AiStatus, void>({
@@ -397,8 +400,9 @@ export const {
   useRequestDeletionMutation,
   useExplainMutation,
   useGuideFeedbackMutation,
-  useMessagingQuery,
-  useSetMessagingMutation,
+  useEmailReportsQuery,
+  useSetEmailReportsMutation,
+  useSendEmailReportMutation,
   useAiOptInQuery,
   useSetAiOptInMutation,
   useParticipantsQuery,
