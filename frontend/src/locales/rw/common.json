@@ -484,7 +484,7 @@
       "readAloud": "Gusoma mu ijwi riranguruye",
       "usabilityEvents": "Igihe kimara kuri buri paji (ubushakashatsi)",
       "pilotInsights": "Incamake y'igerageza",
-      "messaging": "Ubutumwa kuri WhatsApp"
+      "messaging": "Raporo kuri imeri"
     }
   },
   "common": {
@@ -550,14 +550,6 @@
     "provisionalTitle": "Ibisubizo byawe, byabazwe kuri iyi telefoni",
     "provisionalBody": "Nta interineti ufite. Ibi bisubizo bizongera kugenzurwa no kubikwa nugaruka kuri interineti."
   },
-  "whatsapp": {
-    "title": "Ubutumwa kuri WhatsApp",
-    "body": "Akira ubutumwa kuri WhatsApp igihe incamake y'isuzuma ryawe yiteguye. Ubutumwa ntibujya bushyiramo ibisubizo byawe.",
-    "toggle": "Nyoherereza ubutumwa kuri WhatsApp",
-    "needPhone": "Ongeraho nimero ya telefoni yawe muri \"Amakuru yanjye\" kugira ngo ukoreshe ibi.",
-    "unavailable": "Ubutumwa kuri WhatsApp ntiburatangira gukora.",
-    "saved": "Icyemezo cyawe cyabitswe."
-  },
   "install": {
     "title": "Shyira Rinda kuri telefoni",
     "body": "Shyira Rinda ku rupapuro rw'ibanze rwa telefoni kugira ngo ifunguke nka porogaramu kandi ikore nta interineti.",
@@ -571,5 +563,16 @@
     "toggle": "Koresha AI gusobanura ibisubizo byanjye",
     "unavailable": "Ibisobanuro bya AI ntibiratangira gukora. Uzakomeza kubona ibisobanuro byemejwe.",
     "saved": "Icyemezo cyawe cyabitswe."
+  },
+  "emailReports": {
+    "title": "Raporo kuri imeri",
+    "body": "Akira incamake ya buri suzuma kuri imeri: igisubizo cya buri gice n'intambwe imwe nto yo gutangiriraho. Ibisubizo by'imitekerereze n'umunaniro ntibijya byoherezwa. Umuntu wese ushobora gufungura imeri yawe ashobora kuyisoma.",
+    "toggle": "Nyoherereza incamake z'isuzuma ryanjye kuri imeri",
+    "needEmail": "Ibi bisaba konti ifite aderesi ya imeri.",
+    "unavailable": "Raporo kuri imeri ntiziratangira gukora.",
+    "saved": "Icyemezo cyawe cyabitswe.",
+    "send": "Nyoherereza iyi ncamake kuri imeri",
+    "sent": "Incamake yoherejwe kuri imeri yawe.",
+    "sendFailed": "Imeri ntiyashoboye koherezwa. Ongera ugerageze nyuma."
   }
 }

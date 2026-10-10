@@ -1,7 +1,7 @@
 // Profile for every role: details, preferred language, password, sign out. Participants also see their banded
 // "about me" fields and can ask for their data to be deleted (FR-18, FR-44).
 import type { Me, ParticipantProfile } from '@rinda/schemas';
-import { Download, LogOut, MessageCircle, Smartphone, Sparkles } from 'lucide-react';
+import { Download, LogOut, Mail, Smartphone, Sparkles } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -21,8 +21,8 @@ import { useInstallPrompt } from '@/lib/install';
 import {
   useChangePasswordMutation,
   useDeletionStatusQuery,
-  useMessagingQuery,
-  useSetMessagingMutation,
+  useEmailReportsQuery,
+  useSetEmailReportsMutation,
   useAiOptInQuery,
   useSetAiOptInMutation,
   useParticipantProfileQuery,
@@ -273,39 +273,39 @@ function PasswordCard({ me }: { me: Me }) {
   );
 }
 
-/** WhatsApp notices (ADR-020): opt-in only, and the message never contains results. */
-function NoticesCard() {
+/** Email reports (ADR-020): an opted-in participant gets each check-up's summary by email. Off by default. */
+function EmailReportsCard() {
   const { t } = useTranslation();
-  const { data } = useMessagingQuery();
-  const [save, { isLoading, error }] = useSetMessagingMutation();
+  const { data } = useEmailReportsQuery();
+  const [save, { isLoading, error }] = useSetEmailReportsMutation();
   return (
     <Card className="glass">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl">
-          <MessageCircle aria-hidden="true" className="size-5 text-brand-ember-strong" />
-          {t('whatsapp.title')}
+          <Mail aria-hidden="true" className="size-5 text-brand-ember-strong" />
+          {t('emailReports.title')}
         </CardTitle>
-        <CardDescription>{t('whatsapp.body')}</CardDescription>
+        <CardDescription>{t('emailReports.body')}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <Field orientation="horizontal" className="min-h-11 justify-between">
-          <FieldLabel htmlFor="wa-toggle">{t('whatsapp.toggle')}</FieldLabel>
+          <FieldLabel htmlFor="email-reports-toggle">{t('emailReports.toggle')}</FieldLabel>
           <Switch
-            id="wa-toggle"
-            checked={data?.whatsapp ?? false}
-            disabled={!data?.whatsappAvailable || !data.hasPhone || isLoading}
-            onCheckedChange={(whatsapp) =>
-              void save({ whatsapp }).then((r) =>
-                !('error' in r) ? toast.success(t('whatsapp.saved')) : undefined,
+            id="email-reports-toggle"
+            checked={data?.email ?? false}
+            disabled={!data?.available || !data.hasEmail || isLoading}
+            onCheckedChange={(email) =>
+              void save({ email }).then((r) =>
+                !('error' in r) ? toast.success(t('emailReports.saved')) : undefined,
               )
             }
           />
         </Field>
-        {data && !data.whatsappAvailable ? (
-          <p className="text-sm text-muted-foreground">{t('whatsapp.unavailable')}</p>
+        {data && !data.available ? (
+          <p className="text-sm text-muted-foreground">{t('emailReports.unavailable')}</p>
         ) : null}
-        {data?.whatsappAvailable && !data.hasPhone ? (
-          <p className="text-sm text-muted-foreground">{t('whatsapp.needPhone')}</p>
+        {data?.available && !data.hasEmail ? (
+          <p className="text-sm text-muted-foreground">{t('emailReports.needEmail')}</p>
         ) : null}
         <ApiError error={error} />
       </CardContent>
@@ -427,7 +427,7 @@ export function ProfilePage({ me, onSignOut }: { me: Me; onSignOut: () => void }
         <DetailsCard me={me} />
         {isParticipant ? <AboutMeCard /> : null}
         <PasswordCard me={me} />
-        {isParticipant ? <NoticesCard /> : null}
+        {isParticipant ? <EmailReportsCard /> : null}
         {isParticipant ? <AiCard /> : null}
         <InstallCard />
         {isParticipant ? <DeletionCard /> : null}
