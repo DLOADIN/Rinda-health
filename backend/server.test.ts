@@ -117,13 +117,13 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     GOOGLE_CLIENT_SECRET: 'test-secret',
     GEMINI_API_KEY: 'test-gemini-key',
     ETHICS_AMENDMENT_REF: 'SYNTHETIC-DEV-ONLY',
-    WHATSAPP_TOKEN: 'test-wa-token',
-    WHATSAPP_PHONE_NUMBER_ID: '1234567890',
+    BREVO_API_KEY: 'test-brevo-key',
+    EMAIL_FROM: 'reports@rinda.test',
     PUBLIC_URL: 'http://localhost:5173',
   });
   const { logger, lines } = sinkLogger();
   let googleClaims: Record<string, unknown> = {};
-  // One fake for every outside service: Google sign-in, Gemini and the WhatsApp Cloud API.
+  // One fake for every outside service: Google sign-in, Gemini and Brevo email.
   let geminiAnswer: unknown = null;
   const outbound: Array<{ url: string; body: string }> = [];
   const fetchFn = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -140,8 +140,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
         { status: 200 },
       );
     }
-    if (url.includes('graph.facebook.com'))
-      return new Response('{"messages":[{"id":"wamid.test"}]}', { status: 200 });
+    if (url.includes('api.brevo.com')) return new Response('{"messageId":"<test@brevo>"}', { status: 201 });
     return new Response(
       JSON.stringify({
         id_token: `e30.${Buffer.from(JSON.stringify(googleClaims)).toString('base64url')}.sig`,
@@ -461,9 +460,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     const ask = (chipId: string, language = 'en') =>
       agent.post('/api/v1/guide/explain').send({ assessmentId: checkup.body.id, chipId, language });
 
-    // No phone on this account, so a WhatsApp opt-in is refused rather than stored for later.
-    await agent.put('/api/v1/participant/messaging').send({ whatsapp: true }).expect(409);
-
     // No AI without the separate, unticked opt-in (consent scope ai_explanations).
     outbound.length = 0;
     expect((await agent.get('/api/v1/participant/ai-explanations')).body).toEqual({
@@ -532,41 +528,71 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     ]);
   });
 
-  it('WhatsApp notices: only after opt-in, and the message holds no results (ADR-020)', async () => {
-    const { agent, me } = await signup('participant', '0788 555 444');
-    expect((await agent.get('/api/v1/participant/messaging')).body).toEqual({
-      whatsapp: false,
-      whatsappAvailable: true,
-      hasPhone: true,
+  it('email reports: only after opt-in, NCD results only, never mental wellness (ADR-020)', async () => {
+    const byPhone = await signup('participant', '0788 555 444');
+    expect((await byPhone.agent.get('/api/v1/participant/email-reports')).body).toEqual({
+      email: false,
+      available: true,
+      hasEmail: false,
     });
+    await byPhone.agent.put('/api/v1/participant/email-reports').send({ email: true }).expect(409);
+
+    const { agent, me } = await signup('participant', 'reports-user@example.com');
     const submit = () =>
       agent
         .post('/api/v1/participant/assessments')
         .set('Idempotency-Key', randomUUID())
         .send({ language: 'en', startedAt: new Date().toISOString(), answers });
+    const brevoCalls = () => outbound.filter((o) => o.url.includes('api.brevo.com'));
+    const waitForBrevo = async (n: number) => {
+      for (let i = 0; i < 40 && brevoCalls().length < n; i++) await new Promise((r) => setTimeout(r, 250));
+      await new Promise((r) => setTimeout(r, 300)); // let the message_events row land
+    };
 
     outbound.length = 0;
     await submit().expect(201);
     await new Promise((r) => setTimeout(r, 300));
-    expect(outbound.some((o) => o.url.includes('graph.facebook.com'))).toBe(false);
+    expect(brevoCalls()).toHaveLength(0);
 
-    await agent.put('/api/v1/participant/messaging').send({ whatsapp: true }).expect(200);
-    await submit().expect(201);
-    for (let i = 0; i < 40 && !outbound.some((o) => o.url.includes('graph.facebook.com')); i++) {
-      await new Promise((r) => setTimeout(r, 250));
-    }
-    await new Promise((r) => setTimeout(r, 500)); // let the message_events row land
-    const call = outbound.find((o) => o.url.includes('graph.facebook.com'));
-    expect(call?.url).toContain('/1234567890/messages');
+    await agent.put('/api/v1/participant/email-reports').send({ email: true, extra: 1 }).expect(400);
+    await agent.put('/api/v1/participant/email-reports').send({ email: true }).expect(200);
+    const checkup = await submit().expect(201);
+    await waitForBrevo(1);
+    const call = brevoCalls()[0];
+    expect(call?.url).toBe('https://api.brevo.com/v3/smtp/email');
     const payload = JSON.parse(call?.body ?? '{}');
     expect(payload).toMatchObject({
-      to: '250788555444',
-      type: 'template',
-      template: { name: 'rinda_summary_ready' },
+      sender: { name: 'Rinda Health', email: 'reports@rinda.test' },
+      to: [{ email: 'reports-user@example.com' }],
+      subject: 'Your Rinda check-up summary',
     });
-    expect(call?.body).not.toMatch(/hypertension|below|band|systolic|142/i);
-    const events = await db.query('SELECT status FROM message_events WHERE user_id = $1', [me.id]);
-    expect(events.rows).toEqual([{ status: 'sent' }]);
+    expect(payload.textContent).toContain('Blood pressure');
+    expect(payload.textContent).toContain(`http://localhost:5173/app/results/${checkup.body.id}`);
+    expect(payload.textContent).not.toMatch(/phq|gad|mood|anxiety|depress/i);
+    expect(payload.htmlContent).not.toContain('<script');
+    const paragraphs = String(payload.textContent).split('\n\n');
+    expect(new Set(paragraphs).size).toBe(paragraphs.length);
+    const events = await db.query('SELECT channel, status FROM message_events WHERE user_id = $1', [me.id]);
+    expect(events.rows).toEqual([{ channel: 'email', status: 'sent' }]);
+
+    // "Email me this summary" for a saved check-up, and never for someone else's.
+    await agent
+      .post('/api/v1/participant/email-reports/send')
+      .send({ assessmentId: checkup.body.id })
+      .expect(200, {
+        status: 'sent',
+      });
+    await byPhone.agent
+      .post('/api/v1/participant/email-reports/send')
+      .send({ assessmentId: checkup.body.id })
+      .expect(409);
+
+    // Switched off: nothing more is sent.
+    await agent.put('/api/v1/participant/email-reports').send({ email: false }).expect(200);
+    outbound.length = 0;
+    await submit().expect(201);
+    await new Promise((r) => setTimeout(r, 500));
+    expect(brevoCalls()).toHaveLength(0);
   });
 
   it('dashboards include 14 days of chart data', async () => {
@@ -584,7 +610,8 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       '0788',
       'lockme@example.com',
       '250788555444',
-      'test-wa-token',
+      'test-brevo-key',
+      'reports-user@example.com',
       'test-gemini-key',
       '"systolic"',
       'google.user@gmail.com',
