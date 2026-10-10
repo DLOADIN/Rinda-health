@@ -36,7 +36,8 @@ import {
   GuideAnswer,
   GuideExplainRequest,
   GuideFeedbackRequest,
-  MessagingPreference,
+  EmailReportPreference,
+  EmailReportSend,
   AiPreference,
   LoginRequest,
   parseIdentifier,
@@ -102,12 +103,12 @@ const EnvSchema = z
     ETHICS_AMENDMENT_REF: optionalText,
     /** Set to true only for a paid Gemini tier whose terms say prompts are not used for training (needed in the pilot). */
     GEMINI_PAID_TIER: z.preprocess(emptyAsUndefined, z.enum(['true', 'false']).default('false')),
-    WHATSAPP_TOKEN: optionalText,
-    WHATSAPP_PHONE_NUMBER_ID: optionalText,
-    WHATSAPP_TEMPLATE: z.string().default('rinda_summary_ready'),
-    WHATSAPP_TEMPLATE_LANGUAGE_EN: z.string().default('en'),
-    WHATSAPP_TEMPLATE_LANGUAGE_RW: z.string().default('en'),
-    WHATSAPP_API_VERSION: z.string().default('v21.0'),
+    /** Email reports through Brevo (ADR-020): an opted-in participant's result summary, by email. */
+    BREVO_API_KEY: optionalText,
+    /** A sender address verified in Brevo (Senders, Domains & Dedicated IPs). */
+    EMAIL_FROM: optionalText,
+    EMAIL_FROM_NAME: z.string().default('Rinda Health'),
+    /** Ethics approval reference for emailing results; the pilot refuses to switch messaging on without it. */
     MESSAGING_APPROVAL_REF: optionalText,
     SEED_PASSWORD: optionalText,
   })
@@ -158,7 +159,7 @@ const googleConfigured = (c: AppConfig) => Boolean(c.GOOGLE_CLIENT_ID && c.GOOGL
 const generativeGuideAllowed = (c: AppConfig) =>
   Boolean(c.ETHICS_AMENDMENT_REF && c.GEMINI_API_KEY) &&
   (c.APP_ENV !== 'pilot' || c.GEMINI_PAID_TIER === 'true');
-const whatsappConfigured = (c: AppConfig) => Boolean(c.WHATSAPP_TOKEN && c.WHATSAPP_PHONE_NUMBER_ID);
+const emailConfigured = (c: AppConfig) => Boolean(c.BREVO_API_KEY && c.EMAIL_FROM);
 
 const SENSITIVE_KEYS = [
   'pin',
@@ -676,70 +677,120 @@ function valuesOf(input: AssessmentInput) {
   };
 }
 
-async function sendSummaryNotice(
+const escapeHtml = (s: string) =>
+  s.replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c,
+  );
+
+/**
+ * The report email (ADR-020), built only from approved content: each NCD area's result word, the first small step
+ * and the educational notice. Mental-wellness results are never included.
+ */
+export function composeReportEmail(
+  language: 'en' | 'rw',
+  results: AssessmentResult,
+  plan: Plan,
+  link: string,
+): { subject: string; text: string; html: string } {
+  const content = BUNDLED_CONTENT[language];
+  const lookup = (id: string) => content.text[id] ?? id;
+  // A set: an urgent result adds the same seek-care paragraph to both summaries; show it once.
+  const body = [
+    ...new Set([
+      lookup('email.report.greeting'),
+      ...composeGuideAnswer('overview', results, plan, lookup).paragraphs.map((p) => p.text),
+      ...composeGuideAnswer('first_step', results, plan, lookup).paragraphs.map((p) => p.text),
+      lookup('email.report.disclaimer'),
+    ]),
+  ];
+  const open = lookup('email.report.open');
+  const optOut = lookup('email.report.optout');
+  const text = [...body, `${open} ${link}`, optOut].join('\n\n');
+  const html = [
+    '<div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;max-width:560px">',
+    ...body.map((p) => `<p>${escapeHtml(p)}</p>`),
+    `<p><a href="${escapeHtml(link)}">${escapeHtml(open)}</a></p>`,
+    `<p style="font-size:13px">${escapeHtml(optOut)}</p>`,
+    '</div>',
+  ].join('');
+  return { subject: lookup('email.report.subject'), text, html };
+}
+
+type EmailOutcome = 'sent' | 'failed' | 'skipped';
+
+/**
+ * Emails one check-up's summary to its owner through Brevo, only when messaging is on, Brevo is set up and the
+ * participant opted in (consent scope email_reports). message_events keeps the status, never the address or text.
+ */
+async function sendReportEmail(
   db: Db,
   config: AppConfig,
   logger: Logger,
   fetchFn: typeof fetch,
   userId: string,
-): Promise<void> {
-  if (!whatsappConfigured(config) || !(await currentFlags(db, config)).messaging) return;
+  assessmentId: string,
+): Promise<EmailOutcome> {
+  if (!emailConfigured(config) || !(await currentFlags(db, config)).messaging) return 'skipped';
   const consent = await one<{ granted: boolean }>(
     db,
-    "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'whatsapp_notices' ORDER BY created_at DESC LIMIT 1",
+    "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'email_reports' ORDER BY created_at DESC LIMIT 1",
     [userId],
   );
-  if (!consent?.granted) return;
-  const user = await one<{ phone: string | null; preferred_language: 'en' | 'rw' }>(
+  if (!consent?.granted) return 'skipped';
+  const user = await one<{ email: string | null; preferred_language: 'en' | 'rw' }>(
     db,
-    'SELECT phone, preferred_language FROM users WHERE id = $1 AND active AND deleted_at IS NULL',
+    'SELECT email, preferred_language FROM users WHERE id = $1 AND active AND deleted_at IS NULL',
     [userId],
   );
-  const record = (status: 'sent' | 'failed' | 'skipped', errorCode: string | null) =>
-    db.query(
+  const row = await one<{ results: AssessmentResult; plan: Plan }>(
+    db,
+    'SELECT results, plan FROM assessments WHERE id = $1 AND user_id = $2',
+    [assessmentId, userId],
+  );
+  const record = async (status: EmailOutcome, errorCode: string | null) => {
+    await db.query(
       'INSERT INTO message_events (user_id, channel, template, status, error_code) VALUES ($1, $2, $3, $4, $5)',
-      [userId, 'whatsapp', config.WHATSAPP_TEMPLATE, status, errorCode],
+      [userId, 'email', 'email.report', status, errorCode],
     );
-  if (!user?.phone) {
-    await record('skipped', 'no_phone');
-    return;
-  }
+    return status;
+  };
+  if (!user?.email) return record('skipped', 'no_email');
+  if (!row) return record('skipped', 'no_checkup');
+  const email = composeReportEmail(
+    user.preferred_language,
+    row.results,
+    row.plan,
+    `${config.PUBLIC_URL}/app/results/${assessmentId}`,
+  );
   let res: globalThis.Response;
   try {
-    res = await sendWhatsApp(config, fetchFn, user.phone, user.preferred_language);
-  } catch {
-    await record('failed', 'network');
-    logger.warn({ event: 'whatsapp_notice', status: 'failed' }, 'message');
-    return;
-  }
-  await record(res.ok ? 'sent' : 'failed', res.ok ? null : `http_${res.status}`);
-  logger.info(
-    { event: 'whatsapp_notice', status: res.ok ? 'sent' : 'failed', httpStatus: res.status },
-    'message',
-  );
-}
-
-function sendWhatsApp(config: AppConfig, fetchFn: typeof fetch, phone: string, language: 'en' | 'rw') {
-  return fetchFn(
-    `https://graph.facebook.com/${config.WHATSAPP_API_VERSION}/${config.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-    {
+    res = await fetchFn('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${config.WHATSAPP_TOKEN ?? ''}` },
+      headers: {
+        'api-key': config.BREVO_API_KEY ?? '',
+        accept: 'application/json',
+        'content-type': 'application/json',
+      },
       signal: AbortSignal.timeout(15_000),
       body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: phone.replace(/^\+/, ''),
-        type: 'template',
-        template: {
-          name: config.WHATSAPP_TEMPLATE,
-          language: {
-            code:
-              language === 'rw' ? config.WHATSAPP_TEMPLATE_LANGUAGE_RW : config.WHATSAPP_TEMPLATE_LANGUAGE_EN,
-          },
-        },
+        sender: { name: config.EMAIL_FROM_NAME, email: config.EMAIL_FROM },
+        to: [{ email: user.email }],
+        subject: email.subject,
+        textContent: email.text,
+        htmlContent: email.html,
+        tags: ['rinda-report'],
       }),
-    },
+    });
+  } catch {
+    logger.warn({ event: 'email_report', status: 'failed' }, 'message');
+    return record('failed', 'network');
+  }
+  logger.info(
+    { event: 'email_report', status: res.ok ? 'sent' : 'failed', httpStatus: res.status },
+    'message',
   );
+  return record(res.ok ? 'sent' : 'failed', res.ok ? null : `http_${res.status}`);
 }
 
 const requestId = (): RequestHandler => (req, res, next) => {
@@ -839,7 +890,7 @@ const DEVELOPMENT_FLAGS: Flags = {
   readAloud: true,
   usabilityEvents: false,
   pilotInsights: true,
-  messaging: true, // still needs WhatsApp settings and each participant's opt-in
+  messaging: true, // still needs Brevo settings and each participant's opt-in
 };
 /** The documented pilot profile (docs/FEATURES.md). Changing a pilot default needs the supervisor's agreement. */
 const PILOT_FLAGS: Flags = {
@@ -848,7 +899,7 @@ const PILOT_FLAGS: Flags = {
   careGeolocation: false,
   readAloud: false,
   usabilityEvents: false,
-  messaging: false, // until the ethics committee knows participants get WhatsApp notices
+  messaging: false, // until the ethics committee approves emailing results
 };
 export const FLAG_DEFAULTS: Record<AppConfig['APP_ENV'], Flags> = {
   development: DEVELOPMENT_FLAGS,
@@ -869,6 +920,8 @@ async function currentFlags(db: Db | null, config: AppConfig): Promise<Flags> {
       if ((FLAG_KEYS as readonly string[]).includes(row.key)) flags[row.key as FlagKey] = row.enabled;
   }
   flags.guideGenerative = flags.guideGenerative && generativeGuideAllowed(config);
+  // Emailing results in the pilot needs the ethics approval reference, whatever the stored flag says.
+  flags.messaging = flags.messaging && (config.APP_ENV !== 'pilot' || Boolean(config.MESSAGING_APPROVAL_REF));
   return flags;
 }
 
@@ -1449,8 +1502,8 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     if (!row) throw new Error('assessment not stored');
     res.status(inserted ? 201 : 200).json(toAssessment(row));
     if (inserted) {
-      void sendSummaryNotice(database, config, logger, fetchFn, userId).catch(() =>
-        logger.warn({ reqId: req.id, event: 'notice_error' }, 'message'),
+      void sendReportEmail(database, config, logger, fetchFn, userId, row.id).catch(() =>
+        logger.warn({ reqId: req.id, event: 'email_report_error' }, 'message'),
       );
     }
   });
@@ -1964,7 +2017,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       throw new AppError(
         409,
         'FLAG_GUARD',
-        'Phone notices cannot be turned on in the pilot without an ethics approval reference.',
+        'Email reports cannot be turned on in the pilot without an ethics approval reference.',
       );
     }
     await database.query(
@@ -2483,51 +2536,65 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/guide', guide);
 
-  // ── 8.10 WhatsApp notices: opt in or out (consent event), never any results in the message ─────────────────────
-  const messaging = Router();
-  messaging.use(requireAuth, requireRole('participant'));
+  // ── 8.10 Email reports (ADR-020): opt in or out (consent event); results summary by email ──────────────────────
+  const emailReports = Router();
+  emailReports.use(requireAuth, requireRole('participant'));
+  const emailedToday = new Map<string, { day: string; count: number }>();
+  const EMAIL_DAILY_LIMIT = 5;
 
-  messaging.get('/', async (req, res) => {
+  emailReports.get('/', async (req, res) => {
     const database = needDb();
-    const latest = (scope: string) =>
-      one<{ granted: boolean }>(
-        database,
-        'SELECT granted FROM consent_events WHERE user_id = $1 AND scope = $2 ORDER BY created_at DESC LIMIT 1',
-        [me(req).id, scope],
-      );
-    const whatsapp = await latest('whatsapp_notices');
-    const user = await one<{ phone: string | null }>(database, 'SELECT phone FROM users WHERE id = $1', [
+    const consent = await one<{ granted: boolean }>(
+      database,
+      "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'email_reports' ORDER BY created_at DESC LIMIT 1",
+      [me(req).id],
+    );
+    const user = await one<{ email: string | null }>(database, 'SELECT email FROM users WHERE id = $1', [
       me(req).id,
     ]);
     const flags = await currentFlags(database, config);
     res.json({
-      whatsapp: whatsapp?.granted ?? false,
-      whatsappAvailable: flags.messaging && whatsappConfigured(config),
-      hasPhone: Boolean(user?.phone),
+      email: consent?.granted ?? false,
+      available: flags.messaging && emailConfigured(config),
+      hasEmail: Boolean(user?.email),
     });
   });
 
-  messaging.put('/', async (req, res) => {
+  emailReports.put('/', async (req, res) => {
     const database = needDb();
-    const body = MessagingPreference.parse(req.body);
-    const user = await one<{ preferred_language: 'en' | 'rw'; phone: string | null }>(
+    const body = EmailReportPreference.parse(req.body);
+    const user = await one<{ preferred_language: 'en' | 'rw'; email: string | null }>(
       database,
-      'SELECT preferred_language, phone FROM users WHERE id = $1',
+      'SELECT preferred_language, email FROM users WHERE id = $1',
       [me(req).id],
     );
     const flags = await currentFlags(database, config);
-    const canSend = flags.messaging && whatsappConfigured(config) && Boolean(user?.phone);
-    if (body.whatsapp && !canSend) {
-      throw new AppError(409, 'CONFLICT', 'This kind of notice is not available.');
+    if (body.email && !(flags.messaging && emailConfigured(config) && user?.email)) {
+      throw new AppError(409, 'CONFLICT', 'Email reports are not available.');
     }
     await database.query(
       `INSERT INTO consent_events (user_id, scope, granted, consent_doc_version, language)
-       VALUES ($1, 'whatsapp_notices', $2, 'messaging-0.1.0', $3)`,
-      [me(req).id, body.whatsapp, user?.preferred_language ?? 'en'],
+       VALUES ($1, 'email_reports', $2, 'email-reports-0.1.0', $3)`,
+      [me(req).id, body.email, user?.preferred_language ?? 'en'],
     );
     res.json(body);
   });
-  mount('/api/v1/participant/messaging', messaging);
+
+  // "Email me this summary": the same email for one saved check-up, at most a few a day.
+  emailReports.post('/send', async (req, res) => {
+    const database = needDb();
+    const body = EmailReportSend.parse(req.body);
+    const today = new Date().toISOString().slice(0, 10);
+    const usage = emailedToday.get(me(req).id);
+    const used = usage?.day === today ? usage.count : 0;
+    if (used >= EMAIL_DAILY_LIMIT) throw new AppError(429, 'RATE_LIMITED', 'Too many emails today.');
+    const status = await sendReportEmail(database, config, logger, fetchFn, me(req).id, body.assessmentId);
+    // Only real send attempts count towards the daily limit.
+    if (status !== 'skipped') emailedToday.set(me(req).id, { day: today, count: used + 1 });
+    if (status === 'skipped') throw new AppError(409, 'CONFLICT', 'Email reports are not available.');
+    res.json({ status });
+  });
+  mount('/api/v1/participant/email-reports', emailReports);
 
   // 8.11 AI explanations opt-in (ADR-019): off until the participant switches it on; withdrawing is one tap.
   const aiOptIn = Router();
