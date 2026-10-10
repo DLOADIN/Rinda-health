@@ -1,5 +1,5 @@
 // Results history (read and delete) and one result in full (FR-10, FR-14).
-import { ArrowRight, Trash2 } from 'lucide-react';
+import { ArrowRight, Mail, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -16,7 +16,9 @@ import {
   useAssessmentQuery,
   useAssessmentsQuery,
   useDeleteAssessmentMutation,
+  useEmailReportsQuery,
   useMeQuery,
+  useSendEmailReportMutation,
   type Assessment,
 } from '@/lib/api';
 import { pendingFor, useOutbox } from '@/lib/offline';
@@ -82,6 +84,30 @@ export function ResultsPage() {
   );
 }
 
+/** Sends this check-up's summary by email, when the participant switched email reports on (ADR-020). */
+function EmailReportButton({ assessmentId }: { assessmentId: string }) {
+  const { t } = useTranslation();
+  const { data } = useEmailReportsQuery();
+  const [send, { isLoading }] = useSendEmailReportMutation();
+  if (!data?.available || !data.email) return null;
+  return (
+    <Button
+      variant="outline"
+      disabled={isLoading}
+      onClick={() =>
+        void send({ assessmentId }).then((r) =>
+          'error' in r || r.data.status !== 'sent'
+            ? toast.error(t('emailReports.sendFailed'))
+            : toast.success(t('emailReports.sent')),
+        )
+      }
+    >
+      <Mail aria-hidden="true" data-icon="inline-start" />
+      {t('emailReports.send')}
+    </Button>
+  );
+}
+
 export function ResultDetailPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -109,17 +135,20 @@ export function ResultDetailPage() {
         description={data ? t('results.version', { version: data.rulesetVersion }) : undefined}
         actions={
           data && !data.provisional ? (
-            <ConfirmAction
-              trigger={
-                <>
-                  <Trash2 aria-hidden="true" data-icon="inline-start" />
-                  {t('results.delete')}
-                </>
-              }
-              title={t('results.delete')}
-              description={t('results.deleteConfirm')}
-              onConfirm={() => void onDelete()}
-            />
+            <div className="flex flex-wrap gap-2">
+              <EmailReportButton assessmentId={data.id} />
+              <ConfirmAction
+                trigger={
+                  <>
+                    <Trash2 aria-hidden="true" data-icon="inline-start" />
+                    {t('results.delete')}
+                  </>
+                }
+                title={t('results.delete')}
+                description={t('results.deleteConfirm')}
+                onConfirm={() => void onDelete()}
+              />
+            </div>
           ) : null
         }
       />
