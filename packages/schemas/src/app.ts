@@ -202,8 +202,11 @@ export const ApprovalRequest = z.strictObject({
 export const GuideFeedbackRequest = z.strictObject({ requestId: z.uuid(), helpful: z.boolean() });
 
 /** Opt-in for WhatsApp notices that a check-up summary is ready. The message never contains results (ADR-020). */
-export const MessagingPreference = z.strictObject({ whatsapp: z.boolean() });
-export type MessagingPreference = z.infer<typeof MessagingPreference>;
+/** Opt-in for result summaries by email (consent scope email_reports, ADR-020). */
+export const EmailReportPreference = z.strictObject({ email: z.boolean() });
+export type EmailReportPreference = z.infer<typeof EmailReportPreference>;
+export const EmailReportSend = z.strictObject({ assessmentId: z.uuid() });
+export type EmailReportSend = z.infer<typeof EmailReportSend>;
 
 /** Separate opt-in for AI-written explanations (consent scope ai_explanations, ADR-019). */
 export const AiPreference = z.strictObject({ ai: z.boolean() });
