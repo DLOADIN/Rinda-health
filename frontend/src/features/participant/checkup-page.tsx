@@ -12,30 +12,24 @@ import { PageHeader } from '@/components/page-header';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-  FieldTitle,
-} from '@/components/ui/field';
+import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/components/ui/input-group';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Spinner } from '@/components/ui/spinner';
+import { Choice } from '@/features/participant/choice';
+import { SafetyScreen, WellnessSection, WELLNESS_START } from '@/features/participant/wellness-section';
 import { ResultView } from '@/features/results/result-view';
 import {
   errorCode,
   errorDetails,
+  useConsentsQuery,
   useMeQuery,
   useParticipantProfileQuery,
   useSubmitCheckupMutation,
   type Assessment,
 } from '@/lib/api';
-import { addToOutbox, scoreOnPhone } from '@/lib/offline';
+import { addToOutbox, queueSafetyEvent, scoreOnPhone } from '@/lib/offline';
+import { useCached } from '@/lib/use-cached';
 import { useContent } from '@/lib/content';
 
 type Answers = CheckupAnswers;
@@ -77,63 +71,35 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-/** A choice question as full-width rows (44 px targets), with "Skip this question". Nothing is preselected. */
-function Choice({
-  id,
-  question,
-  options,
-  value,
-  onChange,
-}: {
-  id: string;
-  question: string;
-  options: Array<{ value: string; label: string }>;
-  value: string | null;
-  onChange: (value: string | null) => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <FieldSet>
-      <FieldLegend variant="label" className="text-base">
-        {question}
-      </FieldLegend>
-      <RadioGroup value={value ?? ''} onValueChange={(v) => onChange(v)}>
-        {options.map((o) => (
-          <FieldLabel key={o.value} htmlFor={`${id}-${o.value}`}>
-            <Field orientation="horizontal" className="min-h-11">
-              <FieldContent>
-                <FieldTitle>{o.label}</FieldTitle>
-              </FieldContent>
-              <RadioGroupItem value={o.value} id={`${id}-${o.value}`} />
-            </Field>
-          </FieldLabel>
-        ))}
-      </RadioGroup>
-      <Button
-        type="button"
-        variant="ghost"
-        className="self-start"
-        onClick={() => onChange(null)}
-        disabled={value === null}
-      >
-        {t('checkup.skip')}
-      </Button>
-    </FieldSet>
-  );
-}
-
 export function CheckupPage() {
   const { t, i18n } = useTranslation();
   const { text } = useContent();
   const navigate = useNavigate();
   const [submit, { isLoading, error }] = useSubmitCheckupMutation();
   const [key] = useState(() => crypto.randomUUID());
+  // One Tier 2 event per check-up, however often item 9 changes (FR-13).
+  const [safetyEventId] = useState(() => crypto.randomUUID());
   const [startedAt] = useState(() => new Date().toISOString());
   const [answers, setAnswers] = useState<Answers>(EMPTY);
   const [raw, setRaw] = useState<Partial<Record<NumberKey, string>>>({});
+  const [wellness, setWellness] = useState(WELLNESS_START);
+  const [safetyOpen, setSafetyOpen] = useState(false);
 
   const { data: me } = useMeQuery();
   const { data: profile } = useParticipantProfileQuery();
+  const { data: liveConsents, error: consentError } = useConsentsQuery();
+  const { data: consents } = useCached(me ? `consents:${me.id}` : null, liveConsents, consentError);
+  const wellnessOffered = consents?.mental_wellness === true;
+  const wellnessAnswers = (): CheckupAnswers['wellness'] =>
+    wellnessOffered && (wellness.mode === 'answering' || wellness.mode === 'stopped')
+      ? { phq9: wellness.phq9, gad7: wellness.gad7 }
+      : 'declined';
+  /** Item 9 above 0: show the safety screen first, then keep the event encrypted and send it (FR-11, FR-41). */
+  const onItem9Risk = () => {
+    setSafetyOpen(true);
+    window.scrollTo({ top: 0 });
+    if (me) void queueSafetyEvent(me.id, safetyEventId);
+  };
   const [provisional, setProvisional] = useState<Assessment | null>(null);
   const [localIssues, setLocalIssues] = useState<Array<[string, string]>>([]);
   const issues = new Map([
@@ -235,7 +201,11 @@ export function CheckupPage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const body: CheckupSubmission = { language: i18n.language === 'rw' ? 'rw' : 'en', startedAt, answers };
+    const body: CheckupSubmission = {
+      language: i18n.language === 'rw' ? 'rw' : 'en',
+      startedAt,
+      answers: { ...answers, wellness: wellnessAnswers() },
+    };
     if (!navigator.onLine) {
       await saveOffline(body);
       return;
@@ -248,6 +218,20 @@ export function CheckupPage() {
       await saveOffline(body);
     }
   };
+
+  if (safetyOpen) {
+    return (
+      <div className="flex flex-col gap-6">
+        <SafetyScreen
+          onStop={() => {
+            setWellness({ ...wellness, mode: 'stopped' });
+            setSafetyOpen(false);
+          }}
+          onContinue={() => setSafetyOpen(false)}
+        />
+      </div>
+    );
+  }
 
   if (provisional) {
     return (
@@ -349,7 +333,10 @@ export function CheckupPage() {
         </div>
       </Section>
 
-      <FieldDescription>{t('checkup.mentalWellnessLater')}</FieldDescription>
+      {wellnessOffered ? (
+        <WellnessSection state={wellness} onChange={setWellness} onItem9Risk={onItem9Risk} />
+      ) : null}
+
       {error && errorCode(error) !== 'VALIDATION_FAILED' ? <ApiError error={error} /> : null}
       {issues.size > 0 ? (
         <Alert role="alert">
