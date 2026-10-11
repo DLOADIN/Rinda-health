@@ -3,7 +3,7 @@
 // the sidebar opens as a sheet. Participants also get Exit and a floating Get help now (FR-06, FR-12, FR-42).
 import type { Me, Role } from '@rinda/schemas';
 import { CirclePlus, CloudUpload, DoorOpen, EllipsisVertical, LogOut, UserRound } from 'lucide-react';
-import { lazy, Suspense, useCallback, useEffect, useState, type CSSProperties } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router';
@@ -44,7 +44,15 @@ import { HomePage } from '@/features/dashboard/home-page';
 import { NAV, type NavItem } from '@/features/dashboard/nav';
 import { ProfilePage } from '@/features/profile/profile-page';
 import { UpdatePrompt } from '@/features/sync/update-prompt';
-import { api, errorCode, useLogoutMutation, useMeQuery, useUpdateMeMutation } from '@/lib/api';
+import {
+  api,
+  errorCode,
+  useConsentsQuery,
+  useLogoutMutation,
+  useMeQuery,
+  useUpdateMeMutation,
+} from '@/lib/api';
+import { useCached } from '@/lib/use-cached';
 import { displayNameOf, initialsOf } from '@/lib/me';
 import { flushOutbox, useOutbox, useOutboxSync } from '@/lib/offline';
 import { clearPersonalCache, readSecret, saveSecret } from '@/lib/storage/vault';
@@ -53,6 +61,29 @@ import { Badge } from '@/components/ui/badge';
 const ParticipantRoutes = lazy(() => import('@/features/participant/participant-routes'));
 // Staff screens are one chunk, excluded from the offline precache (ADR-009).
 const StaffRoutes = lazy(() => import('@/features/staff/staff-routes'));
+const ConsentPage = lazy(() =>
+  import('@/features/consent/consent-page').then((m) => ({ default: m.ConsentPage })),
+);
+
+/**
+ * Participants see the purpose, age check and consent choices before any health question (FR-01, FR-02). Offline,
+ * the last known answer is used so the app keeps working; Get help now and Exit stay on screen throughout.
+ */
+function ConsentGate({ me, children }: { me: Me; children: ReactNode }) {
+  const { t } = useTranslation();
+  const isParticipant = me.role === 'participant';
+  const { data: live, error } = useConsentsQuery(undefined, { skip: !isParticipant });
+  const { data } = useCached(isParticipant ? `consents:${me.id}` : null, live, error);
+  if (!isParticipant) return children;
+  if (!data) {
+    return error ? (
+      <p className="mx-auto max-w-prose text-center text-muted-foreground">{t('consent.needConnection')}</p>
+    ) : (
+      <Spinner className="mx-auto" />
+    );
+  }
+  return data.decided && data.core ? children : <ConsentPage />;
+}
 
 /** The highlighted action at the top of each role's menu, like Badget's "Quick create". */
 const QUICK_ACTION: Record<Role, { to: string; labelKey: string }> = {
@@ -314,14 +345,16 @@ function Shell({ me }: { me: Me }) {
           <OfflineBadge />
           {pathname.startsWith('/app/checkup') ? null : <UpdatePrompt />}
           <Suspense fallback={<Spinner className="mx-auto" />}>
-            <Routes>
-              <Route index element={<HomePage me={me} />} />
-              <Route path="profile" element={<ProfilePage me={me} onSignOut={() => void signOut()} />} />
-              <Route
-                path="*"
-                element={isParticipant ? <ParticipantRoutes /> : <StaffRoutes role={me.role} />}
-              />
-            </Routes>
+            <ConsentGate me={me}>
+              <Routes>
+                <Route index element={<HomePage me={me} />} />
+                <Route path="profile" element={<ProfilePage me={me} onSignOut={() => void signOut()} />} />
+                <Route
+                  path="*"
+                  element={isParticipant ? <ParticipantRoutes /> : <StaffRoutes role={me.role} />}
+                />
+              </Routes>
+            </ConsentGate>
           </Suspense>
         </main>
       </SidebarInset>
