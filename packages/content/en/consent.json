@@ -1,0 +1,24 @@
+{
+  "contentType": "consent_doc",
+  "key": "consent",
+  "version": "0.1.0",
+  "language": "en",
+  "status": "draft",
+  "reviewers": ["supervisor", "researcher_admin", "language"],
+  "entries": {
+    "consent.title": "Before you start",
+    "consent.purpose.ack": "I understand that Rinda is for learning about my health. It is not a diagnosis and not an emergency service.",
+    "consent.age.question": "Are you between 18 and 35 years old?",
+    "consent.age.ineligible": "Thank you for your interest. This study is only for people aged 18 to 35, so you cannot continue. If you need health support, these services can help.",
+    "consent.choices.intro": "Choose what you agree to. Each choice is separate, and nothing is chosen for you.",
+    "consent.core.label": "I agree to take part in the Rinda Health study",
+    "consent.core.body": "Your answers and results are stored securely and used without your name for the study. You can withdraw and ask for your data to be deleted at any time.",
+    "consent.core.required": "You need to agree to take part to use Rinda.",
+    "consent.mental_wellness.label": "I agree to answer the optional mood and stress questions",
+    "consent.mental_wellness.body": "You can still skip any question. If you do not agree, these questions are not shown.",
+    "consent.audio.label": "I agree to the study interview being audio recorded",
+    "consent.audio.body": "Only the study team listens to it. The Rinda app itself never records you.",
+    "consent.follow_up.label": "I agree to be contacted later about the study",
+    "consent.follow_up.body": "Only through the email or phone number on this account."
+  }
+}

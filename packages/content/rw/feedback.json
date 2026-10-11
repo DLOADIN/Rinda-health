@@ -1,0 +1,28 @@
+{
+  "contentType": "feedback_form",
+  "key": "feedback-sus",
+  "version": "0.1.0",
+  "language": "rw",
+  "status": "draft",
+  "reviewers": ["supervisor", "researcher_admin", "language"],
+  "entries": {
+    "sus.title": "Gukoresha Rinda byakugendekeye bite?",
+    "sus.intro": "Tubwire uko byari byoroshye gukoresha Rinda. Hitamo uko wemera buri nteruro. Ushobora gusimbuka iyo ari yo yose.",
+    "sus.1": "Ndatekereza ko nakwifuza gukoresha Rinda kenshi.",
+    "sus.2": "Nasanze Rinda igoye kurusha uko byari bikwiye.",
+    "sus.3": "Natekereje ko Rinda yoroshye gukoresha.",
+    "sus.4": "Ndatekereza ko nakenera ubufasha bw'umuhanga mu ikoranabuhanga kugira ngo nkoreshe Rinda.",
+    "sus.5": "Nasanze ibice bitandukanye bya Rinda bikorana neza.",
+    "sus.6": "Natekereje ko muri Rinda harimo ibintu byinshi bidahuye.",
+    "sus.7": "Ndatekereza ko abantu benshi bamenya gukoresha Rinda vuba cyane.",
+    "sus.8": "Nasanze Rinda igoye cyane gukoresha.",
+    "sus.9": "Nagize icyizere cyinshi mu gukoresha Rinda.",
+    "sus.10": "Nagombye kwiga ibintu byinshi mbere yo gutangira gukoresha Rinda.",
+    "sus.scale.1": "Simbyemera na gato",
+    "sus.scale.2": "Simbyemera",
+    "sus.scale.3": "Nta ruhande mbogamiyeho",
+    "sus.scale.4": "Ndabyemera",
+    "sus.scale.5": "Ndabyemera cyane",
+    "sus.thanks": "Murakoze. Ibisubizo byanyu bidufasha kunoza Rinda."
+  }
+}

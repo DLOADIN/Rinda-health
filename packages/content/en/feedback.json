@@ -1,0 +1,28 @@
+{
+  "contentType": "feedback_form",
+  "key": "feedback-sus",
+  "version": "0.1.0",
+  "language": "en",
+  "status": "draft",
+  "reviewers": ["supervisor", "researcher_admin", "language"],
+  "entries": {
+    "sus.title": "How was using Rinda?",
+    "sus.intro": "Tell us how easy Rinda was to use. Choose how much you agree with each sentence. You can skip any of them.",
+    "sus.1": "I think that I would like to use Rinda often.",
+    "sus.2": "I found Rinda more complicated than it needed to be.",
+    "sus.3": "I thought Rinda was easy to use.",
+    "sus.4": "I think that I would need help from a technical person to be able to use Rinda.",
+    "sus.5": "I found the different parts of Rinda worked well together.",
+    "sus.6": "I thought there were too many things in Rinda that did not fit together.",
+    "sus.7": "I imagine that most people would learn to use Rinda very quickly.",
+    "sus.8": "I found Rinda very awkward to use.",
+    "sus.9": "I felt very confident using Rinda.",
+    "sus.10": "I needed to learn a lot of things before I could get going with Rinda.",
+    "sus.scale.1": "Strongly disagree",
+    "sus.scale.2": "Disagree",
+    "sus.scale.3": "Neither agree nor disagree",
+    "sus.scale.4": "Agree",
+    "sus.scale.5": "Strongly agree",
+    "sus.thanks": "Thank you. Your answers help make Rinda better."
+  }
+}

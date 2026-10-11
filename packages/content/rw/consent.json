@@ -1,0 +1,24 @@
+{
+  "contentType": "consent_doc",
+  "key": "consent",
+  "version": "0.1.0",
+  "language": "rw",
+  "status": "draft",
+  "reviewers": ["supervisor", "researcher_admin", "language"],
+  "entries": {
+    "consent.title": "Mbere yo gutangira",
+    "consent.purpose.ack": "Ndumva ko Rinda ari iyo kumenya ibijyanye n'ubuzima bwanjye. Si isuzuma rya muganga kandi si serivisi y'ubutabazi bwihuse.",
+    "consent.age.question": "Ufite hagati y’imyaka 18 na 35?",
+    "consent.age.ineligible": "Murakoze ku bw'ubushake bwanyu. Ubu bushakashatsi ni ubw'abantu bafite hagati y'imyaka 18 na 35 gusa, bityo ntushobora gukomeza. Niba ukeneye ubufasha mu by'ubuzima, izi serivisi zirashobora kugufasha.",
+    "consent.choices.intro": "Hitamo ibyo wemera. Buri cyemezo kirihariye, kandi nta na kimwe twaguhitiyemo.",
+    "consent.core.label": "Nemeye kwitabira ubushakashatsi bwa Rinda Health",
+    "consent.core.body": "Ibisubizo byawe bibikwa neza kandi bikoreshwa mu bushakashatsi nta zina ryawe. Ushobora kuva mu bushakashatsi no gusaba ko amakuru yawe asibwa igihe icyo ari cyo cyose.",
+    "consent.core.required": "Ugomba kwemera kwitabira kugira ngo ukoreshe Rinda.",
+    "consent.mental_wellness.label": "Nemeye gusubiza ibibazo by'imitekerereze n'umunaniro bitari itegeko",
+    "consent.mental_wellness.body": "Ushobora gusimbuka ikibazo icyo ari cyo cyose. Nutabyemera, ibi bibazo ntibizerekanwa.",
+    "consent.audio.label": "Nemeye ko ikiganiro cy'ubushakashatsi gifatwa amajwi",
+    "consent.audio.body": "Itsinda ry'ubushakashatsi ni ryo ryonyine ribyumva. Porogaramu ya Rinda ntijya ifata amajwi yawe.",
+    "consent.follow_up.label": "Nemeye ko bazongera kumvugisha nyuma ku byerekeye ubushakashatsi",
+    "consent.follow_up.body": "Binyuze gusa kuri imeri cyangwa nimero ya telefoni iri kuri iyi konti."
+  }
+}
