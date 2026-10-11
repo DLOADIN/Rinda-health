@@ -17,10 +17,13 @@ import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
+import { useContent } from '@/lib/content';
 import { useInstallPrompt } from '@/lib/install';
 import {
   useChangePasswordMutation,
   useDeletionStatusQuery,
+  useChangeConsentMutation,
+  useConsentsQuery,
   useEmailReportsQuery,
   useSetEmailReportsMutation,
   useAiOptInQuery,
@@ -377,6 +380,41 @@ function InstallCard() {
   );
 }
 
+const OPTIONAL_CONSENTS = ['mental_wellness', 'audio', 'follow_up'] as const;
+
+function ConsentsCard() {
+  const { t } = useTranslation();
+  const { text } = useContent();
+  const { data } = useConsentsQuery();
+  const [change, { isLoading, error }] = useChangeConsentMutation();
+  return (
+    <Card className="glass">
+      <CardHeader>
+        <CardTitle className="text-xl">{t('profile.consentsTitle')}</CardTitle>
+        <CardDescription>{t('profile.consentsBody')}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {OPTIONAL_CONSENTS.map((scope) => (
+          <Field key={scope} orientation="horizontal" className="min-h-11 justify-between">
+            <FieldLabel htmlFor={`consent-${scope}`}>{text(`consent.${scope}.label`)}</FieldLabel>
+            <Switch
+              id={`consent-${scope}`}
+              checked={data?.[scope] ?? false}
+              disabled={!data || isLoading}
+              onCheckedChange={(granted) =>
+                void change({ scope, granted }).then((r) =>
+                  !('error' in r) ? toast.success(t('profile.consentSaved')) : undefined,
+                )
+              }
+            />
+          </Field>
+        ))}
+        <ApiError error={error} />
+      </CardContent>
+    </Card>
+  );
+}
+
 function DeletionCard() {
   const { t } = useTranslation();
   const { data } = useDeletionStatusQuery();
@@ -392,7 +430,8 @@ function DeletionCard() {
         {pending && data ? (
           <Alert>
             <AlertDescription>
-              {t('profile.deleteRequested', { date: formatDate(data.requestedAt) })}
+              {t('profile.deleteRequested', { date: formatDate(data.requestedAt) })}{' '}
+              {t('profile.deleteDue', { date: formatDate(data.dueAt, true) })}
             </AlertDescription>
           </Alert>
         ) : (
@@ -427,6 +466,7 @@ export function ProfilePage({ me, onSignOut }: { me: Me; onSignOut: () => void }
         <DetailsCard me={me} />
         {isParticipant ? <AboutMeCard /> : null}
         <PasswordCard me={me} />
+        {isParticipant ? <ConsentsCard /> : null}
         {isParticipant ? <EmailReportsCard /> : null}
         {isParticipant ? <AiCard /> : null}
         <InstallCard />
