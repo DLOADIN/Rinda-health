@@ -1,4 +1,3 @@
-// Feature flags (FR-50; docs/FEATURES.md "Pilot profile"). GET /api/v1/flags returns only these booleans.
 import { z } from 'zod';
 
 export const FLAG_KEYS = [

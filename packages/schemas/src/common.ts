@@ -8,7 +8,6 @@ export const Domain = z.enum(DOMAINS);
 export const NcdDomain = z.enum(NCD_DOMAINS);
 export const Severity = z.enum(SEVERITIES);
 
-/** Unambiguous characters only (no 0/O, 1/I/L): FR-26. Synthetic codes start with DEMO- (docs/TESTING.md). */
 export const STUDY_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 export const StudyCode = z
   .string()
@@ -18,7 +17,6 @@ export const StudyCode = z
 
 export const Pin = z.string().regex(/^\d{4,6}$/, 'PIN is 4 to 6 digits');
 
-/** Option codes are short machine codes, never display text, so no free text can reach the server (C-06). */
 export const OptionCode = z.string().regex(/^[a-z0-9_]{1,40}$/);
 
 export const ErrorCode = z.enum([
@@ -41,7 +39,6 @@ export const ErrorCode = z.enum([
 ]);
 export type ErrorCode = z.infer<typeof ErrorCode>;
 
-/** Error envelope. `message` is plain words and never echoes a submitted value. */
 export const ErrorResponse = z.strictObject({
   error: z.strictObject({
     code: ErrorCode,

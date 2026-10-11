@@ -1,5 +1,3 @@
-// Builds a full AssessmentInput from the flat golden-case format. Absent keys are SKIPPED, null is SKIPPED,
-// and a Missingness code string is that code.
 import { RULESET_V1 } from '@rinda/content';
 import type { Answer, AssessmentInput, Missingness, Sex } from '../src/index.ts';
 

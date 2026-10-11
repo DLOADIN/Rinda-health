@@ -1,6 +1,4 @@
-// The optional mental-wellness module as scoring input (FR-05, FR-22). Shared by the phone and the server so both
-// treat a declined module and a skipped item the same way: declined is MODULE_DECLINED, a skipped item is SKIPPED,
-// and neither is ever counted as 0.
+// This turns the mood and stress answers into scoring input. Declined or skipped never becomes 0.
 import type { Answer, Ruleset } from './types.ts';
 
 export type WellnessForm =
@@ -27,10 +25,6 @@ export function wellnessInput(
   return { phq9: items(form.phq9, phqItems), gad7: items(form.gad7, gadItems) };
 }
 
-/**
- * System Usability Scale score, 0 to 100 (Brooke, 1996). Odd items count (answer − 1), even items (5 − answer),
- * and the sum is multiplied by 2.5. A form with any item skipped has no score.
- */
 export function susScore(items: ReadonlyArray<number | null | undefined>): number | null {
   if (items.length !== 10 || items.some((v) => v === null || v === undefined)) return null;
   const sum = (items as number[]).reduce((s, v, i) => s + (i % 2 === 0 ? v - 1 : 5 - v), 0);

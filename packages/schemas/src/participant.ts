@@ -1,4 +1,3 @@
-// Participant payloads: sign-in, profile, consents (FR-02, FR-03, FR-21, FR-44).
 import { z } from 'zod';
 import { Language, Pin, Sex, StudyCode } from './common.ts';
 
@@ -36,6 +35,5 @@ export const ConsentEventRequest = z.strictObject({
   language: Language,
 });
 
-/** One event per scope; an earlier event is never edited (FR-02, FR-44). */
 export const ConsentsRequest = z.strictObject({ events: z.array(ConsentEventRequest).min(1).max(5) });
 export type ConsentsRequest = z.infer<typeof ConsentsRequest>;

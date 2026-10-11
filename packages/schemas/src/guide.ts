@@ -1,4 +1,3 @@
-// Rinda Guide payloads (FR-36, docs/AI_GUIDE.md). Chips only, no text box (C-06).
 import { NCD_DOMAINS } from '@rinda/rules';
 import { z } from 'zod';
 import { Language } from './common.ts';
@@ -21,7 +20,6 @@ export const GuideExplainRequest = z.strictObject({
   language: Language,
 });
 
-/** Hand-written JSON Schema for structured output: every object needs additionalProperties: false. */
 export const GUIDE_ANSWER_JSON_SCHEMA = {
   type: 'object',
   properties: {
@@ -40,7 +38,6 @@ export const GUIDE_ANSWER_JSON_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-/** Zod twin for runtime checks the JSON Schema cannot express (lengths, counts). */
 export const GuideAnswer = z.strictObject({
   paragraphs: z
     .array(z.strictObject({ text: z.string().max(600), sourceIds: z.array(z.string()).min(1) }))

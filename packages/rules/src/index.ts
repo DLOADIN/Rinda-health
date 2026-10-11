@@ -1,5 +1,3 @@
-// @rinda/rules: deterministic scoring, safety checks, planner and simulator.
-// Pure TypeScript with no runtime dependencies; the same code runs in the browser and the API (FR-09).
 export * from './types.ts';
 export { bmiTimesTen, isValue, scoreAssessment, scoreDomain } from './score.ts';
 export { assessSafety, checkItem9, type Item9Check, type SafetyAssessment } from './safety.ts';

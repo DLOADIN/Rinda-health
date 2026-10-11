@@ -1,4 +1,3 @@
-// Zod schema for a ruleset body. Every ruleset is validated before the web app or the API uses it.
 import type { Ruleset } from '@rinda/rules';
 import { z } from 'zod';
 
@@ -94,7 +93,6 @@ export const RulesetSchema = z.strictObject({
 
 export type RulesetBody = z.infer<typeof RulesetSchema>;
 
-/** Parses a ruleset body and checks that every band the rules can produce has a severity. */
 export function parseRuleset(body: unknown): Ruleset & Pick<RulesetBody, 'status'> {
   const parsed = RulesetSchema.parse(body);
   const d = parsed.domains;

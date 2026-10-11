@@ -4,7 +4,6 @@ import type { MeasurementType, Ruleset } from './types.ts';
 export type ValidationIssue =
   'out_of_range' | 'height_in_metres' | 'weight_check' | 'systolic_not_above_diastolic';
 
-/** Returns null when the value is accepted, otherwise a code the UI turns into a plain message. */
 export function validateMeasurement(
   type: MeasurementType,
   value: number,
@@ -33,7 +32,6 @@ export interface MeasurementInput {
   diastolic?: number;
 }
 
-/** Soft checks: ask the person to re-check a reading, never block a value inside the validation range. */
 export function checkPlausibility(m: MeasurementInput, ruleset: Ruleset): PlausibilityFlag[] {
   const p = ruleset.plausibility;
   const flags: PlausibilityFlag[] = [];

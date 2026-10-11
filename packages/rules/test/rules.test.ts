@@ -1,4 +1,3 @@
-// Unit tests for the branches the golden fixtures do not reach (NFR-11: 100% branch coverage).
 import { describe, expect, it } from 'vitest';
 import {
   assessSafety,

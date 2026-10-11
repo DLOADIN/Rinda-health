@@ -1,6 +1,3 @@
-// Shapes shared by every rule. Thresholds never live here: they come from the ruleset JSON
-// (packages/content/rulesets), so a threshold change is a new ruleset version (ADR-003).
-
 export type Sex = 'female' | 'male' | 'not_stated';
 export type Missingness = 'SKIPPED' | 'MODULE_DECLINED' | 'DONT_KNOW' | 'NOT_APPLICABLE';
 export type Answer<T> = { value: T } | { missing: Missingness };
@@ -21,15 +18,12 @@ export const INSUFFICIENT = 'insufficient';
 export interface AssessmentInput {
   sex: Sex;
   tobaccoUse: Answer<boolean>;
-  /** As you may be able to see here is that the AUDIT-C items is from 1 to 3, each 0 to 4. */
   auditC: readonly [Answer<number>, Answer<number>, Answer<number>];
   activity: { moderateMinutes: Answer<number>; vigorousMinutes: Answer<number> };
   diet: { servingsPerDay: Answer<number>; addsSaltAtTable: Answer<boolean> };
   body: { heightCm: Answer<number>; weightKg: Answer<number>; waistCm: Answer<number> };
   bp: { systolic: Answer<number>; diastolic: Answer<number> };
-  /** PHQ-9 items in order (8 items when the ruleset uses the PHQ-8 variant). Declined module: every item MODULE_DECLINED. */
   phq9: readonly Answer<number>[];
-  /** GAD-7 items in order. */
   gad7: readonly Answer<number>[];
 }
 
@@ -37,7 +31,6 @@ export interface DomainResult {
   domain: Domain;
   band: string;
   severity: Severity;
-  /** The scored value when the domain has one (BMI, total, minutes); null otherwise. */
   value: number | null;
   completeness: Completeness;
   contributingFactors: string[];
@@ -64,10 +57,8 @@ export interface Ruleset {
     alcohol: { ruleId: string; source: string; attentionAt: Record<Sex, number> };
     activity: { ruleId: string; source: string; vigorousMultiplier: number; meetsAt: number };
     diet: { ruleId: string; source: string; meetsAt: number };
-    /** BMI cut-offs are stored ×10 so banding is integer-only (SCORING_RULES.md Section 4). */
     bmi: { ruleId: string; source: string; bandsX10: BandFrom[] };
     waist: { ruleId: string; source: string; bands: Record<Sex, BandFrom[]> };
-    /** Ordered least to most severe; a reading takes the highest band either value reaches. */
     bp: {
       ruleId: string;
       source: string;

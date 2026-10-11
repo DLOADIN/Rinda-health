@@ -1,3 +1,4 @@
+// This is where every result is worked out. Pure functions only, so the phone and the server always agree.
 import {
   INSUFFICIENT,
   type Answer,
@@ -12,12 +13,10 @@ import {
 
 export const isValue = <T>(answer: Answer<T>): answer is { value: T } => 'value' in answer;
 
-/** Completeness of a domain that could not be scored: some inputs given, or none. */
 function missingCompleteness(answers: readonly Answer<unknown>[]): Exclude<Completeness, 'complete'> {
   return answers.some(isValue) ? 'partial' : 'none';
 }
 
-/** Index of the highest band whose minimum the value reaches. Bands are ordered least to most. */
 function bandIndex<T>(bands: readonly T[], reaches: (band: T) => boolean): number {
   const index = bands.reduce((found, band, i) => (reaches(band) ? i : found), -1);
   if (index === -1) throw new RangeError('Value is below the lowest band in the ruleset');
@@ -59,10 +58,6 @@ function result(
 const insufficient = (domain: Domain, completeness: Completeness, ruleset: Ruleset): DomainResult =>
   result(domain, INSUFFICIENT, null, completeness, [], ruleset);
 
-/**
- * BMI × 10, rounded half up, using integers only (docs/SCORING_RULES.md Section 4).
- * Weight and height are taken to 0.1 kg and 0.1 cm, as entered.
- */
 export function bmiTimesTen(heightCm: number, weightKg: number): number {
   const w10 = Math.round(weightKg * 10);
   const h10 = Math.round(heightCm * 10);
@@ -81,7 +76,6 @@ function scoreAlcohol(input: AssessmentInput, ruleset: Ruleset): DomainResult {
   const [item1, item2, item3] = input.auditC;
   let total: number;
   if (isValue(item1) && item1.value === 0) {
-    // "Never" drinks: total is 0 and items 2 and 3 are NOT_APPLICABLE.
     total = 0;
   } else if (isValue(item1) && isValue(item2) && isValue(item3)) {
     total = item1.value + item2.value + item3.value;
@@ -117,7 +111,6 @@ function scoreActivity(input: AssessmentInput, ruleset: Ruleset): DomainResult {
 function scoreDiet(input: AssessmentInput, ruleset: Ruleset): DomainResult {
   const { servingsPerDay, addsSaltAtTable } = input.diet;
   if (!isValue(servingsPerDay)) return insufficient('diet', 'none', ruleset);
-  // Salt is an information flag only, never a band.
   const factors = isValue(addsSaltAtTable) && addsSaltAtTable.value ? ['adds_salt_at_table'] : [];
   return servingsPerDay.value >= ruleset.domains.diet.meetsAt
     ? result('diet', 'meets', servingsPerDay.value, 'complete', factors, ruleset)
@@ -200,7 +193,6 @@ export function scoreDomain(domain: Domain, input: AssessmentInput, ruleset: Rul
   return SCORERS[domain](input, ruleset);
 }
 
-/** Scores every domain separately. NCD and mental-wellness results are never combined (C-04). */
 export function scoreAssessment(input: AssessmentInput, ruleset: Ruleset): AssessmentResult {
   return {
     rulesetVersion: ruleset.version,

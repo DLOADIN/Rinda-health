@@ -1,6 +1,3 @@
-// Rinda Guide template composer (FR-33, FR-36, docs/AI_GUIDE.md). Pure: builds each chip's answer from approved
-// content templates and the planner's output, so it runs offline in the browser and is the fallback for the AI.
-// It looks at NCD results only; mental-wellness results never enter the guide (C-04).
 import type { Plan, PlanTarget } from './plan.ts';
 import { NCD_DOMAINS, type AssessmentResult, type DomainResult, type NcdDomain } from './types.ts';
 
@@ -12,7 +9,6 @@ export interface GuideDraft {
   paragraphs: GuideParagraph[];
   followUpChipIds: string[];
 }
-/** Looks up approved text by content ID in the reader's language. */
 export type TextLookup = (id: string) => string;
 
 const VALUE_DOMAINS: readonly NcdDomain[] = ['activity', 'diet', 'bmi', 'waist', 'alcohol'];
@@ -42,7 +38,6 @@ export function composeGuideAnswer(
   const step = (target: PlanTarget) => t(`guide.target.${target.kind}`, { ...target });
   const paragraphs: GuideParagraph[] = [];
 
-  // A seek-care-today result always comes first, in approved safety wording only.
   if (plan.urgent) paragraphs.push({ text: t(plan.urgent.contentId), sourceIds: [plan.urgent.contentId] });
 
   const focusLine = (f: Plan['focus'][number]): GuideParagraph => {
@@ -104,7 +99,6 @@ export function composeGuideAnswer(
     return { paragraphs, followUpChipIds: ['first_step', 'overview'] };
   }
 
-  // Overview (also the answer for any chip the composer does not know).
   const lines = result.ncd.map((r) => t('guide.tpl.area', { area: area(r.domain), band: t(bandId(r)) }));
   paragraphs.push({
     text: [t('guide.tpl.overview.intro'), ...lines].join(' '),
@@ -123,7 +117,6 @@ export function composeGuideAnswer(
   return { paragraphs, followUpChipIds: ['first_step', 'plan_week'] };
 }
 
-/** Every number the guide may mention: values, plan targets, ruleset targets (`extra`) and template numbers. */
 export function allowedNumbers(
   result: AssessmentResult,
   plan: Plan,

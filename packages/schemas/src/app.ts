@@ -1,4 +1,3 @@
-// Request and response shapes for accounts, dashboards and CRUD (SRS v1.4, ADR-016). Shared by frontend and backend.
 import { z } from 'zod';
 import { Language, Sex } from './common.ts';
 import { SafetyAction } from './safety.ts';
@@ -8,7 +7,6 @@ export const Role = z.enum(ROLES);
 export type Role = z.infer<typeof Role>;
 export const STAFF_ROLES = ['facilitator', 'researcher_admin', 'reviewer'] as const satisfies readonly Role[];
 
-/** Turns "0788 123 456", "250788123456" or "+250788123456" into E.164 (+250788123456). Rwanda by default. */
 export function normalisePhone(raw: string): string | null {
   const digits = raw.replace(/[\s\-().]/g, '');
   let e164 = digits;
@@ -19,7 +17,6 @@ export function normalisePhone(raw: string): string | null {
 
 export type Identifier = { kind: 'email'; value: string } | { kind: 'phone'; value: string };
 
-/** An email address or a phone number, as typed on the sign-in and sign-up forms. */
 export function parseIdentifier(raw: string): Identifier | null {
   const value = raw.trim();
   if (value.includes('@')) {
@@ -97,7 +94,6 @@ export type ParticipantProfile = z.infer<typeof ParticipantProfile>;
 
 const maybe = <T extends z.ZodType>(schema: T) => schema.nullable().optional();
 
-/** A check-up as the form sends it. Null or absent means "skipped" (FR-05). Ranges are checked by @rinda/rules. */
 export const CheckupAnswers = z.strictObject({
   tobaccoUse: maybe(z.boolean()),
   auditC: z.tuple([
@@ -115,10 +111,6 @@ export const CheckupAnswers = z.strictObject({
   systolic: maybe(z.number().finite()),
   diastolic: maybe(z.number().finite()),
   measurementSource: z.enum(['in_session', 'recalled']),
-  /**
-   * The optional mental-wellness module (FR-05, FR-22). "declined" (or absent) means the module was not taken;
-   * otherwise each PHQ-9 and GAD-7 item is 0 to 3, or null when skipped (never 0 by default).
-   */
   wellness: z
     .union([
       z.literal('declined'),
@@ -132,12 +124,10 @@ export const CheckupAnswers = z.strictObject({
 export type CheckupAnswers = z.infer<typeof CheckupAnswers>;
 export type WellnessAnswers = Exclude<NonNullable<CheckupAnswers['wellness']>, 'declined'>;
 
-/** Consent scopes the participant chooses at the start (FR-02); each one is a separate, un-ticked choice. */
 export const STUDY_CONSENTS = ['core', 'mental_wellness', 'audio', 'follow_up'] as const;
 export const StudyConsent = z.enum(STUDY_CONSENTS);
 export type StudyConsent = z.infer<typeof StudyConsent>;
 
-/** First visit: purpose acknowledged, age confirmed (18 to 35) and the four consent choices (FR-01, FR-02). */
 export const ConsentSubmission = z.strictObject({
   purposeAcknowledged: z.literal(true),
   ageConfirmed: z.literal(true),
@@ -151,14 +141,12 @@ export const ConsentSubmission = z.strictObject({
 });
 export type ConsentSubmission = z.infer<typeof ConsentSubmission>;
 
-/** Changing one optional consent later (FR-44); core consent is withdrawn through a deletion request. */
 export const ConsentChange = z.strictObject({
   scope: z.enum(['mental_wellness', 'audio', 'follow_up']),
   granted: z.boolean(),
 });
 export type ConsentChange = z.infer<typeof ConsentChange>;
 
-/** System Usability Scale after the session (FR-17): ten items, 1 to 5, each skippable. */
 export const SusSubmission = z.strictObject({
   formVersion: z.literal('sus-1.0'),
   items: z.array(maybe(z.number().int().min(1).max(5))).length(10),
@@ -245,16 +233,12 @@ export const ApprovalRequest = z.strictObject({
   notes: z.string().trim().max(500).optional(),
 });
 
-/** "Was this helpful?" for a guide answer: two buttons, no free text (AI_GUIDE.md). */
 export const GuideFeedbackRequest = z.strictObject({ requestId: z.uuid(), helpful: z.boolean() });
 
-/** Opt-in for WhatsApp notices that a check-up summary is ready. The message never contains results (ADR-020). */
-/** Opt-in for result summaries by email (consent scope email_reports, ADR-020). */
 export const EmailReportPreference = z.strictObject({ email: z.boolean() });
 export type EmailReportPreference = z.infer<typeof EmailReportPreference>;
 export const EmailReportSend = z.strictObject({ assessmentId: z.uuid() });
 export type EmailReportSend = z.infer<typeof EmailReportSend>;
 
-/** Separate opt-in for AI-written explanations (consent scope ai_explanations, ADR-019). */
 export const AiPreference = z.strictObject({ ai: z.boolean() });
 export type AiPreference = z.infer<typeof AiPreference>;

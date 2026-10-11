@@ -1,3 +1,4 @@
+// This is where the safety tiers are decided. checkItem9 must stay instant and run before anything is sent.
 import { isValue } from './score.ts';
 import type { Answer, AssessmentInput, AssessmentResult, Ruleset, WellnessDomain } from './types.ts';
 
@@ -14,10 +15,6 @@ export interface SafetyAssessment {
   promptFacilitator: boolean;
 }
 
-/**
- * Automatic tiers for a scored assessment. Tier 3 is facilitator-only and never automatic.
- * Tier 1 needs a complete PHQ-9 or GAD-7 total at or above the ruleset cut-off and no Tier 2.
- */
 export function assessSafety(
   input: AssessmentInput,
   result: AssessmentResult,

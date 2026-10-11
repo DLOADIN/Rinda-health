@@ -32,7 +32,6 @@ function apply(change: WhatIfChange, base: AssessmentInput): AssessmentInput {
     case 'tobacco':
       return { ...base, tobaccoUse: { value: change.tobaccoUse } };
     default:
-      // Weight, BMI, waist and blood pressure are deliberately not simulated.
       throw new Error(`What-if does not simulate ${(change as { domain: string }).domain}`);
   }
 }

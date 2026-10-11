@@ -1,4 +1,3 @@
-// Rinda Guide template composer: every chip, urgent results, missing data, and the numbers it may mention.
 import { BUNDLED_CONTENT } from '@rinda/content';
 import { describe, expect, it } from 'vitest';
 import {

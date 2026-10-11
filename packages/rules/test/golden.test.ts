@@ -1,5 +1,3 @@
-// Golden fixtures (FR-09, FR-25, FR-33; SRS Section 5.3; docs/SCORING_RULES.md Sections 6 and 7).
-// The same files run against the production web bundle in e2e, so client and server must agree.
 import { describe, expect, it } from 'vitest';
 import { assessSafety, planNextSteps, scoreAssessment, type Domain } from '../src/index.ts';
 import golden from './golden/v1.0.json' with { type: 'json' };
@@ -44,7 +42,6 @@ describe('planner golden fixtures v1.0', () => {
       if ('target' in f) expect(plan.focus[i]?.target).toEqual(f.target);
       if ('domains' in f) expect(plan.focus[i]?.domains).toEqual(f.domains);
     });
-    // Body-size focus areas never carry a weight target.
     plan.focus.filter((f) => f.id.startsWith('body_')).forEach((f) => expect(f.target).toBeNull());
   });
 });

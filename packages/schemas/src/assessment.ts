@@ -1,4 +1,3 @@
-// POST /api/v1/assessments (FR-07, FR-08, FR-09, FR-29). Header: Idempotency-Key (UUID v4).
 import { z } from 'zod';
 import { Domain, Language, Missingness, NcdDomain, OptionCode, Severity } from './common.ts';
 

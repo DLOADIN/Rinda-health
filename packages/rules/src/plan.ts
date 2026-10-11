@@ -1,4 +1,4 @@
-// Next-best-step planner (FR-33, docs/SCORING_RULES.md Section 7). NCD domains only (C-04).
+// This is where we pick the few areas a person should focus on first.
 import type { AssessmentResult, DomainResult, NcdDomain, Ruleset } from './types.ts';
 
 export type PlanTarget =
@@ -11,13 +11,11 @@ export interface FocusArea {
   domains: NcdDomain[];
   reasons: string[];
   recommendationId: string;
-  /** Behaviour targets only. Body-size focus areas never carry a weight target. */
   target: PlanTarget | null;
 }
 
 export interface Plan {
   rulesetVersion: string;
-  /** Seek-care-today referral shown above everything; it is not a focus area. */
   urgent: { domain: NcdDomain; contentId: string } | null;
   focus: FocusArea[];
   other: FocusArea[];

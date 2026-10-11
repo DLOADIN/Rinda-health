@@ -1,5 +1,3 @@
-// npm run content:validate — schemas, IDs, en/rw key parity and band-label coverage (FR-16, NFR-09).
-// Pass --release to also fail on any remaining TODO(content) placeholder (run before a pilot release).
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,7 +14,6 @@ const keysOf = (body: unknown): string[] => {
   return Array.isArray(entries) ? entries.map((e: { id: string }) => e.id) : Object.keys(entries as object);
 };
 
-// 1. Rulesets
 const rulesets = readdirSync(join(root, 'rulesets')).filter((f) => f.endsWith('.json'));
 const parsedRulesets = rulesets.flatMap((file) => {
   try {
@@ -27,7 +24,6 @@ const parsedRulesets = rulesets.flatMap((file) => {
   }
 });
 
-// 2. Every language file parses and has the same files and keys as English.
 const files = new Map(
   LANGUAGES.map((lang) => [lang, readdirSync(join(root, lang)).filter((f) => f.endsWith('.json'))]),
 );
@@ -68,7 +64,6 @@ for (const file of english) {
   }
 }
 
-// 3. Every band a ruleset can produce has a label in every language.
 for (const ruleset of parsedRulesets) {
   for (const lang of LANGUAGES) {
     const labels = new Set(keysOf(bodies.get(`${lang}/bands.json`) ?? { entries: {} }));

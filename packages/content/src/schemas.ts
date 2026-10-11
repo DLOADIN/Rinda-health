@@ -1,4 +1,3 @@
-// Zod schemas for content bodies (docs/CONTENT_I18N.md). IDs are stable dotted codes such as `ref.hotline.114`.
 import { z } from 'zod';
 
 export const LANGUAGES = ['en', 'rw'] as const;

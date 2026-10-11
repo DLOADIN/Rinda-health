@@ -1,4 +1,3 @@
-// Mental-wellness form to scoring input, and the System Usability Scale score.
 import { describe, expect, it } from 'vitest';
 import { susScore, wellnessInput } from '../src/index.ts';
 import { ruleset } from './helpers.ts';
