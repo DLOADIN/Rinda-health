@@ -6,6 +6,8 @@ import { ReferralList } from '@/components/referral-list';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckupPage } from '@/features/participant/checkup-page';
 import { ResultDetailPage, ResultsPage } from '@/features/participant/results-pages';
+import { SusPage } from '@/features/feedback/sus-page';
+import { HowResultsPage } from '@/features/results/how-results-page';
 
 function HelpPage() {
   const { t } = useTranslation();
@@ -28,6 +30,8 @@ export default function ParticipantRoutes() {
       <Route path="results" element={<ResultsPage />} />
       <Route path="results/:id" element={<ResultDetailPage />} />
       <Route path="help" element={<HelpPage />} />
+      <Route path="feedback" element={<SusPage />} />
+      <Route path="how-results-work" element={<HowResultsPage />} />
       <Route path="*" element={<Navigate to="/app" replace />} />
     </Routes>
   );

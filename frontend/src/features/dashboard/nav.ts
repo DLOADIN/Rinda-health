@@ -1,6 +1,7 @@
 // Sidebar menus, different for each role. Paths are under /app.
 import type { Role } from '@rinda/schemas';
 import {
+  Calculator,
   CalendarClock,
   ChartNoAxesColumn,
   ClipboardList,
@@ -8,6 +9,7 @@ import {
   FileText,
   House,
   LifeBuoy,
+  MessageSquareHeart,
   ScrollText,
   ShieldCheck,
   ToggleRight,
@@ -32,6 +34,8 @@ export const NAV: Record<Role, NavItem[]> = {
     home,
     { to: '/app/checkup', labelKey: 'nav.checkup', icon: ClipboardList },
     { to: '/app/results', labelKey: 'nav.results', icon: ChartNoAxesColumn },
+    { to: '/app/how-results-work', labelKey: 'nav.howResults', icon: Calculator },
+    { to: '/app/feedback', labelKey: 'nav.feedback', icon: MessageSquareHeart },
     { to: '/app/help', labelKey: 'nav.help', icon: LifeBuoy },
     profile,
   ],
