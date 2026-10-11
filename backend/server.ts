@@ -20,6 +20,8 @@ import {
   type SafetyAssessment,
   type MeasurementType,
   type Sex,
+  susScore,
+  wellnessInput,
 } from '@rinda/rules';
 import {
   AdminCreateUserRequest,
@@ -36,7 +38,11 @@ import {
   GuideAnswer,
   GuideExplainRequest,
   GuideFeedbackRequest,
+  ConsentChange,
+  ConsentSubmission,
   EmailReportPreference,
+  SafetyEvent,
+  SusSubmission,
   EmailReportSend,
   AiPreference,
   LoginRequest,
@@ -191,6 +197,12 @@ const SENSITIVE_KEYS = [
   'servingsPerDay',
   'moderateMinutes',
   'vigorousMinutes',
+  'wellness',
+  'phq9',
+  'gad7',
+  'items',
+  'consents',
+  'score',
 ];
 export const REDACT_PATHS = [
   'req.headers.authorization',
@@ -685,7 +697,7 @@ const escapeHtml = (s: string) =>
 
 /**
  * The report email (ADR-020), built only from approved content: each NCD area's result word, the first small step
- * and the educational notice. Mental-wellness results are never included.
+ * (with any urgent advice) and the educational notice. Mental-wellness results are never included.
  */
 export function composeReportEmail(
   language: 'en' | 'rw',
@@ -695,24 +707,66 @@ export function composeReportEmail(
 ): { subject: string; text: string; html: string } {
   const content = BUNDLED_CONTENT[language];
   const lookup = (id: string) => content.text[id] ?? id;
-  // A set: an urgent result adds the same seek-care paragraph to both summaries; show it once.
-  const body = [
-    ...new Set([
-      lookup('email.report.greeting'),
-      ...composeGuideAnswer('overview', results, plan, lookup).paragraphs.map((p) => p.text),
-      ...composeGuideAnswer('first_step', results, plan, lookup).paragraphs.map((p) => p.text),
-      lookup('email.report.disclaimer'),
-    ]),
+  const area = (domain: string) => lookup(`guide.area.${domain}`);
+  const answered = results.ncd.filter((r) => r.band !== 'insufficient');
+  const missing = results.ncd.filter((r) => r.band === 'insufficient').map((r) => area(r.domain));
+  const rowsOf = answered.map((r) => ({
+    area: area(r.domain),
+    band: lookup(`band.${r.domain}.${r.band}`),
+    r,
+  }));
+  const steps = [
+    ...new Set(composeGuideAnswer('first_step', results, plan, lookup).paragraphs.map((p) => p.text)),
   ];
+  const greeting = lookup('email.report.greeting');
+  const disclaimer = lookup('email.report.disclaimer');
   const open = lookup('email.report.open');
   const optOut = lookup('email.report.optout');
-  const text = [...body, `${open} ${link}`, optOut].join('\n\n');
+  const missingLine = missing.length ? `${lookup('band.insufficient')}: ${missing.join(', ')}` : null;
+
+  const text = [
+    greeting,
+    rowsOf.map((x) => `- ${x.area}: ${x.band}`).join('\n'),
+    missingLine,
+    ...steps,
+    disclaimer,
+    `${open}: ${link}`,
+    optOut,
+  ]
+    .filter((p): p is string => Boolean(p))
+    .join('\n\n');
+
+  // Email clients need tables and inline styles; the colours are the Rinda theme tokens (docs/design/rinda-theme.css).
+  const tone: Record<string, string> = {
+    ok: '#2F6B4F',
+    attention: '#A87C14',
+    confirm: '#C24A63',
+    urgent: '#C2330E',
+    wellness: '#B26F7E',
+    unknown: '#665C54',
+  };
+  const e = escapeHtml;
+  const row = (x: (typeof rowsOf)[number]) =>
+    `<tr><td style="padding:10px 0;border-bottom:1px solid #EBE9E1;color:#2B1D16">${e(x.area)}</td>` +
+    `<td style="padding:10px 0;border-bottom:1px solid #EBE9E1;text-align:right;font-weight:600;color:${tone[x.r.severity] ?? '#2B1D16'}">${e(x.band)}</td></tr>`;
   const html = [
-    '<div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;max-width:560px">',
-    ...body.map((p) => `<p>${escapeHtml(p)}</p>`),
-    `<p><a href="${escapeHtml(link)}">${escapeHtml(open)}</a></p>`,
-    `<p style="font-size:13px">${escapeHtml(optOut)}</p>`,
+    '<div style="background:#EBE9E1;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#2B1D16">',
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto">',
+    '<tr><td style="padding:0 4px 16px;font-size:20px;font-weight:700;color:#C2330E">Rinda Health</td></tr>',
+    '<tr><td style="background:#F7F6F3;border:1px solid #D3CEC3;border-radius:16px;padding:24px">',
+    `<p style="margin:0 0 16px;font-size:16px;line-height:1.5">${e(greeting)}</p>`,
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px">',
+    rowsOf.map(row).join(''),
+    '</table>',
+    missingLine ? `<p style="margin:12px 0 0;font-size:13px;color:#665C54">${e(missingLine)}</p>` : '',
+    '<div style="margin:20px 0 0;padding:16px;background:#FBEECD;border-radius:12px">',
+    ...steps.map((p) => `<p style="margin:0 0 8px;font-size:15px;line-height:1.5">${e(p)}</p>`),
     '</div>',
+    `<p style="margin:24px 0 0"><a href="${e(link)}" style="display:inline-block;background:#D4380F;color:#FFFFFF;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px">${e(open)}</a></p>`,
+    `<p style="margin:20px 0 0;font-size:13px;line-height:1.5;color:#665C54">${e(disclaimer)}</p>`,
+    '</td></tr>',
+    `<tr><td style="padding:16px 4px 0;font-size:12px;line-height:1.5;color:#665C54">${e(optOut)}</td></tr>`,
+    '</table></div>',
   ].join('');
   return { subject: lookup('email.report.subject'), text, html };
 }
@@ -935,11 +989,25 @@ export interface AppDeps {
 
 const ruleset = RULESET_V1;
 
+/** Personal data are deleted within 72 hours of a deletion request (FR-18, as agreed with the supervisor). */
+const DELETION_DUE_HOURS = 72;
+const CONSENT_DOC_VERSION = 'consent-0.1.0';
+
+/** The latest consent choice per scope; a scope never chosen counts as not given (FR-02, FR-44). */
+async function latestConsents(db: Db, userId: string): Promise<Record<string, boolean>> {
+  const list = await rows<{ scope: string; granted: boolean }>(
+    db,
+    `SELECT DISTINCT ON (scope) scope, granted FROM consent_events WHERE user_id = $1
+      ORDER BY scope, created_at DESC`,
+    [userId],
+  );
+  return Object.fromEntries(list.map((c) => [c.scope, c.granted]));
+}
+
 /** Converts a check-up form into the rules input. Null or absent means skipped, never 0 (FR-05). */
 function toAssessmentInput(a: CheckupSubmission['answers'], sex: Sex): AssessmentInput {
   const ans = <T>(v: T | null | undefined): Answer<T> =>
     v === null || v === undefined ? { missing: 'SKIPPED' } : { value: v };
-  const declined = (n: number) => Array.from({ length: n }, () => ({ missing: 'MODULE_DECLINED' as const }));
   return {
     sex,
     tobaccoUse: ans(a.tobaccoUse),
@@ -948,10 +1016,8 @@ function toAssessmentInput(a: CheckupSubmission['answers'], sex: Sex): Assessmen
     diet: { servingsPerDay: ans(a.servingsPerDay), addsSaltAtTable: ans(a.addsSaltAtTable) },
     body: { heightCm: ans(a.heightCm), weightKg: ans(a.weightKg), waistCm: ans(a.waistCm) },
     bp: { systolic: ans(a.systolic), diastolic: ans(a.diastolic) },
-    // The mental-wellness module is not offered yet: it needs validated Kinyarwanda PHQ-9 and GAD-7 and the
-    // item 9 safety screen (Milestone 1). Recorded as declined, never as 0.
-    phq9: declined(ruleset.domains.phq9.variant === 'PHQ-8' ? 8 : 9),
-    gad7: declined(ruleset.domains.gad7.items),
+    // The optional mental-wellness module (FR-05, FR-22): declined is MODULE_DECLINED, a skipped item SKIPPED.
+    ...wellnessInput(a.wellness, ruleset),
   };
 }
 
@@ -1464,12 +1530,20 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       res.json(toAssessment(existing));
       return;
     }
+    const consents = await latestConsents(database, userId);
+    if (!consents['core']) {
+      throw new AppError(403, 'CONSENT_REQUIRED', 'Please agree to take part before a check-up.');
+    }
     const profile = await one<{ sex: Sex }>(
       database,
       'SELECT sex FROM participant_profiles WHERE user_id = $1',
       [userId],
     );
-    const input = toAssessmentInput(body.answers, profile?.sex ?? 'not_stated');
+    // Without the mental-wellness consent the module counts as declined, whatever was sent (FR-02).
+    const answers = consents['mental_wellness']
+      ? body.answers
+      : { ...body.answers, wellness: 'declined' as const };
+    const input = toAssessmentInput(answers, profile?.sex ?? 'not_stated');
     const results = scoreAssessment(input, ruleset);
     const plan = planNextSteps(results, ruleset);
     const safety = assessSafety(input, results, ruleset);
@@ -1500,6 +1574,14 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         [userId, key.data],
       ));
     if (!row) throw new Error('assessment not stored');
+    if (inserted && safety.tier === 1) {
+      // Tier 1 (FR-13, FR-25): the result shows the supportive message and referral list. No answer or score is kept.
+      await database.query(
+        `INSERT INTO safety_events (participant_id, tier, trigger_type, actions, occurred_at, recorded_by_role)
+         VALUES ($1, 1, 'score_threshold', ARRAY['referral_list_shown'], now(), 'system')`,
+        [userId],
+      );
+    }
     res.status(inserted ? 201 : 200).json(toAssessment(row));
     if (inserted) {
       void sendReportEmail(database, config, logger, fetchFn, userId, row.id).catch(() =>
@@ -1567,10 +1649,95 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
             id: row.id,
             status: row.status,
             requestedAt: row.requested_at.toISOString(),
+            dueAt: new Date(row.requested_at.getTime() + DELETION_DUE_HOURS * 3_600_000).toISOString(),
             completedAt: row.completed_at?.toISOString() ?? null,
           }
         : null,
     );
+  });
+
+  // Consent and eligibility (FR-01, FR-02, FR-44): one event per choice, never edited.
+  participant.get('/consents', async (req, res) => {
+    const consents = await latestConsents(needDb(), me(req).id);
+    res.json({
+      decided: 'core' in consents,
+      core: consents['core'] ?? false,
+      mental_wellness: consents['mental_wellness'] ?? false,
+      audio: consents['audio'] ?? false,
+      follow_up: consents['follow_up'] ?? false,
+    });
+  });
+
+  participant.post('/consents', async (req, res) => {
+    const body = ConsentSubmission.parse(req.body);
+    await tx(needDb(), async (client) => {
+      for (const scope of ['core', 'mental_wellness', 'audio', 'follow_up'] as const) {
+        await client.query(
+          `INSERT INTO consent_events (user_id, scope, granted, consent_doc_version, language)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [me(req).id, scope, body.consents[scope], CONSENT_DOC_VERSION, body.language],
+        );
+      }
+    });
+    res.status(201).json(body.consents);
+  });
+
+  participant.put('/consents', async (req, res) => {
+    const database = needDb();
+    const body = ConsentChange.parse(req.body);
+    const user = await one<{ preferred_language: 'en' | 'rw' }>(
+      database,
+      'SELECT preferred_language FROM users WHERE id = $1',
+      [me(req).id],
+    );
+    await database.query(
+      `INSERT INTO consent_events (user_id, scope, granted, consent_doc_version, language)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [me(req).id, body.scope, body.granted, CONSENT_DOC_VERSION, user?.preferred_language ?? 'en'],
+    );
+    res.json(body);
+  });
+
+  // Item 9 safety events from the phone (FR-11, FR-13, FR-41). Generated on the phone with its own ID, so a resend
+  // after reconnecting is stored once. Only tier 2 from item 9 by the system is accepted here; no answer or score.
+  participant.post('/safety-events', async (req, res) => {
+    const body = SafetyEvent.parse(req.body);
+    if (body.tier !== 2 || body.triggerType !== 'item9' || body.recordedByRole !== 'system') {
+      throw new AppError(400, 'VALIDATION_FAILED', 'Only item 9 safety events can be sent from the app.');
+    }
+    const row = await one<{ id: string }>(
+      needDb(),
+      `INSERT INTO safety_events (id, participant_id, tier, trigger_type, actions, occurred_at, recorded_by_role)
+       VALUES ($1, $2, 2, 'item9', $3, $4, 'system') ON CONFLICT (id) DO NOTHING RETURNING id`,
+      [body.id, me(req).id, body.actions, body.occurredAt],
+    );
+    res.status(row ? 201 : 200).json({ id: body.id });
+  });
+
+  // System Usability Scale after the session (FR-17), stored per item with the form version.
+  participant.get('/feedback', async (req, res) => {
+    const row = await one<{ n: number }>(
+      needDb(),
+      "SELECT count(*)::int AS n FROM feedback_responses WHERE user_id = $1 AND form_version = 'sus-1.0'",
+      [me(req).id],
+    );
+    res.json({ submitted: (row?.n ?? 0) > 0 });
+  });
+
+  participant.post('/feedback', async (req, res) => {
+    const body = SusSubmission.parse(req.body);
+    await tx(needDb(), async (client) => {
+      const at = new Date();
+      for (const [i, value] of body.items.entries()) {
+        if (value === null || value === undefined) continue; // skipped items are simply not stored
+        await client.query(
+          `INSERT INTO feedback_responses (user_id, form_version, condition, item_code, value, created_at)
+           VALUES ($1, $2, 'post_session', $3, $4, $5)`,
+          [me(req).id, body.formVersion, `sus.${i + 1}`, value, at],
+        );
+      }
+    });
+    res.status(201).json({ score: susScore(body.items) });
   });
   mount('/api/v1/participant', participant);
 
@@ -1916,8 +2083,8 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         status: d.status,
         requestedAt: d.requested_at.toISOString(),
         completedAt: d.completed_at?.toISOString() ?? null,
-        // Due within 14 days of the request (FR-18).
-        dueAt: new Date(d.requested_at.getTime() + 14 * 86_400_000).toISOString(),
+        // Due within 72 hours of the request (FR-18).
+        dueAt: new Date(d.requested_at.getTime() + DELETION_DUE_HOURS * 3_600_000).toISOString(),
         participantLabel: maskIdentifier(d.email, d.phone),
       })),
     );
@@ -2302,6 +2469,23 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     }
 
     if (user.role === 'researcher_admin') {
+      const sus = await rows<{ user_id: string; created_at: Date; item_code: string; value: number }>(
+        database,
+        "SELECT user_id, created_at, item_code, value FROM feedback_responses WHERE form_version = 'sus-1.0'",
+      );
+      // The latest complete SUS form per person (FR-17); a form with a skipped item has no score.
+      const latestForm = new Map<string, { at: number; items: Array<number | null> }>();
+      for (const r of sus) {
+        const at = r.created_at.getTime();
+        const current = latestForm.get(r.user_id);
+        if (!current || at > current.at) latestForm.set(r.user_id, { at, items: Array(10).fill(null) });
+        const form = latestForm.get(r.user_id);
+        const index = Number(r.item_code.replace('sus.', '')) - 1;
+        if (form && form.at === at && index >= 0 && index < 10) form.items[index] = r.value;
+      }
+      const susScores = [...latestForm.values()]
+        .map((f) => susScore(f.items))
+        .filter((v): v is number => v !== null);
       const byRole = await rows<{ role: string; n: number }>(
         database,
         'SELECT role, count(*)::int AS n FROM users WHERE deleted_at IS NULL GROUP BY role ORDER BY role',
@@ -2327,6 +2511,11 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
           {
             key: 'deletions_pending',
             value: await count("SELECT count(*)::int AS n FROM deletion_requests WHERE status = 'requested'"),
+          },
+          { key: 'sus_responses', value: susScores.length },
+          {
+            key: 'sus_average',
+            value: susScores.length ? Math.round(susScores.reduce((a, b) => a + b, 0) / susScores.length) : 0,
           },
           {
             key: 'content_drafts',
