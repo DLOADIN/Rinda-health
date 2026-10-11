@@ -3,12 +3,15 @@
 import { createApi, fetchBaseQuery, type FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 import type {
   CheckupSubmission,
+  ConsentChange,
+  ConsentSubmission,
   ContentCreateRequest,
   Flags,
   Me,
   ParticipantProfile,
   Role,
   SignupRequest,
+  SusSubmission,
   UpdateMeRequest,
 } from '@rinda/schemas';
 import type { z } from 'zod';
@@ -49,6 +52,15 @@ export interface GuideResponse {
 export interface AiStatus {
   ai: boolean;
   available: boolean;
+}
+
+export interface ConsentStatus {
+  /** False until the participant has answered the consent questions once. */
+  decided: boolean;
+  core: boolean;
+  mental_wellness: boolean;
+  audio: boolean;
+  follow_up: boolean;
 }
 
 export interface EmailReportStatus {
@@ -160,6 +172,8 @@ export const api = createApi({
   baseQuery: fetchBaseQuery({ baseUrl: '/api/v1', credentials: 'same-origin' }),
   tagTypes: [
     'Me',
+    'Consents',
+    'Feedback',
     'Dashboard',
     'Assessments',
     'Profile',
@@ -227,7 +241,7 @@ export const api = createApi({
       invalidatesTags: ['Assessments', 'Dashboard'],
     }),
     deletionStatus: b.query<
-      { id: string; status: string; requestedAt: string; completedAt: string | null } | null,
+      { id: string; status: string; requestedAt: string; dueAt: string; completedAt: string | null } | null,
       void
     >({
       query: () => '/participant/deletion-requests/current',
@@ -236,6 +250,30 @@ export const api = createApi({
     requestDeletion: b.mutation<void, void>({
       query: () => ({ url: '/participant/deletion-requests', method: 'POST' }),
       invalidatesTags: ['Deletions', 'Dashboard'],
+    }),
+
+    // Consent and eligibility (FR-01, FR-02, FR-44)
+    consents: b.query<ConsentStatus, void>({
+      query: () => '/participant/consents',
+      providesTags: ['Consents'],
+    }),
+    submitConsents: b.mutation<unknown, ConsentSubmission>({
+      query: (body) => ({ url: '/participant/consents', method: 'POST', body }),
+      invalidatesTags: ['Consents'],
+    }),
+    changeConsent: b.mutation<unknown, ConsentChange>({
+      query: (body) => ({ url: '/participant/consents', method: 'PUT', body }),
+      invalidatesTags: ['Consents'],
+    }),
+
+    // System Usability Scale (FR-17)
+    feedbackStatus: b.query<{ submitted: boolean }, void>({
+      query: () => '/participant/feedback',
+      providesTags: ['Feedback'],
+    }),
+    submitFeedback: b.mutation<{ score: number | null }, SusSubmission>({
+      query: (body) => ({ url: '/participant/feedback', method: 'POST', body }),
+      invalidatesTags: ['Feedback', 'Dashboard'],
     }),
 
     // Rinda Guide and email reports
@@ -397,6 +435,11 @@ export const {
   useSubmitCheckupMutation,
   useDeleteAssessmentMutation,
   useDeletionStatusQuery,
+  useConsentsQuery,
+  useSubmitConsentsMutation,
+  useChangeConsentMutation,
+  useFeedbackStatusQuery,
+  useSubmitFeedbackMutation,
   useRequestDeletionMutation,
   useExplainMutation,
   useGuideFeedbackMutation,
