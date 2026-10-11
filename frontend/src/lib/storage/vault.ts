@@ -61,7 +61,9 @@ export async function removeSecret(id: string): Promise<void> {
 }
 
 /** Clears everything the signed-in person left on this phone, except items still waiting to be sent. */
-export async function clearPersonalCache(keep: readonly string[] = ['outbox']): Promise<void> {
+export async function clearPersonalCache(
+  keep: readonly string[] = ['outbox', 'safety-outbox'],
+): Promise<void> {
   if (!vaultAvailable()) return;
   const database = await db();
   for (const id of await database.getAllKeys('vault'))
