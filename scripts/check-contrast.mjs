@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-// Checks WCAG 2.2 contrast for every Rinda theme token pair (NFR-15).
-// Usage: node scripts/check-contrast.mjs [path/to/theme.css]
-// Default: frontend/src/index.css if it exists, otherwise docs/design/rinda-theme.css.
 import { existsSync, readFileSync } from 'node:fs';
 
 const file =
@@ -33,7 +30,6 @@ const ratio = (a, b) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-// [use, foreground token, background token, minimum ratio]
 const pairs = [
   ['Body text', 'foreground', 'background', 4.5],
   ['Text on cards', 'card-foreground', 'card', 4.5],

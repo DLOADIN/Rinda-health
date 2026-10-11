@@ -1,5 +1,3 @@
-// End-to-end tests on the production build with the real service worker (docs/TESTING.md).
-// `npm run test:e2e` builds first. API logs go to test-results/logs/ for the FR-15 sentinel check (npm run test:logs).
 import { mkdirSync } from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
 
@@ -23,7 +21,6 @@ export default defineConfig({
   ],
   webServer: [
     {
-      // Development mode without a database: temporary secrets, in-memory flags.
       command: 'node scripts/run-logged.mjs test-results/logs/api.log npm run start -w @rinda/backend',
       url: 'http://localhost:3000/api/v1/health',
       env: { APP_ENV: 'development', LOG_LEVEL: 'info', DATABASE_URL: '' },

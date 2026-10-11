@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-// Build-size budget (NFR-06, NFR-17) and precache rules (ADR-009). Run after `npm run build`.
-// - Initial participant JavaScript (scripts referenced by index.html and their static imports) <= 250 KB gzip.
-// - Initial download (initial JS + CSS + HTML) < 1 MB gzip.
-// - No staff, chart, guide or clinic-card chunk in the service-worker precache.
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
@@ -20,7 +16,6 @@ if (!existsSync(path.join(dist, 'index.html'))) {
 const gz = (file) => gzipSync(readFileSync(path.join(dist, file))).length;
 const html = readFileSync(path.join(dist, 'index.html'), 'utf8');
 
-// Follow static imports from the entry scripts (Rolldown emits `import ... from "./chunk.js"`).
 const initial = new Set();
 const queue = [...html.matchAll(/<script[^>]+src="\/([^"]+\.js)"/g)].map((m) => m[1]);
 while (queue.length) {

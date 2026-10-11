@@ -21,7 +21,7 @@ export default defineConfig({
           include: ['backend/**/*.test.ts'],
           exclude: ['**/node_modules/**'],
           environment: 'node',
-          testTimeout: 90_000, // database tests make many round trips to Neon
+          testTimeout: 90_000,
           hookTimeout: 60_000,
         },
       },

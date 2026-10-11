@@ -7,7 +7,7 @@ const dir = 'test-results/logs';
 
 if (!existsSync(dir)) {
   console.log(`No logs in ${dir} yet; run npm run test:e2e first.`);
-  process.exit(process.env.CI ? 1 : 0); // in CI, missing logs mean the capture broke
+  process.exit(process.env.CI ? 1 : 0);
 }
 const files = readdirSync(dir, { recursive: true })
   .map((f) => path.join(dir, String(f)))
@@ -23,11 +23,9 @@ for (const file of files) {
   readFileSync(file, 'utf8')
     .split('\n')
     .forEach((line, i) => {
-      // Ignore ISO timestamps and durations so the numeric sentinels only match values.
       const scrubbed = line
         .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+Z?/g, '')
-        .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '') // UUIDs
-        // Random request IDs are 24 hex characters; any digits inside them are not values (e.g. "...14187d4...").
+        .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '')
         .replace(/"reqId":"[0-9a-f]+"/gi, '')
         .replace(/"(time|durationMs|pid|port)":\d+/g, '');
       for (const s of SENTINELS)

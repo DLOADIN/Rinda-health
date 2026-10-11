@@ -1,5 +1,3 @@
-// FR-15 sentinel values reach the API; `npm run test:logs` then searches test-results/logs for them.
-// Milestone 1 replaces these calls with the real participant flow once sign-in and submission exist.
 import { expect, test } from '@playwright/test';
 
 const API = 'http://localhost:3000/api/v1';

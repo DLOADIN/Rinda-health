@@ -1,4 +1,3 @@
-// Milestone 0 exit: the themed app shell works on a 360 px phone (FR-06, FR-12, FR-21, FR-42, NFR-08).
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
@@ -71,8 +70,6 @@ test('the app shell and Get help now work offline after first load (NFR-04, FR-1
   context,
   browserName,
 }) => {
-  // Playwright's WebKit fails navigations under setOffline before the service worker can answer, although the
-  // worker does control the page there. WebKit offline is covered by the manual installed-iPhone check (OFFLINE.md).
   test.skip(
     browserName === 'webkit',
     'Playwright WebKit cannot route offline navigations through the service worker',
@@ -81,7 +78,7 @@ test('the app shell and Get help now work offline after first load (NFR-04, FR-1
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
-  await page.reload(); // the service worker now controls the page
+  await page.reload();
   await context.setOffline(true);
   await page.goto('/');
   await page.getByRole('button', { name: 'Get help now' }).click();

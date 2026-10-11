@@ -1,4 +1,3 @@
-// Golden fixtures in the browser (Milestone 0 exit, FR-09): Node and each browser engine must agree exactly.
 import path from 'node:path';
 import vm from 'node:vm';
 import { expect, test } from '@playwright/test';
