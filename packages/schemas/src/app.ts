@@ -115,8 +115,55 @@ export const CheckupAnswers = z.strictObject({
   systolic: maybe(z.number().finite()),
   diastolic: maybe(z.number().finite()),
   measurementSource: z.enum(['in_session', 'recalled']),
+  /**
+   * The optional mental-wellness module (FR-05, FR-22). "declined" (or absent) means the module was not taken;
+   * otherwise each PHQ-9 and GAD-7 item is 0 to 3, or null when skipped (never 0 by default).
+   */
+  wellness: z
+    .union([
+      z.literal('declined'),
+      z.strictObject({
+        phq9: z.array(maybe(z.number().int().min(0).max(3))).length(9),
+        gad7: z.array(maybe(z.number().int().min(0).max(3))).length(7),
+      }),
+    ])
+    .optional(),
 });
 export type CheckupAnswers = z.infer<typeof CheckupAnswers>;
+export type WellnessAnswers = Exclude<NonNullable<CheckupAnswers['wellness']>, 'declined'>;
+
+/** Consent scopes the participant chooses at the start (FR-02); each one is a separate, un-ticked choice. */
+export const STUDY_CONSENTS = ['core', 'mental_wellness', 'audio', 'follow_up'] as const;
+export const StudyConsent = z.enum(STUDY_CONSENTS);
+export type StudyConsent = z.infer<typeof StudyConsent>;
+
+/** First visit: purpose acknowledged, age confirmed (18 to 35) and the four consent choices (FR-01, FR-02). */
+export const ConsentSubmission = z.strictObject({
+  purposeAcknowledged: z.literal(true),
+  ageConfirmed: z.literal(true),
+  consents: z.strictObject({
+    core: z.boolean(),
+    mental_wellness: z.boolean(),
+    audio: z.boolean(),
+    follow_up: z.boolean(),
+  }),
+  language: Language,
+});
+export type ConsentSubmission = z.infer<typeof ConsentSubmission>;
+
+/** Changing one optional consent later (FR-44); core consent is withdrawn through a deletion request. */
+export const ConsentChange = z.strictObject({
+  scope: z.enum(['mental_wellness', 'audio', 'follow_up']),
+  granted: z.boolean(),
+});
+export type ConsentChange = z.infer<typeof ConsentChange>;
+
+/** System Usability Scale after the session (FR-17): ten items, 1 to 5, each skippable. */
+export const SusSubmission = z.strictObject({
+  formVersion: z.literal('sus-1.0'),
+  items: z.array(maybe(z.number().int().min(1).max(5))).length(10),
+});
+export type SusSubmission = z.infer<typeof SusSubmission>;
 
 export const CheckupSubmission = z.strictObject({
   language: Language,
