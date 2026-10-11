@@ -146,7 +146,7 @@ All traffic is HTTPS (TLS 1.2 or later). The API is JSON over REST, versioned un
 | POST /api/v1/admin/auth/signout, GET /api/v1/admin/me | Sign out; current staff member, role and permissions (FR-55) |  |
 | GET, POST, PATCH /api/v1/admin/staff | List, invite, change role or deactivate staff accounts (FR-54) | Researcher-admin only |
 | POST /api/v1/admin/participants | Generate study codes and order assignment | Researcher-admin only |
-| GET, PATCH /api/v1/admin/deletion-requests | List and complete deletion requests | Completion within 14 days |
+| GET, PATCH /api/v1/admin/deletion-requests | List and complete deletion requests | Completion within 72 hours |
 | POST /api/v1/admin/content/publish | Publish an approved content or ruleset version | Refused without approval records |
 | GET /api/v1/admin/exports/:dataset | De-identified CSV export with data dictionary and versions | Each export logged |
 | GET /api/v1/health | Health check | No data |
@@ -209,7 +209,7 @@ Requirements FR-01 to FR-20 carry the proposal's numbering (Table 13) so the pro
 | --- | --- | --- | --- |
 | FR-14 | Display assessment history and mark when two results were produced by different ruleset versions. | Should | History lists date and version; a notice appears when versions differ. |
 | FR-17 | Collect versioned usability (SUS) and baseline-comparison feedback after the session. | Must | Feedback is stored with the feedback-form version and linked to the participant code only. |
-| FR-18 | Allow withdrawal and deletion requests at any time, completed under the retention schedule. | Must | A request creates a record visible to the admin; completion within 14 days deletes all the participant's application data and records the completion date. |
+| FR-18 | Allow withdrawal and deletion requests at any time, completed under the retention schedule. | Must | A request creates a record visible to the admin; completion within 72 hours (agreed with the supervisor, 9 October 2026) deletes all the participant's application data and records the completion date. |
 
 ### 4.8 Privacy, content governance and administration
 

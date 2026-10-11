@@ -76,7 +76,7 @@ frame-ancestors 'none'; base-uri 'none'; form-action 'self'
 ## Retention and rights
 
 - Application data: exported de-identified and deleted within 30 days after the pilot; backups expire within a further 30 days; technical logs 14 days (SRS Section 7.2).
-- Withdrawal and deletion requests are completed within 14 days and recorded (FR-18). Deleting a participant removes profile, assessments, responses, measurements, results, feedback, task outcomes and refresh tokens; consent and safety records follow the retention the ethics approval sets.
+- Withdrawal and deletion requests are completed within 72 hours and recorded (FR-18). Deleting a participant removes profile, assessments, responses, measurements, results, feedback, task outcomes and refresh tokens; consent and safety records follow the retention the ethics approval sets.
 - People can see what is kept, change optional consents and download their own results (FR-44).
 
 ## If something goes wrong

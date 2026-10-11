@@ -253,3 +253,7 @@ All offline tests run Playwright against `vite build` and `vite preview`, becaus
 | `reconcile.spec.ts` | A forced server-side mismatch shows the server result and the notice |
 
 Playwright cannot simulate Safari's seven-day eviction or the missing Background Sync on a real iPhone, so the M4 checklist includes a manual run on a real iPhone with the installed app in airplane mode.
+
+## Item 9 safety events on the phone (11 October 2026)
+
+When item 9 is above 0, the safety screen shows first; the Tier 2 event (tier, trigger, actions and time only) is then kept in the encrypted vault under `safety-outbox`, tagged with the account, and sent once that person is online (one event per check-up, deduplicated by ID on the server). Waiting events survive Exit and sign-out so a safety record is not lost, are only ever sent under the account that created them, and are dropped from the phone after 7 days.
