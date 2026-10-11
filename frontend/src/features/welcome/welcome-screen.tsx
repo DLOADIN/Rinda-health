@@ -1,4 +1,3 @@
-// Landing page: purpose statement (FR-01) before anything else, then sign in or create an account.
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

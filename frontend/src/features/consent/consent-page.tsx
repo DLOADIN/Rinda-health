@@ -1,5 +1,4 @@
-// First visit (FR-01, FR-02): the purpose statement, the age check (18 to 35) and four separate, un-ticked consent
-// choices. Nothing is preselected. Someone outside the age range sees the referral list and cannot continue.
+// This is the first screen a participant sees: what Rinda is, the age check and four un-ticked consent choices.
 import { STUDY_CONSENTS, type StudyConsent } from '@rinda/schemas';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

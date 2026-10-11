@@ -7,8 +7,6 @@ import { NeutralScreen } from '@/features/exit/neutral-screen';
 import { UpdatePrompt } from '@/features/sync/update-prompt';
 import { WelcomeScreen } from '@/features/welcome/welcome-screen';
 
-// Loaded on demand so the first screen stays within the initial JavaScript budget (NFR-17).
-// These chunks are still precached, so sign-in and the participant dashboard open offline.
 const LoginPage = lazy(() => import('@/features/auth/login-page').then((m) => ({ default: m.LoginPage })));
 const SignupPage = lazy(() => import('@/features/auth/signup-page').then((m) => ({ default: m.SignupPage })));
 const DashboardLayout = lazy(() =>
@@ -44,7 +42,6 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // Signed-in dashboards for every role (sidebar menus, profile, role pages).
   { path: '/app/*', element: wait(<DashboardLayout />), errorElement: <RouteError standalone /> },
   { path: '/staff/*', element: <Navigate to="/app" replace /> },
 ]);

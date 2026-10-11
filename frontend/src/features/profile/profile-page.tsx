@@ -1,5 +1,3 @@
-// Profile for every role: details, preferred language, password, sign out. Participants also see their banded
-// "about me" fields and can ask for their data to be deleted (FR-18, FR-44).
 import type { Me, ParticipantProfile } from '@rinda/schemas';
 import { Download, LogOut, Mail, Smartphone, Sparkles } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
@@ -276,7 +274,6 @@ function PasswordCard({ me }: { me: Me }) {
   );
 }
 
-/** Email reports (ADR-020): an opted-in participant gets each check-up's summary by email. Off by default. */
 function EmailReportsCard() {
   const { t } = useTranslation();
   const { data } = useEmailReportsQuery();
@@ -316,7 +313,6 @@ function EmailReportsCard() {
   );
 }
 
-/** Separate opt-in for AI-written explanations (ADR-019). Off until switched on; templates are used otherwise. */
 function AiCard() {
   const { t } = useTranslation();
   const { data } = useAiOptInQuery();
@@ -351,7 +347,6 @@ function AiCard() {
   );
 }
 
-/** Install Rinda to the home screen so it opens like an app and works offline (NFR-04). */
 function InstallCard() {
   const { t } = useTranslation();
   const { canInstall, installed, isIos, install } = useInstallPrompt();

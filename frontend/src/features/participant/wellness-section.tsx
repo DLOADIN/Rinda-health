@@ -1,5 +1,4 @@
-// The optional mental-wellness module (FR-05, FR-11, FR-22) and the safety screen (docs/SAFETY.md). Calm styling
-// only: no red, no alarm words, no countdowns. Every item can be skipped and nothing is preselected.
+// This is the optional mood and stress part of the check-up, plus the safety screen. Calm colours only.
 import { RULESET_V1 } from '@rinda/content';
 import { checkItem9 } from '@rinda/rules';
 import { HeartHandshake } from 'lucide-react';
@@ -17,7 +16,6 @@ export interface WellnessState {
   phq9: Array<number | null>;
   gad7: Array<number | null>;
 }
-/** PHQ-8 never asks item 9 (docs/SAFETY.md "PHQ-8 fallback"); the ruleset decides which variant is used. */
 const PHQ_VARIANT = RULESET_V1.domains.phq9.variant;
 export const WELLNESS_START: WellnessState = {
   mode: 'intro',
@@ -32,7 +30,6 @@ export function WellnessSection({
 }: {
   state: WellnessState;
   onChange: (next: WellnessState) => void;
-  /** Called synchronously when item 9 is above 0, before anything is sent (FR-11). */
   onItem9Risk: () => void;
 }) {
   const { t } = useTranslation();
@@ -43,6 +40,7 @@ export function WellnessSection({
     const items = [...state[which]];
     items[index] = value;
     onChange({ ...state, [which]: items });
+    // Item 9 is checked right here, on the phone, before anything is sent.
     const isItem9 = which === 'phq9' && index === 8 && PHQ_VARIANT === 'PHQ-9';
     if (isItem9 && value !== null && checkItem9({ value }) === 'tier2') onItem9Risk();
   };
@@ -115,10 +113,6 @@ export function WellnessSection({
   );
 }
 
-/**
- * Shown at once when item 9 is above 0 (FR-11, Tier 2). The wording is approved content only. The default is to stop
- * these questions; continuing is the person's choice. Get help now stays one tap away.
- */
 export function SafetyScreen({ onStop, onContinue }: { onStop: () => void; onContinue: () => void }) {
   const { t } = useTranslation();
   const { text } = useContent();

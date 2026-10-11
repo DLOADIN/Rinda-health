@@ -1,4 +1,3 @@
-// Researcher-admin: deletion requests (FR-18), the append-only audit log (FR-48) and feature flags (FR-50).
 import { FLAG_KEYS } from '@rinda/schemas';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';

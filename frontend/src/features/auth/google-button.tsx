@@ -1,5 +1,3 @@
-// "Continue with Google": a full-page redirect to the API, which runs the OpenID Connect flow (FR-51).
-// Hidden when the server has no Google client configured.
 import type { Role } from '@rinda/schemas';
 import { Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';

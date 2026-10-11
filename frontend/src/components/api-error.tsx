@@ -1,4 +1,3 @@
-// Shows an API error as a plain interface string, never the raw server message.
 import { CircleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription } from '@/components/ui/alert';

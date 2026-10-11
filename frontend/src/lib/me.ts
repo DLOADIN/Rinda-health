@@ -1,6 +1,5 @@
 import type { Me } from '@rinda/schemas';
 
-/** The name to greet someone by: their chosen name, else the part of the email before the @. */
 export const displayNameOf = (me: Me): string | null => me.displayName ?? me.email?.split('@')[0] ?? null;
 
 export const initialsOf = (me: Me): string =>

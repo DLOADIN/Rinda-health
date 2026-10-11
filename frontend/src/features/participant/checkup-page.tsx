@@ -1,6 +1,3 @@
-// Health check-up for the six NCD areas. Every question can be skipped, with no default answer (FR-05).
-// Ranges are checked on the server by @rinda/rules and shown next to the field (FR-07). The Idempotency-Key is made
-// when the check-up starts, so retries never create a second record (FR-08).
 import { RULESET_V1 } from '@rinda/content';
 import { validateMeasurement, type MeasurementType } from '@rinda/rules';
 import type { CheckupAnswers, CheckupSubmission } from '@rinda/schemas';
@@ -77,7 +74,6 @@ export function CheckupPage() {
   const navigate = useNavigate();
   const [submit, { isLoading, error }] = useSubmitCheckupMutation();
   const [key] = useState(() => crypto.randomUUID());
-  // One Tier 2 event per check-up, however often item 9 changes (FR-13).
   const [safetyEventId] = useState(() => crypto.randomUUID());
   const [startedAt] = useState(() => new Date().toISOString());
   const [answers, setAnswers] = useState<Answers>(EMPTY);
@@ -94,7 +90,6 @@ export function CheckupPage() {
     wellnessOffered && (wellness.mode === 'answering' || wellness.mode === 'stopped')
       ? { phq9: wellness.phq9, gad7: wellness.gad7 }
       : 'declined';
-  /** Item 9 above 0: show the safety screen first, then keep the event encrypted and send it (FR-11, FR-41). */
   const onItem9Risk = () => {
     setSafetyOpen(true);
     window.scrollTo({ top: 0 });
@@ -116,7 +111,6 @@ export function CheckupPage() {
   const setAudit = (index: 0 | 1 | 2, v: string | null) => {
     const next = [...answers.auditC] as Answers['auditC'];
     next[index] = v === null ? null : Number(v);
-    // "Never" drinks: questions 2 and 3 do not apply.
     if (index === 0 && v === '0') {
       next[1] = null;
       next[2] = null;
@@ -160,7 +154,6 @@ export function CheckupPage() {
     );
   };
 
-  /** The same range checks the server runs (FR-07), so an offline check-up is never queued with a bad reading. */
   const checkRanges = (a: CheckupAnswers): Array<[string, string]> => {
     const fields: Array<[keyof CheckupAnswers, MeasurementType]> = [
       ['heightCm', 'height'],
@@ -188,7 +181,6 @@ export function CheckupPage() {
     return found;
   };
 
-  /** Offline: score on the phone, keep the check-up encrypted, and send it when the network returns (FR-29). */
   const saveOffline = async (body: CheckupSubmission) => {
     const found = checkRanges(body.answers);
     setLocalIssues(found);

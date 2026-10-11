@@ -1,5 +1,3 @@
-// Keeps the last good copy of a server response in the encrypted vault, and shows it when the phone is offline
-// (NFR-18). Keys include the account ID, so on a shared phone nobody sees someone else's cached data.
 import { useEffect, useState } from 'react';
 import { errorCode } from '@/lib/api';
 import { readSecret, saveSecret } from '@/lib/storage/vault';

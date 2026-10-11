@@ -1,5 +1,3 @@
-// i18next for interface strings only (FR-16, NFR-09). Health wording comes from approved content (lib/content).
-// Empty Kinyarwanda values fall back to English until the bilingual key informant supplies them; never machine-translate.
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from '@/locales/en/common.json';
@@ -16,10 +14,9 @@ void i18n.use(initReactI18next).init({
   fallbackLng: 'en',
   defaultNS: 'common',
   returnEmptyString: false,
-  interpolation: { escapeValue: false }, // React escapes
+  interpolation: { escapeValue: false },
 });
 
-/** Keeps <html lang> in step so screen readers and hyphenation behave (DESIGN_SYSTEM.md "Typography"). */
 i18n.on('languageChanged', (lng) => {
   document.documentElement.lang = lng;
 });

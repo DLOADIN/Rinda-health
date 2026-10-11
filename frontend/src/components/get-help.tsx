@@ -1,5 +1,3 @@
-// Get help now (FR-12, FR-41): one tap from every participant screen opens the approved referral list.
-// It reads bundled content only, so it works offline. All wording comes from approved content.
 import { LifeBuoy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ReferralList } from '@/components/referral-list';
@@ -17,7 +15,6 @@ import {
 import { useContent } from '@/lib/content';
 import { cn } from '@/lib/utils';
 
-/** `bar` fills the sticky bottom bar; `floating` sits in the corner of dashboards, like a help button. */
 export function GetHelp({
   variant = 'bar',
   className,

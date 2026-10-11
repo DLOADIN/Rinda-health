@@ -1,5 +1,3 @@
-// Staff screens under /app (ADR-009): one lazy chunk, excluded from the offline precache, never downloaded by
-// participants. Each role sees only its own routes; the server checks the role again on every request (FR-53).
 import type { Role } from '@rinda/schemas';
 import { Navigate, Route, Routes } from 'react-router';
 import { useMeQuery } from '@/lib/api';

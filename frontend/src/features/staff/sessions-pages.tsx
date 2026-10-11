@@ -1,5 +1,3 @@
-// Facilitator sessions (FR-45): list and start, then a task checklist with outcomes and minutes, end and delete.
-// The AB/BA order is shown read-only (FR-24).
 import { TASK_CODES } from '@rinda/schemas';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';

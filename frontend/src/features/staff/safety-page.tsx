@@ -1,5 +1,3 @@
-// Safety events (FR-13, FR-41). Facilitators record observed or disclosed distress; researcher-admins can view.
-// Only tier, trigger and actions are stored, never answers or scores.
 import type { Role } from '@rinda/schemas';
 import { SafetyAction } from '@rinda/schemas';
 import { Plus } from 'lucide-react';

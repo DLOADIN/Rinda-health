@@ -1,4 +1,3 @@
-// Offline is a normal state, shown with a neutral Badge, never an error (DESIGN_SYSTEM.md principle 5).
 import { CloudOff } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';

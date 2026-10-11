@@ -1,5 +1,4 @@
-// "How results are calculated" (FR-23). Every number on this page is read from the ruleset in use, and the wording is
-// approved content with slots, so the page always matches the rules that produced the person's results.
+// Every number on this page is read from the ruleset, so it always matches the rules in use.
 import { RULESET_V1 } from '@rinda/content';
 import { fillSlots, type Ruleset } from '@rinda/rules';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +12,6 @@ type Slots = Record<string, string | number>;
 const minOf = (bands: ReadonlyArray<{ band: string; min: number }>, band: string) =>
   bands.find((b) => b.band === band)?.min ?? 0;
 
-/** The numbers each rule's sentence needs, taken from the ruleset. */
 function slotsFor(r: Ruleset): Record<string, Slots> {
   const d = r.domains;
   const bp = (band: string) => d.bp.bands.find((b) => b.band === band) ?? { systolic: 0, diastolic: 0 };

@@ -1,6 +1,3 @@
-// "Install app" (NFR-04, docs/OFFLINE.md "iPhones and Safari"). Chromium fires beforeinstallprompt once, early,
-// so the listener is registered when this module loads (imported from main.tsx). Safari has no prompt, so we show
-// the Share > Add to Home Screen steps there instead.
 import { useSyncExternalStore } from 'react';
 
 interface InstallPromptEvent extends Event {

@@ -1,4 +1,3 @@
-// Sign in with an email address or phone number and a password, or with Google (Badget-style centred card).
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginRequest } from '@rinda/schemas';
 import { Controller, useForm } from 'react-hook-form';

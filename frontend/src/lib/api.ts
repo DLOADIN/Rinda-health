@@ -1,5 +1,4 @@
-// RTK Query client for the single-file backend (backend/server.ts). Every call goes to /api/v1 on the same origin,
-// with the HttpOnly session cookie. Nothing personal is cached outside memory (ADR-010).
+// This is where every call to our API is defined, using RTK Query.
 import { createApi, fetchBaseQuery, type FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 import type {
   CheckupSubmission,
@@ -24,7 +23,6 @@ export interface Assessment {
   results: AssessmentResult;
   plan: Plan;
   safety: SafetyAssessment;
-  /** The person's own entered values, for their charts. */
   values: {
     moderateMinutes: number | null;
     vigorousMinutes: number | null;
@@ -36,7 +34,6 @@ export interface Assessment {
     diastolic: number | null;
     auditC: number | null;
   };
-  /** Scored on this phone and not sent yet (offline). */
   provisional?: boolean;
 }
 export interface DayCount {
@@ -55,7 +52,6 @@ export interface AiStatus {
 }
 
 export interface ConsentStatus {
-  /** False until the participant has answered the consent questions once. */
   decided: boolean;
   core: boolean;
   mental_wellness: boolean;
@@ -148,7 +144,6 @@ export interface AuditEntry {
   createdAt: string;
 }
 
-/** Stable error code from the API envelope, for looking up an interface string (never the raw message). */
 export function errorCode(error: unknown): string {
   const e = error as FetchBaseQueryError | undefined;
   const data = e && 'data' in e ? (e.data as { error?: { code?: string } } | undefined) : undefined;
@@ -157,7 +152,6 @@ export function errorCode(error: unknown): string {
   return 'INTERNAL';
 }
 
-/** Per-field issue codes returned with VALIDATION_FAILED. */
 export function errorDetails(error: unknown): Array<{ path: string; issue: string }> {
   const e = error as FetchBaseQueryError | undefined;
   const data =
@@ -189,7 +183,6 @@ export const api = createApi({
     'AiOptIn',
   ],
   endpoints: (b) => ({
-    // Authentication and my account
     providers: b.query<{ password: boolean; google: boolean }, void>({ query: () => '/auth/providers' }),
     me: b.query<Me, void>({ query: () => '/me', providesTags: ['Me'] }),
     signup: b.mutation<Me, SignupRequest>({
@@ -210,7 +203,6 @@ export const api = createApi({
     }),
     dashboard: b.query<Dashboard, void>({ query: () => '/dashboard', providesTags: ['Dashboard'] }),
 
-    // Participant
     participantProfile: b.query<ParticipantProfile, void>({
       query: () => '/participant/profile',
       providesTags: ['Profile'],
@@ -252,7 +244,6 @@ export const api = createApi({
       invalidatesTags: ['Deletions', 'Dashboard'],
     }),
 
-    // Consent and eligibility (FR-01, FR-02, FR-44)
     consents: b.query<ConsentStatus, void>({
       query: () => '/participant/consents',
       providesTags: ['Consents'],
@@ -266,7 +257,6 @@ export const api = createApi({
       invalidatesTags: ['Consents'],
     }),
 
-    // System Usability Scale (FR-17)
     feedbackStatus: b.query<{ submitted: boolean }, void>({
       query: () => '/participant/feedback',
       providesTags: ['Feedback'],
@@ -276,7 +266,6 @@ export const api = createApi({
       invalidatesTags: ['Feedback', 'Dashboard'],
     }),
 
-    // Rinda Guide and email reports
     explain: b.mutation<GuideResponse, { assessmentId: string; chipId: string; language: 'en' | 'rw' }>({
       query: (body) => ({ url: '/guide/explain', method: 'POST', body }),
     }),
@@ -304,7 +293,6 @@ export const api = createApi({
       invalidatesTags: ['AiOptIn'],
     }),
 
-    // Facilitator
     participants: b.query<ParticipantSummary[], void>({
       query: () => '/facilitator/participants',
       providesTags: ['Participants'],
@@ -350,7 +338,6 @@ export const api = createApi({
       invalidatesTags: ['Safety', 'Dashboard'],
     }),
 
-    // Researcher-admin
     users: b.query<AdminUser[], { role?: Role; search?: string }>({
       query: (params) => ({ url: '/admin/users', params }),
       providesTags: ['Users'],
@@ -388,7 +375,6 @@ export const api = createApi({
       invalidatesTags: ['Flags', 'Audit'],
     }),
 
-    // Content (researcher-admin writes and publishes; reviewers approve)
     content: b.query<ContentVersion[], void>({ query: () => '/content', providesTags: ['Content'] }),
     createContent: b.mutation<ContentVersion, z.infer<typeof ContentCreateRequest>>({
       query: (body) => ({ url: '/content', method: 'POST', body }),

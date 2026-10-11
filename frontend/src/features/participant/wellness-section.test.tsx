@@ -1,5 +1,3 @@
-// Item 9 (FR-11, docs/SAFETY.md): 1, 2 and 3 open the safety screen synchronously, before any network call; 0 does
-// not. The safety screen shows the referral list and uses calm styling only.
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';

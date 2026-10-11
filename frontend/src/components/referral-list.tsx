@@ -1,4 +1,3 @@
-// The approved referral list with tap-to-call buttons (FR-12, FR-39). Bundled, so it works offline.
 import { Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';

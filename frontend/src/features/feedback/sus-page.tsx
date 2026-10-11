@@ -1,4 +1,3 @@
-// System Usability Scale after the session (FR-17): ten statements, 1 to 5, each skippable with no default.
 import { CircleCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

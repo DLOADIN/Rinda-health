@@ -1,5 +1,3 @@
-// Charts (shadcn Chart on Recharts), loaded on demand (NFR-17). Each chart is decorative to screen readers and is
-// paired with a sentence carrying the same numbers (DESIGN_SYSTEM.md "Charts"). Colours come from theme tokens.
 import { useTranslation } from 'react-i18next';
 import {
   Area,
@@ -51,7 +49,6 @@ function ChartCard({
   );
 }
 
-/** A ring that fills towards the weekly activity target (like a step-count ring). */
 export function ActivityRing({ minutes, target }: { minutes: number; target: number }) {
   const { t } = useTranslation();
   const config = {
@@ -87,7 +84,6 @@ export function ActivityRing({ minutes, target }: { minutes: number; target: num
   );
 }
 
-/** Blood pressure per check-up as capsules from the bottom number to the top number (like an HRV bar chart). */
 export function BpHistoryChart({
   items,
 }: {
@@ -135,7 +131,6 @@ export function BpHistoryChart({
   );
 }
 
-/** Fruit and vegetable servings per check-up against the daily target. */
 export function DietTrendChart({
   items,
   target,
@@ -182,7 +177,6 @@ export function DietTrendChart({
   );
 }
 
-/** Daily counts for the last 14 days, as a soft gradient area (staff dashboards). */
 export function DailyAreaChart({
   title,
   data,

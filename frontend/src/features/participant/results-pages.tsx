@@ -1,4 +1,3 @@
-// Results history (read and delete) and one result in full (FR-10, FR-14).
 import { ArrowRight, Mail, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -30,8 +29,7 @@ export function ResultsPage() {
   const { data: me } = useMeQuery();
   const { data: live, isLoading, error } = useAssessmentsQuery();
   const { data: saved, fromCache } = useCached(me ? `assessments:${me.id}` : null, live, error);
-  useOutbox(); // re-render when the outbox changes
-  // Check-ups still waiting on this phone come first, labelled as not sent yet.
+  useOutbox();
   const data =
     saved || me ? [...(me ? pendingFor(me.id).map((i) => i.provisional) : []), ...(saved ?? [])] : undefined;
   return (
@@ -84,7 +82,6 @@ export function ResultsPage() {
   );
 }
 
-/** Sends this check-up's summary by email, when the participant switched email reports on (ADR-020). */
 function EmailReportButton({ assessmentId }: { assessmentId: string }) {
   const { t } = useTranslation();
   const { data } = useEmailReportsQuery();

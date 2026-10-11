@@ -1,4 +1,3 @@
-// One badge for every result band: word + lucide icon + band colour, never colour alone (FR-10, DESIGN_SYSTEM.md).
 import type { Severity } from '@rinda/rules';
 import {
   CircleAlert,

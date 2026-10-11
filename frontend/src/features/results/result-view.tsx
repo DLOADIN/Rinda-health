@@ -1,6 +1,3 @@
-// One check-up result: purpose statement, any urgent message first, next steps from the planner, then one glass card
-// per NCD area with the band word, icon and value; tapping a card opens its details (FR-01, FR-10, FR-32, FR-33,
-// FR-37). Never a combined score (C-04).
 import type { DomainResult, FocusArea, Plan } from '@rinda/rules';
 import { ChevronRight, CircleAlert, CloudOff, HeartHandshake, Hospital } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -141,10 +138,6 @@ export function DomainCard({ result, assessment }: { result: DomainResult; asses
   );
 }
 
-/**
- * Mood and stress, shown apart from the NCD areas and never combined with them (C-04). Calm wellness styling only.
- * Tier 1 shows the supportive message and referral list (FR-25); Tier 2 the approved safety text (FR-11).
- */
 function WellnessResults({ assessment }: { assessment: Assessment }) {
   const { t } = useTranslation();
   const { text } = useContent();

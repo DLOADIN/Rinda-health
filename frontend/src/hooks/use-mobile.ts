@@ -1,4 +1,3 @@
-// Used by the shadcn Sidebar to switch to a sheet on phones.
 import { useSyncExternalStore } from 'react';
 
 const MOBILE_BREAKPOINT = 768;

@@ -1,4 +1,3 @@
-// Badget-style auth layout: a large centred heading, the purpose line, then the card.
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 

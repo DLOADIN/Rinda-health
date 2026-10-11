@@ -1,6 +1,3 @@
-// Signed-in frame for every role, on the Badget skeleton (shadcn dashboard-01): an inset sidebar with the role's
-// menu, a primary quick action and the account menu, plus a header with the sidebar toggle and page title. On phones
-// the sidebar opens as a sheet. Participants also get Exit and a floating Get help now (FR-06, FR-12, FR-42).
 import type { Me, Role } from '@rinda/schemas';
 import { CirclePlus, CloudUpload, DoorOpen, EllipsisVertical, LogOut, UserRound } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
@@ -59,16 +56,12 @@ import { clearPersonalCache, readSecret, saveSecret } from '@/lib/storage/vault'
 import { Badge } from '@/components/ui/badge';
 
 const ParticipantRoutes = lazy(() => import('@/features/participant/participant-routes'));
-// Staff screens are one chunk, excluded from the offline precache (ADR-009).
 const StaffRoutes = lazy(() => import('@/features/staff/staff-routes'));
 const ConsentPage = lazy(() =>
   import('@/features/consent/consent-page').then((m) => ({ default: m.ConsentPage })),
 );
 
-/**
- * Participants see the purpose, age check and consent choices before any health question (FR-01, FR-02). Offline,
- * the last known answer is used so the app keeps working; Get help now and Exit stay on screen throughout.
- */
+// Participants see the purpose, age check and consent choices before any health question.
 function ConsentGate({ me, children }: { me: Me; children: ReactNode }) {
   const { t } = useTranslation();
   const isParticipant = me.role === 'participant';
@@ -85,7 +78,6 @@ function ConsentGate({ me, children }: { me: Me; children: ReactNode }) {
   return data.decided && data.core ? children : <ConsentPage />;
 }
 
-/** The highlighted action at the top of each role's menu, like Badget's "Quick create". */
 const QUICK_ACTION: Record<Role, { to: string; labelKey: string }> = {
   participant: { to: '/app/checkup', labelKey: 'dashboard.startCheckup' },
   facilitator: { to: '/app/sessions', labelKey: 'sessions.new' },
@@ -306,7 +298,6 @@ function Shell({ me }: { me: Me }) {
   const isParticipant = me.role === 'participant';
   useEscapeTwiceToExit(isParticipant ? quickExit : () => undefined);
 
-  // Waiting check-ups are sent on start, when the network returns and when the app is visible again (FR-30).
   const onSent = useCallback(() => {
     dispatch(api.util.invalidateTags(['Assessments', 'Dashboard']));
   }, [dispatch]);
@@ -367,11 +358,9 @@ function Shell({ me }: { me: Me }) {
   );
 }
 
-/** Loads the signed-in account; anyone not signed in goes to the sign-in page. */
 export function DashboardLayout() {
   const { i18n } = useTranslation();
   const { data: live, isLoading, isError, error } = useMeQuery();
-  // Offline: open with the last account seen on this phone, kept encrypted (NFR-18).
   const [offlineMe, setOfflineMe] = useState<Me | null>(null);
   const offline = isError && errorCode(error) === 'OFFLINE';
   useEffect(() => {
@@ -381,7 +370,6 @@ export function DashboardLayout() {
   const me = live ?? offlineMe ?? undefined;
   useEffect(() => {
     if (me && i18n.language !== me.preferredLanguage) void i18n.changeLanguage(me.preferredLanguage);
-    // Only when the account loads, so a manual switch is not undone.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.id]);
   if (isLoading) {
@@ -399,7 +387,6 @@ export function DashboardLayout() {
     );
   }
   if (!me) return <Navigate to="/login" replace />;
-  // Sidebar tooltips need a provider; it lives here so the tooltip code loads with the dashboard only.
   return (
     <TooltipProvider>
       <Shell me={me} />

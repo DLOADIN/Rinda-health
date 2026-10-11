@@ -1,4 +1,3 @@
-// "Ask Rinda" button. The panel itself loads on demand (NFR-17).
 import { Sparkles } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';

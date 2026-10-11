@@ -1,4 +1,3 @@
-// Create an account as a participant, facilitator, researcher-admin or reviewer (ADR-016: open sign-up).
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ROLES, SignupRequest, type Role } from '@rinda/schemas';
 import { Controller, useForm, useWatch } from 'react-hook-form';

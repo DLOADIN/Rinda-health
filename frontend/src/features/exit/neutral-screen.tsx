@@ -1,4 +1,3 @@
-// Neutral screen after Exit (FR-06, FR-42): no health content. Get help now stays reachable (FR-12).
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';

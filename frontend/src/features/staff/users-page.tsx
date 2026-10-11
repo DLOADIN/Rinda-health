@@ -1,4 +1,3 @@
-// Researcher-admin: create, read, update (role, on/off) and delete accounts (FR-54).
 import { ROLES, type Role } from '@rinda/schemas';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';

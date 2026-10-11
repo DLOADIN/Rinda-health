@@ -1,4 +1,3 @@
-// Participant screens under /app (loaded on demand, cached for offline use).
 import { useTranslation } from 'react-i18next';
 import { Navigate, Route, Routes } from 'react-router';
 import { PageHeader } from '@/components/page-header';

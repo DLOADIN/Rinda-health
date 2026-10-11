@@ -1,4 +1,3 @@
-// A calm confirmation for actions that cannot be undone (deleting, completing a deletion). Never used for quick exit.
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

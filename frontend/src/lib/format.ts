@@ -1,5 +1,3 @@
-// Dates are UTC in data and shown in words with Intl. Some browsers have no Kinyarwanda locale data, so we build
-// Kinyarwanda dates from month names kept in the interface strings (docs/CONTENT_I18N.md).
 import { i18n } from '@/lib/i18n';
 
 const pad = (n: number) => String(n).padStart(2, '0');

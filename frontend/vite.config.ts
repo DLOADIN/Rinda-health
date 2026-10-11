@@ -8,14 +8,12 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    // docs/OFFLINE.md "Plugin configuration". The manifest colours are the only hex values allowed outside
-    // rinda-theme.css, because a web manifest cannot read CSS variables.
     VitePWA({
       strategies: 'injectManifest',
       srcDir: 'src/sw',
       filename: 'sw.ts',
       registerType: 'prompt',
-      injectRegister: false, // registered by useRegisterSW in UpdatePrompt
+      injectRegister: false,
       manifest: {
         name: 'Rinda Health',
         short_name: 'Rinda',
@@ -33,7 +31,6 @@ export default defineConfig({
       },
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
-        // Lazy chunks are named after their entry files; keep these names stable.
         globIgnores: [
           '**/assets/staff-routes-*.js',
           '**/assets/charts-*.js',
@@ -47,7 +44,6 @@ export default defineConfig({
   resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } },
   server: {
     port: 5173,
-    // `npm run dev`: the API is proxied under /api so everything is same-origin (no CORS).
     proxy: { '/api': { target: 'http://localhost:3000', changeOrigin: false } },
   },
   preview: { proxy: { '/api': { target: 'http://localhost:3000', changeOrigin: false } } },

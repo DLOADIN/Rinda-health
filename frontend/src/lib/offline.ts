@@ -1,7 +1,5 @@
-// Offline check-ups (FR-08, FR-29, FR-30): when the network is gone, the check-up is scored on the phone with the
-// same @rinda/rules package, kept in an encrypted outbox with its Idempotency-Key, and sent later. The server
-// re-scores it; retries never create a second record. Sending is tried on app start, when the network returns,
-// when the app becomes visible again and when the person taps "Send now".
+// This is where the app keeps working without internet: check-ups are scored on the phone, saved encrypted
+// and sent when the network comes back.
 import { RULESET_V1 } from '@rinda/content';
 import {
   assessSafety,
@@ -44,7 +42,6 @@ async function save(items: OutboxItem[]) {
   notify();
 }
 
-/** Scores a check-up on the phone exactly as the server would (same package, same ruleset version). */
 export function scoreOnPhone(body: CheckupSubmission, sex: Sex, key: string): Assessment {
   const a = body.answers;
   const ans = <T>(v: T | null | undefined): Answer<T> =>
@@ -89,7 +86,6 @@ export async function addToOutbox(item: OutboxItem): Promise<void> {
 }
 
 const SAFETY_OUTBOX = 'safety-outbox';
-/** A waiting safety event is dropped from the phone after this many days (shared phones, docs/OFFLINE.md). */
 const SAFETY_OUTBOX_MAX_DAYS = 7;
 
 interface QueuedSafetyEvent {
@@ -97,7 +93,6 @@ interface QueuedSafetyEvent {
   event: SafetyEvent;
 }
 
-// Reads and writes of the safety outbox run one after another, so an event saved during a send is never lost.
 let safetyChain: Promise<unknown> = Promise.resolve();
 const serial = <T>(task: () => Promise<T>): Promise<T> => {
   const next = safetyChain.then(task, task);
@@ -105,10 +100,6 @@ const serial = <T>(task: () => Promise<T>): Promise<T> => {
   return next;
 };
 
-/**
- * Sends the signed-in person's waiting item 9 safety events (FR-41). Only events that were stored are removed;
- * another person's events on a shared phone are never sent under this account.
- */
 function flushSafetyEvents(userId: string): Promise<void> {
   return serial(async () => {
     const oldest = Date.now() - SAFETY_OUTBOX_MAX_DAYS * 86_400_000;
@@ -124,7 +115,7 @@ function flushSafetyEvents(userId: string): Promise<void> {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(item.event),
       }).catch(() => null);
-      if (!res) break; // still offline: try again later
+      if (!res) break;
       if (res.ok || (res.status >= 400 && res.status < 500 && res.status !== 401)) sent.add(item.event.id);
     }
     const left = waiting.filter((i) => !sent.has(i.event.id));
@@ -133,11 +124,7 @@ function flushSafetyEvents(userId: string): Promise<void> {
   });
 }
 
-/**
- * Item 9 above 0 (FR-11, FR-13): the safety screen is already showing when this runs. The event holds only the
- * tier, trigger, actions and time, is kept encrypted on the phone, and is sent now or when the network returns.
- * The ID comes from the check-up, so one check-up records one Tier 2 event however often item 9 changes.
- */
+// By the time this runs the safety screen is already showing. The event is saved encrypted and sent once.
 export async function queueSafetyEvent(userId: string, eventId: string): Promise<void> {
   const event: SafetyEvent = {
     id: eventId,
@@ -156,7 +143,6 @@ export async function queueSafetyEvent(userId: string, eventId: string): Promise
   if (navigator.onLine) await flushSafetyEvents(userId);
 }
 
-/** Sends every waiting check-up that belongs to the signed-in person. Returns how many were sent. */
 export async function flushOutbox(me: Pick<Me, 'id'>): Promise<number> {
   if (status === 'sending' || !navigator.onLine) return 0;
   await flushSafetyEvents(me.id).catch(() => undefined);
@@ -165,14 +151,14 @@ export async function flushOutbox(me: Pick<Me, 'id'>): Promise<number> {
   let sent = 0;
   try {
     for (const item of await load()) {
-      if (item.userId !== me.id) continue; // on a shared phone, never send under someone else's account
+      if (item.userId !== me.id) continue;
       const res = await fetch('/api/v1/participant/assessments', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'content-type': 'application/json', 'idempotency-key': item.key },
         body: JSON.stringify(item.body),
       }).catch(() => null);
-      if (!res) break; // still offline: stop and try again later
+      if (!res) break;
       if (res.ok || res.status === 409 || res.status === 400 || res.status === 403) {
         await save(pending.filter((i) => i.key !== item.key));
         if (res.ok) sent++;
@@ -191,7 +177,6 @@ const subscribe = (l: () => void) => {
 };
 const snapshot = () => `${status}:${pending.length}`;
 
-/** Number of check-ups waiting on this phone and whether they are being sent now. */
 export function useOutbox(): { count: number; sending: boolean } {
   const value = useSyncExternalStore(subscribe, snapshot, snapshot);
   const [s, n] = value.split(':');
@@ -202,7 +187,6 @@ export function pendingFor(userId: string): OutboxItem[] {
   return pending.filter((i) => i.userId === userId);
 }
 
-/** Tries to send waiting check-ups on start, when the network returns and when the app is visible again. */
 export function useOutboxSync(me: Pick<Me, 'id'> | undefined, onSent: () => void) {
   useEffect(() => {
     if (!me) return;

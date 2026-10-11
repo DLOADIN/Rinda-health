@@ -1,5 +1,3 @@
-// Safe updates (FR-30, docs/OFFLINE.md): a new version is offered only outside the assessment, consent and
-// safety flows, and never reloads on its own.
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 import { useRegisterSW } from 'virtual:pwa-register/react';

@@ -1,5 +1,3 @@
-// Error screen that still offers Get help now (FR-12, SAFETY.md rule 1). Used inside AppShell for screen errors,
-// and on its own if the shell itself fails, so an error can never hide the referral list.
 import { useTranslation } from 'react-i18next';
 import { GetHelp } from '@/components/get-help';
 import { Alert, AlertDescription } from '@/components/ui/alert';

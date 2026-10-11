@@ -1,4 +1,3 @@
-// Sidebar menus, different for each role. Paths are under /app.
 import type { Role } from '@rinda/schemas';
 import {
   Calculator,

@@ -9,7 +9,6 @@ import '@/lib/i18n';
 import '@/lib/install';
 import './index.css';
 
-// Light mode is the default; dark follows the system setting (DESIGN_SYSTEM.md "Rules").
 const dark = window.matchMedia('(prefers-color-scheme: dark)');
 const applyTheme = () => document.documentElement.classList.toggle('dark', dark.matches);
 applyTheme();

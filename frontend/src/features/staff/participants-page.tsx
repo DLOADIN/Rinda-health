@@ -1,4 +1,3 @@
-// Participants by masked identifier only (C-06). Facilitators can start a session from here (FR-45).
 import type { Role } from '@rinda/schemas';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';

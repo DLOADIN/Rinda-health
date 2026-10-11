@@ -1,6 +1,3 @@
-// Ask Rinda (FR-36, docs/AI_GUIDE.md). Question chips only, no text box (C-06). The approved template answer is
-// composed on the phone and shown at once (it works offline); when online, the server may return a reworded
-// answer that passed the validator. A badge always says where the answer came from.
 import { composeGuideAnswer } from '@rinda/rules';
 import { Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -27,7 +24,6 @@ export default function GuidePanel({ assessment, open, onOpenChange, initialChip
   const { text, lang } = useContent();
   const online = useOnline();
   const [chip, setChip] = useState<string | null>(initialChip ?? null);
-  // The server's answer for a chip, once it arrives; until then the template composed on the phone is shown.
   const [served, setServed] = useState<{ chip: string; answer: GuideResponse } | null>(null);
   const [votedFor, setVotedFor] = useState<string | null>(null);
   const [explain, { isLoading }] = useExplainMutation();

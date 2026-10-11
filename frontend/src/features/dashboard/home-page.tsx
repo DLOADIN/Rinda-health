@@ -1,5 +1,3 @@
-// Home for every role. Participants get a glass hero ("glance"), metric cards, charts ("focus") and their latest
-// areas ("explore"), following the Oura-style levels in health-ui-inspiration.md. Staff get metrics and 14-day charts.
 import type { Me } from '@rinda/schemas';
 import { ArrowRight, HeartPulse } from 'lucide-react';
 import { lazy, Suspense } from 'react';
@@ -45,7 +43,6 @@ const DailyAreaChart = lazy(() =>
 
 const chartFallback = <Skeleton className="h-72 rounded-xl" />;
 
-/** Glass section cards: label, large number and a one-line hint. */
 function MetricCards({ data }: { data: Dashboard }) {
   const { t } = useTranslation();
   return (
@@ -107,7 +104,6 @@ function ViewAll({ to }: { to: string }) {
   );
 }
 
-/** The participant hero: greeting, a calm call to action and the latest bands as floating glass chips. */
 function ParticipantHero({ me, latest }: { me: Me; latest: Assessment | null }) {
   const { t } = useTranslation();
   const label = useBandLabel();
@@ -159,7 +155,7 @@ function ParticipantHero({ me, latest }: { me: Me; latest: Assessment | null }) 
 function ParticipantCharts({ me }: { me: Me }) {
   const { data: live, error } = useAssessmentsQuery();
   const { data } = useCached(`assessments:${me.id}`, live, error);
-  const history = [...(data ?? [])].reverse(); // oldest first for charts
+  const history = [...(data ?? [])].reverse();
   const latest = data?.[0];
   const activity = latest?.results.ncd.find((r) => r.domain === 'activity')?.value ?? null;
   const bp = history.flatMap((a) =>

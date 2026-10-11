@@ -2,7 +2,6 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/* Inter Variable, self-hosted (no font CDN): Latin and Latin Extended cover English and Kinyarwanda. */
 @font-face {
   font-family: 'Inter Variable';
   font-style: normal;
@@ -29,41 +28,38 @@
 :root {
   --radius: 0.75rem;
 
-  /* Brand palette: exact values from the reference screenshot */
   --brand-ember: #e43d12;
   --brand-rose: #d6536d;
   --brand-blush: #ffa2b6;
   --brand-amber: #efb11d;
   --brand-bone: #ebe9e1;
 
-  /* Accessible companions (text and strokes) */
-  --brand-ember-strong: #c2330e; /* ember text/links on light surfaces (>= 4.5:1) */
-  --brand-rose-strong: #c24a63; /* rose fill under white text (4.72:1) */
-  --brand-amber-strong: #a87c14; /* amber strokes/icons on light surfaces (>= 3:1, graphics only) */
-  --brand-blush-strong: #b26f7e; /* blush strokes on light surfaces (>= 3:1, graphics only) */
-  --brand-blush-soft: #ffe3e9; /* calm support surfaces (mental wellness, Tier 1) */
-  --brand-amber-soft: #fbeecd; /* hover and highlight surfaces */
+  --brand-ember-strong: #c2330e;
+  --brand-rose-strong: #c24a63;
+  --brand-amber-strong: #a87c14;
+  --brand-blush-strong: #b26f7e;
+  --brand-blush-soft: #ffe3e9;
+  --brand-amber-soft: #fbeecd;
 
-  /* shadcn/ui semantic tokens */
-  --background: #ebe9e1; /* Bone */
-  --foreground: #2b1d16; /* Ink, 13.39:1 on Bone */
+  --background: #ebe9e1;
+  --foreground: #2b1d16;
   --card: #f7f6f3;
   --card-foreground: #2b1d16;
   --popover: #f7f6f3;
   --popover-foreground: #2b1d16;
-  --primary: #d4380f; /* Ember 600, white text 4.80:1 */
+  --primary: #d4380f;
   --primary-foreground: #ffffff;
-  --secondary: #ffa2b6; /* Blush, ink text 8.60:1 */
+  --secondary: #ffa2b6;
   --secondary-foreground: #2b1d16;
   --muted: #e0ddd3;
-  --muted-foreground: #665c54; /* 4.79:1 on muted, 5.36:1 on Bone */
-  --accent: #fbeecd; /* Amber soft */
+  --muted-foreground: #665c54;
+  --accent: #fbeecd;
   --accent-foreground: #2b1d16;
-  --destructive: #a83c53; /* Rose 700, white text 6.11:1 */
+  --destructive: #a83c53;
   --destructive-foreground: #ffffff;
-  --border: #d3cec3; /* decorative separators only */
-  --input: #857f77; /* form-field borders, >= 3:1 on card and Bone */
-  --ring: #e43d12; /* focus ring, Ember, >= 3:1 on Bone and card */
+  --border: #d3cec3;
+  --input: #857f77;
+  --ring: #e43d12;
 
   --chart-1: #e43d12;
   --chart-2: #d6536d;
@@ -80,7 +76,6 @@
   --sidebar-border: #d3cec3;
   --sidebar-ring: #e43d12;
 
-  /* Result bands: always shown with a word and an icon, never colour alone */
   --band-ok: #e2ddd0;
   --band-ok-foreground: #2b1d16;
   --band-attention: #efb11d;
@@ -235,12 +230,11 @@
 
 @layer base {
   html {
-    font-size: 100%; /* base 16 px; respects the reader's browser text size */
+    font-size: 100%;
   }
   body {
     @apply font-sans leading-normal;
   }
-  /* Data-saver mode (FR-31): system font instead of the downloaded Inter file. */
   html[data-saver='on'] body {
     font-family:
       ui-sans-serif,
@@ -252,11 +246,6 @@
   }
 }
 
-/*
- * Glass surfaces and soft brand light (inspired by docs: health-ui-inspiration.md and the reference screenshots).
- * Built only from Rinda tokens, so light and dark mode and the contrast table still hold. Text always sits on a
- * surface that is at least 72% card colour.
- */
 @utility glass {
   background-color: color-mix(in oklab, var(--card) 72%, transparent);
   border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
@@ -275,7 +264,6 @@
   -webkit-backdrop-filter: blur(24px) saturate(150%);
 }
 
-/* Calm brand light behind dashboards: blush, amber and ember glows on Bone. Decorative only. */
 @utility bg-mesh {
   background-color: var(--background);
   background-image:
@@ -297,7 +285,6 @@
   background-attachment: fixed;
 }
 
-/* Hero illustration disc: an ember-to-blush glow for the large icon on the participant home. */
 @utility hero-orb {
   background-image: radial-gradient(
     circle at 35% 30%,

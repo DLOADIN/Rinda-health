@@ -1,4 +1,3 @@
-// Redux Toolkit store (ADR-010). Nothing here is persisted; personal data goes through lib/storage (encrypted).
 import {
   combineReducers,
   configureStore,
@@ -25,7 +24,6 @@ const settings = createSlice({
 
 export const { languageChanged } = settings.actions;
 
-/** Quick exit and sign-out (FR-42) dispatch this to drop every cached API result that could hold health data. */
 export const clearSession = { type: 'session/cleared' } as const;
 
 const appReducer = combineReducers({ settings: settings.reducer, [api.reducerPath]: api.reducer });

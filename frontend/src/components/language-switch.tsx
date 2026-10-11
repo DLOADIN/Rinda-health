@@ -1,4 +1,3 @@
-// EN | RW switch, on every screen including sign-in (FR-16, FR-21). Switching never loses answers.
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { languageChanged } from '@/app/store';

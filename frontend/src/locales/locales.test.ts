@@ -1,5 +1,3 @@
-// Key parity between interface-string languages (FR-16, NFR-09). Empty Kinyarwanda values fall back to English
-// until the bilingual key informant supplies them; `content:validate --release` fails while any remain.
 import { describe, expect, it } from 'vitest';
 import en from './en/common.json';
 import rw from './rw/common.json';

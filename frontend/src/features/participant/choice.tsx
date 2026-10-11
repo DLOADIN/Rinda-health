@@ -1,10 +1,8 @@
-// A choice question as full-width rows (44 px targets) with "Skip this question" (FR-05). Nothing is preselected.
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Field, FieldContent, FieldLabel, FieldLegend, FieldSet, FieldTitle } from '@/components/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-/** A choice question as full-width rows (44 px targets), with "Skip this question". Nothing is preselected. */
 export function Choice({
   id,
   question,

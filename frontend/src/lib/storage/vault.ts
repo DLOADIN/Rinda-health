@@ -1,6 +1,4 @@
-// Encrypted storage on the phone (NFR-03, docs/OFFLINE.md "Local storage"). One IndexedDB database, `rinda`:
-// the `key` store holds a non-extractable AES-GCM CryptoKey, and every record in `vault` is { iv, ciphertext }.
-// Nothing personal ever goes to localStorage, sessionStorage or Cache Storage. Wiping deletes the key first.
+// This is the encrypted storage on the phone. The key never leaves the browser and cannot be exported.
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
 interface RindaDB extends DBSchema {
@@ -60,7 +58,6 @@ export async function removeSecret(id: string): Promise<void> {
   await (await db()).delete('vault', id);
 }
 
-/** Clears everything the signed-in person left on this phone, except items still waiting to be sent. */
 export async function clearPersonalCache(
   keep: readonly string[] = ['outbox', 'safety-outbox'],
 ): Promise<void> {

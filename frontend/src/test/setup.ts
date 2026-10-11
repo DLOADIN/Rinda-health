@@ -4,7 +4,6 @@ import '@/lib/i18n';
 
 afterEach(() => cleanup());
 
-// jsdom has no matchMedia; vaul (Drawer) and the theme switch read it.
 if (!window.matchMedia) {
   window.matchMedia = (query: string) =>
     ({

@@ -1,5 +1,3 @@
-// Public frame (landing, sign-in, sign-up, exit): language switch, Exit, offline status and a sticky
-// Get help now bar (FR-06, FR-12, FR-21, FR-42). Phone first: single column at 360 px.
 import { DoorOpen } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,21 +11,19 @@ import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { clearPersonalCache } from '@/lib/storage/vault';
 
-/** Quick exit (FR-42): signs out, drops cached data and replaces history with the neutral screen. */
+// Exit leaves the screen first, then signs out and clears the phone, so nothing personal stays visible.
 export function useQuickExit() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   return () => {
     void fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => undefined);
-    // Leave the screen first so nothing personal stays visible, then clear the phone.
     void navigate('/exit', { replace: true });
     dispatch(api.util.resetApiState());
     dispatch(clearSession);
-    void clearPersonalCache(); // waiting check-ups stay encrypted; everything else on the phone is cleared
+    void clearPersonalCache();
   };
 }
 
-/** Escape pressed twice within a second exits, unless a drawer or dialog is open (FR-42). */
 export function useEscapeTwiceToExit(quickExit: () => void) {
   const lastEscape = useRef(0);
   useEffect(() => {

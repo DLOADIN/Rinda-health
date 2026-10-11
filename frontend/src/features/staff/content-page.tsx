@@ -1,5 +1,3 @@
-// Content versions (FR-20, FR-46). Researcher-admins create, edit, delete drafts and publish; reviewers approve or
-// request changes. Publishing needs approvals from two different people, and the author cannot approve.
 import { CONTENT_TYPES, type Role } from '@rinda/schemas';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
@@ -51,7 +49,6 @@ function parseBody(raw: string): Record<string, unknown> | null {
   }
 }
 
-/** Create a draft, or edit an existing draft's version and body. */
 function DraftDialog({ existing }: { existing?: ContentVersion }) {
   const { t } = useTranslation();
   const [create, createState] = useCreateContentMutation();
