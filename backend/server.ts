@@ -1,3 +1,5 @@
+// This is the whole Rinda API in one file: settings, logging, the database, sign-in, every route, and the
+// migrate, seed and db-check commands at the bottom.
 import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -83,6 +85,7 @@ const HERE = import.meta.dirname;
 const emptyAsUndefined = (v: unknown) => (v === '' ? undefined : v);
 const optionalText = z.preprocess(emptyAsUndefined, z.string().optional());
 
+// This is where every setting from .env is checked when the server starts, so a typo stops us early.
 const EnvSchema = z
   .object({
     APP_ENV: z.enum(['development', 'staging', 'pilot', 'test']).default('development'),
@@ -107,14 +110,10 @@ const EnvSchema = z
     GEMINI_API_KEY: optionalText,
     GEMINI_MODEL: z.string().default('gemini-3.5-flash'),
     ETHICS_AMENDMENT_REF: optionalText,
-    /** Set to true only for a paid Gemini tier whose terms say prompts are not used for training (needed in the pilot). */
     GEMINI_PAID_TIER: z.preprocess(emptyAsUndefined, z.enum(['true', 'false']).default('false')),
-    /** Email reports through Brevo (ADR-020): an opted-in participant's result summary, by email. */
     BREVO_API_KEY: optionalText,
-    /** A sender address verified in Brevo (Senders, Domains & Dedicated IPs). */
     EMAIL_FROM: optionalText,
     EMAIL_FROM_NAME: z.string().default('Rinda Health'),
-    /** Ethics approval reference for emailing results; the pilot refuses to switch messaging on without it. */
     MESSAGING_APPROVAL_REF: optionalText,
     SEED_PASSWORD: optionalText,
   })
@@ -162,11 +161,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
 }
 
 const googleConfigured = (c: AppConfig) => Boolean(c.GOOGLE_CLIENT_ID && c.GOOGLE_CLIENT_SECRET);
+// The AI guide only switches on with an ethics reference and a key, and in the pilot also needs a paid Gemini tier.
 const generativeGuideAllowed = (c: AppConfig) =>
   Boolean(c.ETHICS_AMENDMENT_REF && c.GEMINI_API_KEY) &&
   (c.APP_ENV !== 'pilot' || c.GEMINI_PAID_TIER === 'true');
 const emailConfigured = (c: AppConfig) => Boolean(c.BREVO_API_KEY && c.EMAIL_FROM);
 
+// Anything on this list is blanked out of the logs, so answers, results and passwords never end up there.
 const SENSITIVE_KEYS = [
   'pin',
   'password',
@@ -240,8 +241,8 @@ const forbidden = () => new AppError(403, 'FORBIDDEN', 'You do not have access t
 export type Db = pg.Pool;
 type Queryable = pg.Pool | pg.PoolClient;
 
+// This is where we connect to PostgreSQL on Neon. All SQL below is plain SQL with $1-style parameters.
 export function createPool(connectionString: string, schema?: string): Db {
-  // A schema (tests only) is set as a startup option, so it applies before the first query. Use a direct URL.
   return new pg.Pool({
     connectionString,
     max: 10,
@@ -291,7 +292,7 @@ export function directUrlOf(config: Pick<AppConfig, 'DIRECT_URL' | 'DATABASE_URL
 
 const MIGRATIONS_DIR = path.join(HERE, 'db', 'migrations');
 
-/** Applies every db/migrations/*.sql file that has not run yet, each in its own transaction. */
+// This is where the numbered files in db/migrations are applied, once each, in order.
 export async function migrate(db: Db, schema?: string): Promise<string[]> {
   if (schema) await db.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
   await db.query(
@@ -305,9 +306,7 @@ export async function migrate(db: Db, schema?: string): Promise<string[]> {
     .filter((f) => f.endsWith('.sql'))
     .sort()) {
     if (done.has(file)) continue;
-    // 001_init.sql may have been run by hand in the Neon SQL editor. If its tables exist, record it as applied.
     if (file === '001_init.sql' && done.size === 0) {
-      // Only the schema being migrated counts: never let search_path fall through to another schema's tables.
       const existing = await one<{ t: string | null }>(
         db,
         "SELECT to_regclass(quote_ident(current_schema()) || '.users')::text AS t",
@@ -392,7 +391,6 @@ async function audit(
 const ARGON2 = { type: argon2.argon2id, memoryCost: 19_456, timeCost: 2, parallelism: 1 } as const;
 const hashPassword = (password: string) => argon2.hash(password, ARGON2);
 let dummyHash: Promise<string> | null = null;
-/** Verifies a password; with no hash, still spends the same time so unknown accounts are not revealed. */
 async function verifyPassword(hash: string | null, password: string): Promise<boolean> {
   if (!hash) {
     dummyHash ??= hashPassword(randomBytes(16).toString('hex'));
@@ -407,6 +405,7 @@ const SESSION_COOKIE = 'rinda_session';
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_MINUTES = 15;
 
+// Sessions live in an HttpOnly cookie; the database only keeps a hash of the token.
 async function startSession(
   db: Db,
   config: AppConfig,
@@ -526,7 +525,6 @@ These limits keep people safe, so follow them exactly:
 - Write in the requested language, in at most 4 short paragraphs and under 150 words.
 - For each paragraph, list the IDs of the approved texts it draws on, taken from the library.`;
 
-/** Gemini structured-output schema (OpenAPI subset). Lengths and counts are checked afterwards with Zod. */
 const GEMINI_ANSWER_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -571,8 +569,6 @@ const BANNED =
 const OUT_OF_SCOPE = /\b(mood|stress\w*|anxi\w*|depress\w*|mental|worr\w*|PHQ|GAD)\b/i;
 const LINK_OR_PHONE = /https?:\/\/|www\.|\+?\d[\d\s-]{6,}\d/;
 
-/** Deterministic checks on a generated answer (docs/AI_GUIDE.md "Validator"). Returns the first failure, or pass. */
-/** Every number in a text, written as digits ("20") or as a word ("one", "three"). */
 export function numbersIn(text: string): number[] {
   return [
     ...[...text.matchAll(/\d+(?:[.,]\d+)?/g)].map((m) => Number(m[0].replace(',', '.'))),
@@ -582,6 +578,8 @@ export function numbersIn(text: string): number[] {
   ];
 }
 
+// This is where we double-check Gemini's answer. If it changes a number or wanders off topic, we show the
+// approved template instead.
 export function validateGuideAnswer(
   answer: GuideAnswer,
   allowed: readonly number[],
@@ -672,7 +670,6 @@ async function explainWithGemini(
   return { answer: outcome === 'pass' ? answer.data : null, outcome, ...usage };
 }
 
-/** Values the participant entered, for their own charts (never sent to the guide or to any third party). */
 function valuesOf(input: AssessmentInput) {
   const v = (a: Answer<number> | undefined) => (a && isValue(a) ? a.value : null);
   const audit = input.auditC.map(v);
@@ -695,10 +692,8 @@ const escapeHtml = (s: string) =>
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c,
   );
 
-/**
- * The report email (ADR-020), built only from approved content: each NCD area's result word, the first small step
- * (with any urgent advice) and the educational notice. Mental-wellness results are never included.
- */
+// This is where the report email is put together, only from approved wording. Mood and stress results
+// are never emailed.
 export function composeReportEmail(
   language: 'en' | 'rw',
   results: AssessmentResult,
@@ -736,7 +731,6 @@ export function composeReportEmail(
     .filter((p): p is string => Boolean(p))
     .join('\n\n');
 
-  // Email clients need tables and inline styles; the colours are the Rinda theme tokens (docs/design/rinda-theme.css).
   const tone: Record<string, string> = {
     ok: '#2F6B4F',
     attention: '#A87C14',
@@ -773,10 +767,7 @@ export function composeReportEmail(
 
 type EmailOutcome = 'sent' | 'failed' | 'skipped';
 
-/**
- * Emails one check-up's summary to its owner through Brevo, only when messaging is on, Brevo is set up and the
- * participant opted in (consent scope email_reports). message_events keeps the status, never the address or text.
- */
+// Emails go out only when messaging is on, Brevo is set up and the person opted in.
 async function sendReportEmail(
   db: Db,
   config: AppConfig,
@@ -848,7 +839,7 @@ async function sendReportEmail(
 }
 
 const requestId = (): RequestHandler => (req, res, next) => {
-  req.id = randomBytes(12).toString('hex'); // always server-made, so no client value reaches the logs
+  req.id = randomBytes(12).toString('hex');
   res.setHeader('x-request-id', req.id);
   next();
 };
@@ -873,7 +864,6 @@ const requestLogger =
     next();
   };
 
-/** Records the mount pattern for the request log, so logs carry route templates, never real path values. */
 const mountAt =
   (pattern: string): RequestHandler =>
   (req, _res, next) => {
@@ -892,7 +882,6 @@ function errorHandler(logger: Logger): ErrorRequestHandler {
       details?: Array<{ path: string; issue: string }>,
     ) => res.status(status).json({ error: details ? { code, message, details } : { code, message } });
     if (error instanceof ZodError) {
-      // Paths and issue codes only: Zod messages can quote the received value.
       const details = error.issues.map((i) => ({
         path: i.path.join('.'),
         issue: i.message.length < 40 ? i.message : i.code,
@@ -917,7 +906,6 @@ function errorHandler(logger: Logger): ErrorRequestHandler {
       send(413, 'VALIDATION_FAILED', 'The request body is too large.');
       return;
     }
-    // Log the error class and database code only: driver messages can contain submitted values.
     logger.error(
       {
         reqId: req.id,
@@ -933,7 +921,7 @@ function errorHandler(logger: Logger): ErrorRequestHandler {
 const DEVELOPMENT_FLAGS: Flags = {
   offlineSync: true,
   guideDeterministic: true,
-  guideGenerative: true, // still needs ETHICS_AMENDMENT_REF and a key to take effect
+  guideGenerative: true,
   measurementCoach: true,
   progressTrends: true,
   whatIf: true,
@@ -944,17 +932,17 @@ const DEVELOPMENT_FLAGS: Flags = {
   readAloud: true,
   usabilityEvents: false,
   pilotInsights: true,
-  messaging: true, // still needs Brevo settings and each participant's opt-in
+  messaging: true,
 };
-/** The documented pilot profile (docs/FEATURES.md). Changing a pilot default needs the supervisor's agreement. */
 const PILOT_FLAGS: Flags = {
   ...DEVELOPMENT_FLAGS,
   guideGenerative: false,
   careGeolocation: false,
   readAloud: false,
   usabilityEvents: false,
-  messaging: false, // until the ethics committee approves emailing results
+  messaging: false,
 };
+// This is where each feature starts on or off. Email reports stay off in the pilot until the ethics committee agrees.
 export const FLAG_DEFAULTS: Record<AppConfig['APP_ENV'], Flags> = {
   development: DEVELOPMENT_FLAGS,
   staging: DEVELOPMENT_FLAGS,
@@ -974,7 +962,6 @@ async function currentFlags(db: Db | null, config: AppConfig): Promise<Flags> {
       if ((FLAG_KEYS as readonly string[]).includes(row.key)) flags[row.key as FlagKey] = row.enabled;
   }
   flags.guideGenerative = flags.guideGenerative && generativeGuideAllowed(config);
-  // Emailing results in the pilot needs the ethics approval reference, whatever the stored flag says.
   flags.messaging = flags.messaging && (config.APP_ENV !== 'pilot' || Boolean(config.MESSAGING_APPROVAL_REF));
   return flags;
 }
@@ -983,17 +970,15 @@ export interface AppDeps {
   config: AppConfig;
   logger: Logger;
   db: Db | null;
-  /** Injected in tests to stand in for Google's token endpoint. */
   fetchFn?: typeof fetch;
 }
 
 const ruleset = RULESET_V1;
 
-/** Personal data are deleted within 72 hours of a deletion request (FR-18, as agreed with the supervisor). */
 const DELETION_DUE_HOURS = 72;
 const CONSENT_DOC_VERSION = 'consent-0.1.0';
 
-/** The latest consent choice per scope; a scope never chosen counts as not given (FR-02, FR-44). */
+// This is where we look up each person's most recent consent choice for every scope.
 async function latestConsents(db: Db, userId: string): Promise<Record<string, boolean>> {
   const list = await rows<{ scope: string; granted: boolean }>(
     db,
@@ -1004,7 +989,7 @@ async function latestConsents(db: Db, userId: string): Promise<Record<string, bo
   return Object.fromEntries(list.map((c) => [c.scope, c.granted]));
 }
 
-/** Converts a check-up form into the rules input. Null or absent means skipped, never 0 (FR-05). */
+// Skipped answers stay "skipped" here and are never counted as 0.
 function toAssessmentInput(a: CheckupSubmission['answers'], sex: Sex): AssessmentInput {
   const ans = <T>(v: T | null | undefined): Answer<T> =>
     v === null || v === undefined ? { missing: 'SKIPPED' } : { value: v };
@@ -1016,12 +1001,10 @@ function toAssessmentInput(a: CheckupSubmission['answers'], sex: Sex): Assessmen
     diet: { servingsPerDay: ans(a.servingsPerDay), addsSaltAtTable: ans(a.addsSaltAtTable) },
     body: { heightCm: ans(a.heightCm), weightKg: ans(a.weightKg), waistCm: ans(a.waistCm) },
     bp: { systolic: ans(a.systolic), diastolic: ans(a.diastolic) },
-    // The optional mental-wellness module (FR-05, FR-22): declined is MODULE_DECLINED, a skipped item SKIPPED.
     ...wellnessInput(a.wellness, ruleset),
   };
 }
 
-/** Hard range checks from the ruleset (FR-07). Returns per-field issue codes for the form. */
 function measurementIssues(a: CheckupSubmission['answers']) {
   const fields: Array<[keyof CheckupSubmission['answers'], MeasurementType]> = [
     ['heightCm', 'height'],
@@ -1091,6 +1074,7 @@ async function createUser(
   return user;
 }
 
+// This is where the Express app and all its routes are built.
 export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Express {
   const app = express();
   app.disable('x-powered-by');
@@ -1128,7 +1112,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     return db;
   };
 
-  /** Signed-in user from the session cookie, with an idle timeout (FR-55). */
   const requireAuth: RequestHandler = async (req, _res, next) => {
     const database = needDb();
     const token = (req.cookies as Record<string, string | undefined>)[SESSION_COOKIE];
@@ -1150,7 +1133,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     next();
   };
 
-  /** Deny by default: only the listed roles pass (FR-53). */
   const requireRole =
     (...roles: Role[]): RequestHandler =>
     (req, _res, next) => {
@@ -1195,7 +1177,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1', system);
 
-  // ── 8.2 Authentication (sign up, sign in, sign out, Google) ─────────────────────────────────────────────────────
   const auth = Router();
   auth.get('/providers', (_req, res) => {
     res.json({ password: true, google: googleConfigured(config) });
@@ -1301,7 +1282,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.cookie(OAUTH_COOKIE, sealState(config.SESSION_SECRET, state), {
       httpOnly: true,
       secure: config.PUBLIC_URL.startsWith('https://'),
-      sameSite: 'lax', // must survive Google's redirect back to us
+      sameSite: 'lax',
       path: '/api/v1/auth/google',
       maxAge: 10 * 60_000,
     });
@@ -1391,7 +1372,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/auth', auth);
 
-  // ── 8.3 My account (every role) ─────────────────────────────────────────────────────────────────────────────────
   const account = Router();
   account.use(requireAuth);
 
@@ -1439,7 +1419,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       user.id,
       await hashPassword(body.newPassword),
     ]);
-    // Sign out every other device.
     await database.query(
       'UPDATE user_sessions SET revoked_at = now() WHERE user_id = $1 AND id <> $2 AND revoked_at IS NULL',
       [user.id, me(req).sessionId],
@@ -1448,7 +1427,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/me', account);
 
-  // ── 8.4 Participant: profile, check-ups (assessments), deletion requests ───────────────────────────────────────
   const participant = Router();
   participant.use(requireAuth, requireRole('participant'));
 
@@ -1531,6 +1509,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       return;
     }
     const consents = await latestConsents(database, userId);
+    // Nobody can send a check-up before agreeing to take part.
     if (!consents['core']) {
       throw new AppError(403, 'CONSENT_REQUIRED', 'Please agree to take part before a check-up.');
     }
@@ -1539,7 +1518,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       'SELECT sex FROM participant_profiles WHERE user_id = $1',
       [userId],
     );
-    // Without the mental-wellness consent the module counts as declined, whatever was sent (FR-02).
     const answers = consents['mental_wellness']
       ? body.answers
       : { ...body.answers, wellness: 'declined' as const };
@@ -1574,8 +1552,8 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         [userId, key.data],
       ));
     if (!row) throw new Error('assessment not stored');
+    // A mood or stress score of 10 or more is noted as a Tier 1 safety event, without any answers or scores.
     if (inserted && safety.tier === 1) {
-      // Tier 1 (FR-13, FR-25): the result shows the supportive message and referral list. No answer or score is kept.
       await database.query(
         `INSERT INTO safety_events (participant_id, tier, trigger_type, actions, occurred_at, recorded_by_role)
          VALUES ($1, 1, 'score_threshold', ARRAY['referral_list_shown'], now(), 'system')`,
@@ -1656,7 +1634,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     );
   });
 
-  // Consent and eligibility (FR-01, FR-02, FR-44): one event per choice, never edited.
   participant.get('/consents', async (req, res) => {
     const consents = await latestConsents(needDb(), me(req).id);
     res.json({
@@ -1698,8 +1675,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.json(body);
   });
 
-  // Item 9 safety events from the phone (FR-11, FR-13, FR-41). Generated on the phone with its own ID, so a resend
-  // after reconnecting is stored once. Only tier 2 from item 9 by the system is accepted here; no answer or score.
+  // The phone sends item 9 safety events here. Each has its own ID, so a resend is only stored once.
   participant.post('/safety-events', async (req, res) => {
     const body = SafetyEvent.parse(req.body);
     if (body.tier !== 2 || body.triggerType !== 'item9' || body.recordedByRole !== 'system') {
@@ -1714,7 +1690,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.status(row ? 201 : 200).json({ id: body.id });
   });
 
-  // System Usability Scale after the session (FR-17), stored per item with the form version.
   participant.get('/feedback', async (req, res) => {
     const row = await one<{ n: number }>(
       needDb(),
@@ -1729,7 +1704,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     await tx(needDb(), async (client) => {
       const at = new Date();
       for (const [i, value] of body.items.entries()) {
-        if (value === null || value === undefined) continue; // skipped items are simply not stored
+        if (value === null || value === undefined) continue;
         await client.query(
           `INSERT INTO feedback_responses (user_id, form_version, condition, item_code, value, created_at)
            VALUES ($1, $2, 'post_session', $3, $4, $5)`,
@@ -1741,7 +1716,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/participant', participant);
 
-  // ── 8.5 Facilitator: participants, sessions and task results, safety events ────────────────────────────────────
   const facilitator = Router();
   facilitator.use(requireAuth);
 
@@ -1760,7 +1734,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
               (SELECT count(*)::int FROM assessments a WHERE a.user_id = u.id) AS assessments
          FROM users u WHERE u.role = 'participant' AND u.deleted_at IS NULL ORDER BY u.created_at DESC LIMIT 500`,
     );
-    // Masked identifiers only: facilitators never see a participant's full email or phone number.
     res.json(
       list.map((p) => ({
         id: p.id,
@@ -1937,7 +1910,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/facilitator', facilitator);
 
-  // ── 8.6 Researcher-admin: users, deletion requests, audit log, flags ───────────────────────────────────────────
   const admin = Router();
   admin.use(requireAuth, requireRole('researcher_admin'));
 
@@ -1985,7 +1957,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.status(201).json(toAdminUser({ ...user, assessments: 0 }));
   });
 
-  /** The last active researcher-admin can never be removed, so the console always has an owner (FR-54). */
   const assertNotLastAdmin = async (db2: Queryable, userId: string) => {
     const row = await one<{ others: number }>(
       db2,
@@ -2083,14 +2054,12 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         status: d.status,
         requestedAt: d.requested_at.toISOString(),
         completedAt: d.completed_at?.toISOString() ?? null,
-        // Due within 72 hours of the request (FR-18).
         dueAt: new Date(d.requested_at.getTime() + DELETION_DUE_HOURS * 3_600_000).toISOString(),
         participantLabel: maskIdentifier(d.email, d.phone),
       })),
     );
   });
 
-  /** Removes the participant's application data and identifiers, keeping a stub and the request record (FR-18). */
   admin.post('/deletion-requests/:id/complete', async (req, res) => {
     const database = needDb();
     const id = uuidParam(req);
@@ -2197,7 +2166,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/admin', admin);
 
-  // ── 8.7 Content versions with two-person approval (FR-20, FR-46) ────────────────────────────────────────────────
   const content = Router();
   content.use(requireAuth, requireRole('researcher_admin', 'reviewer'));
 
@@ -2296,7 +2264,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         'UPDATE content_versions SET version = $2, body = $3, body_hash = $4, updated_at = now() WHERE id = $1',
         [id, body.version ?? current.version, newBody, sha256(normalise(newBody))],
       );
-      // A changed draft needs fresh approvals.
       await client.query('DELETE FROM content_approvals WHERE content_version_id = $1', [id]);
       await audit(client, me(req), 'content.update', { type: 'content_version', id });
     });
@@ -2367,7 +2334,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/content', content);
 
-  // ── 8.8 Dashboard metrics, different for each role ──────────────────────────────────────────────────────────────
   const dashboard = Router();
   dashboard.use(requireAuth);
   dashboard.get('/', async (req, res) => {
@@ -2473,7 +2439,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         database,
         "SELECT user_id, created_at, item_code, value FROM feedback_responses WHERE form_version = 'sus-1.0'",
       );
-      // The latest complete SUS form per person (FR-17); a form with a skipped item has no score.
       const latestForm = new Map<string, { at: number; items: Array<number | null> }>();
       for (const r of sus) {
         const at = r.created_at.getTime();
@@ -2540,7 +2505,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       return;
     }
 
-    // Reviewer
     const waiting = await rows<ContentRow>(
       database,
       `${CONTENT_SELECT} WHERE c.status = 'draft' AND (c.created_by IS NULL OR c.created_by <> $1)
@@ -2576,7 +2540,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/dashboard', dashboard);
 
-  // ── 8.9 Rinda Guide: question chips answered from approved templates, optionally reworded by Gemini ──────────────
   const guide = Router();
   guide.use(requireAuth, requireRole('participant'));
   const generatedToday = new Map<string, { day: string; count: number }>();
@@ -2596,20 +2559,16 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     const content = BUNDLED_CONTENT[body.language];
     const lookup = (id: string) => content.text[id] ?? id;
     const draft = composeGuideAnswer(chipId, row.results, row.plan, lookup);
-    // Numbers in the approved answer are allowed too, including words such as "One small step".
     const allowed = allowedNumbers(row.results, row.plan, draft, [
       ruleset.domains.activity.meetsAt,
       ruleset.domains.diet.meetsAt,
       ...numbersIn(draft.paragraphs.map((p) => p.text).join(' ')),
     ]);
 
-    // Templates only for urgent results, any safety event, Kinyarwanda (until a reviewed evaluation), when the
-    // flag is off (it needs ETHICS_AMENDMENT_REF and a key), or after the daily limit.
     const today = new Date().toISOString().slice(0, 10);
     const usage = generatedToday.get(me(req).id);
     const used = usage?.day === today ? usage.count : 0;
     const flags = await currentFlags(database, config);
-    // The AI needs its own, separate opt-in (consent scope ai_explanations); without it the template is served.
     const aiConsent = await one<{ granted: boolean }>(
       database,
       "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'ai_explanations' ORDER BY created_at DESC LIMIT 1",
@@ -2631,7 +2590,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       inputTokens: null,
       outputTokens: null,
     };
-    // Each AI answer is written once per check-up, question and language, then the saved answer is reused.
     const saved = templatesOnly
       ? null
       : await one<{
@@ -2652,7 +2610,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
           ([id]) => (id.startsWith('guide.') || id.startsWith('band.')) && !/^band\.(phq9|gad7)\./.test(id),
         ),
       );
-      // Only codes, band words, values and targets for NCD areas: no identifiers, dates or mental-wellness data.
       const facts = {
         language: body.language,
         chip: chipId,
@@ -2666,7 +2623,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         templateAnswer: draft.paragraphs.map((p) => p.text).join('\n\n'),
         allowedNumbers: allowed,
       };
-      // Every attempt counts towards the daily limit, whether or not the answer passes the checks.
       generatedToday.set(me(req).id, { day: today, count: used + 1 });
       try {
         const result = await explainWithGemini(config, fetchFn, facts, library, allowed);
@@ -2725,7 +2681,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/guide', guide);
 
-  // ── 8.10 Email reports (ADR-020): opt in or out (consent event); results summary by email ──────────────────────
   const emailReports = Router();
   emailReports.use(requireAuth, requireRole('participant'));
   const emailedToday = new Map<string, { day: string; count: number }>();
@@ -2769,7 +2724,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.json(body);
   });
 
-  // "Email me this summary": the same email for one saved check-up, at most a few a day.
   emailReports.post('/send', async (req, res) => {
     const database = needDb();
     const body = EmailReportSend.parse(req.body);
@@ -2778,14 +2732,12 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     const used = usage?.day === today ? usage.count : 0;
     if (used >= EMAIL_DAILY_LIMIT) throw new AppError(429, 'RATE_LIMITED', 'Too many emails today.');
     const status = await sendReportEmail(database, config, logger, fetchFn, me(req).id, body.assessmentId);
-    // Only real send attempts count towards the daily limit.
     if (status !== 'skipped') emailedToday.set(me(req).id, { day: today, count: used + 1 });
     if (status === 'skipped') throw new AppError(409, 'CONFLICT', 'Email reports are not available.');
     res.json({ status });
   });
   mount('/api/v1/participant/email-reports', emailReports);
 
-  // 8.11 AI explanations opt-in (ADR-019): off until the participant switches it on; withdrawing is one tap.
   const aiOptIn = Router();
   aiOptIn.use(requireAuth, requireRole('participant'));
 
@@ -2833,6 +2785,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   return app;
 }
 
+// This is where the made-up demo accounts are created. It refuses to run in the pilot.
 export async function seed(
   db: Db,
   config: AppConfig,
@@ -2922,6 +2875,7 @@ export async function seed(
   };
 }
 
+// This is where the command line starts: serve, migrate, seed or db-check.
 async function main() {
   let config: AppConfig;
   try {

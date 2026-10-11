@@ -1,5 +1,3 @@
-// API tests. The first block needs no database. The second runs every role's CRUD flow against a real PostgreSQL
-// (Neon) inside a throwaway schema that is dropped afterwards; it runs when DATABASE_URL or TEST_DATABASE_URL is set.
 import { randomBytes, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { Writable } from 'node:stream';
@@ -45,7 +43,6 @@ describe('without a database', () => {
     expect(() => loadConfig({ ...pilot, ETHICS_AMENDMENT_REF: 'SYNTHETIC-DEV-ONLY' })).toThrow(
       /ETHICS_AMENDMENT_REF/,
     );
-    // Phone notices stay off in the pilot profile until the ethics committee knows (FR-58).
     expect(FLAG_DEFAULTS.pilot.messaging).toBe(false);
   });
 
@@ -97,7 +94,6 @@ describe('without a database', () => {
   });
 });
 
-// A throwaway schema needs a direct (unpooled) connection: Neon's pooler does not keep search_path.
 const dbUrl =
   process.env['TEST_DATABASE_URL'] ||
   directUrlOf({
@@ -123,7 +119,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
   });
   const { logger, lines } = sinkLogger();
   let googleClaims: Record<string, unknown> = {};
-  // One fake for every outside service: Google sign-in, Gemini and Brevo email.
   let geminiAnswer: unknown = null;
   const outbound: Array<{ url: string; body: string }> = [];
   const fetchFn = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -154,7 +149,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     admin = createPool(dbUrl ?? '');
     db = createPool(dbUrl ?? '', schema);
     await migrate(db, schema);
-    // Safety net: never run these tests unless the throwaway schema really holds its own tables.
     const own = await db.query<{ t: string | null }>(`SELECT to_regclass('${schema}.users')::text AS t`);
     if (!own.rows[0]?.t)
       throw new Error(`Test schema ${schema} was not migrated; refusing to touch other schemas.`);
@@ -173,7 +167,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       .post('/api/v1/auth/signup')
       .send({ role, identifier, password, preferredLanguage: 'en' });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
-    // Participants agree to take part first (FR-02); the consent test below signs up without this.
     if (role === 'participant' && consent) {
       await agent
         .post('/api/v1/participant/consents')
@@ -363,8 +356,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       await agent.patch(`/api/v1/admin/users/${me.id}`).send({ active: false }).expect(409);
     await agent.delete(`/api/v1/admin/users/${me.id}`).expect(409);
 
-    // This test app has an amendment reference and a Gemini key, so switching the AI on is allowed here; the
-    // refusal without them is covered in the 'without a database' tests and the pilot placeholder check.
     await agent.patch('/api/v1/admin/flags/guideGenerative').send({ enabled: true }).expect(200);
     expect((await agent.patch('/api/v1/admin/flags/whatIf').send({ enabled: false })).body.whatIf).toBe(
       false,
@@ -472,7 +463,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     const ask = (chipId: string, language = 'en') =>
       agent.post('/api/v1/guide/explain').send({ assessmentId: checkup.body.id, chipId, language });
 
-    // No AI without the separate, unticked opt-in (consent scope ai_explanations).
     outbound.length = 0;
     expect((await agent.get('/api/v1/participant/ai-explanations')).body).toEqual({
       ai: false,
@@ -503,7 +493,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       paragraphs: [{ text: 'Walk 45 minutes a day.', sourceIds: ['guide.tpl.first_step'] }],
       followUpChipIds: [],
     };
-    // Asked again: the saved answer comes back and Gemini is not called a second time.
     outbound.length = 0;
     const again = await ask('first_step');
     expect(again.body).toMatchObject({ source: 'generated', paragraphs: generated.body.paragraphs });
@@ -558,7 +547,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     const brevoCalls = () => outbound.filter((o) => o.url.includes('api.brevo.com'));
     const waitForBrevo = async (n: number) => {
       for (let i = 0; i < 40 && brevoCalls().length < n; i++) await new Promise((r) => setTimeout(r, 250));
-      await new Promise((r) => setTimeout(r, 300)); // let the message_events row land
+      await new Promise((r) => setTimeout(r, 300));
     };
 
     outbound.length = 0;
@@ -587,7 +576,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     const events = await db.query('SELECT channel, status FROM message_events WHERE user_id = $1', [me.id]);
     expect(events.rows).toEqual([{ channel: 'email', status: 'sent' }]);
 
-    // "Email me this summary" for a saved check-up, and never for someone else's.
     await agent
       .post('/api/v1/participant/email-reports/send')
       .send({ assessmentId: checkup.body.id })
@@ -599,7 +587,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       .send({ assessmentId: checkup.body.id })
       .expect(409);
 
-    // Switched off: nothing more is sent.
     await agent.put('/api/v1/participant/email-reports').send({ email: false }).expect(200);
     outbound.length = 0;
     await submit().expect(201);
@@ -623,7 +610,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
         .send({ language: 'en', startedAt: new Date().toISOString(), answers });
     expect((await submit()).body.error.code).toBe('CONSENT_REQUIRED');
 
-    // Age and purpose must be confirmed; an extra field is refused.
     const consentBody = {
       purposeAcknowledged: true,
       ageConfirmed: true,
@@ -641,7 +627,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     await agent.post('/api/v1/participant/consents').send(consentBody).expect(201);
     await submit().expect(201);
 
-    // Without the mental-wellness consent, wellness answers are ignored (counted as declined).
     const withWellness = await agent
       .post('/api/v1/participant/assessments')
       .set('Idempotency-Key', randomUUID())
@@ -677,7 +662,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
         .set('Idempotency-Key', randomUUID())
         .send({ language: 'en', startedAt: new Date().toISOString(), answers: { ...answers, wellness } });
 
-    // PHQ-9 total 9, GAD-7 total 9: no tier. Skipped items are never 0.
     const nine = await send({ phq9: [1, 1, 1, 1, 1, 1, 1, 2, 0], gad7: [2, 2, 2, 1, 1, 1, null] }).expect(
       201,
     );
@@ -685,7 +669,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     expect(nine.body.results.wellness.find((r: { domain: string }) => r.domain === 'gad7').band).toBe(
       'insufficient',
     );
-    // PHQ-9 total 10 with item 9 = 0: Tier 1.
     const ten = await send({ phq9: [2, 1, 1, 1, 1, 1, 1, 2, 0], gad7: [0, 0, 0, 0, 0, 0, 0] }).expect(201);
     expect(ten.body.safety).toMatchObject({ tier: 1, triggerType: 'score_threshold' });
     expect(ten.body.results.ncd.map((r: { domain: string }) => r.domain)).not.toContain('phq9');
@@ -715,7 +698,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       recordedByRole: 'system',
     };
     await agent.post('/api/v1/participant/safety-events').send(event).expect(201);
-    await agent.post('/api/v1/participant/safety-events').send(event).expect(200); // resent after reconnecting
+    await agent.post('/api/v1/participant/safety-events').send(event).expect(200);
     await agent
       .post('/api/v1/participant/safety-events')
       .send({ ...event, id: randomUUID(), phq9: [0, 0, 0, 0, 0, 0, 0, 0, 2] })
