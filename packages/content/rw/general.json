@@ -13,6 +13,19 @@
     "email.report.greeting": "Muraho. Dore incamake y'isuzuma ryawe riheruka kuri Rinda. Buri gice kirebwa ukwacyo.",
     "email.report.disclaimer": "Iyi ncamake ni iyo kwiga, si isuzuma rya muganga, kandi Rinda si serivisi y'ubutabazi bwihuse. Niba wumva utameze neza cyangwa uhangayitse, vugana n'umukozi w'ubuzima.",
     "email.report.open": "Fungura Rinda usome ibisobanuro byose",
-    "email.report.optout": "Wakiriye iyi imeri kubera ko wafunguye raporo kuri imeri mu Mwirondoro wawe kuri Rinda. Ushobora kuzifunga aho igihe icyo ari cyo cyose."
+    "email.report.optout": "Wakiriye iyi imeri kubera ko wafunguye raporo kuri imeri mu Mwirondoro wawe kuri Rinda. Ushobora kuzifunga aho igihe icyo ari cyo cyose.",
+    "rules.intro": "Buri gisubizo gikomoka ku mategeko adahinduka yavuye mu mabwiriza y'ubuzima yatangajwe. Ibisubizo bimwe bihora bitanga igisubizo kimwe. Aya mategeko ni verisiyo {version}.",
+    "rules.skipped": "Ikibazo wasimbutse ntikibarwa nka 0. Iyo igice kidafite ibisubizo bihagije, kigaragaza \"Nta makuru ahagije\".",
+    "rules.tobacco": "Niba ubu ukoresha itabi iryo ari ryo ryose, iki gisubizo gisaba kwitonderwa.",
+    "rules.alcohol": "Duteranya ibisubizo byawe bitatu ku kunywa inzoga (0 kugeza 12). Igiteranyo cya {male} cyangwa birenga ku bagabo, cyangwa {female} cyangwa birenga ku bagore, gisaba kwitonderwa.",
+    "rules.activity": "Duteranya iminota yawe y'imyitozo iciriritse n'inshuro {multiplier} iminota y'imyitozo ikomeye buri cyumweru. Iminota {meetsAt} cyangwa irenga yujuje inama.",
+    "rules.diet": "Ibipimo {meetsAt} cyangwa birenga by'imbuto n'imboga ku munsi byujuje inama.",
+    "rules.bmi": "Igipimo cy'umubiri (BMI) ni ibiro byawe ugabanyije uburebure bwawe muri metero bwikubye. Munsi ya {normal} ni ibiro bike, {normal} kugeza kuri {overweight} ni urugero rwiza, {overweight} kugeza kuri {obesity} ni ibiro byinshi, naho {obesity} cyangwa birenga ni umubyibuho ukabije.",
+    "rules.waist": "Ku bagabo, umukenyero wa cm {m1} cyangwa irenga uriyongereye, naho cm {m2} cyangwa irenga wiyongereye cyane. Ku bagore, izo ntambwe ni cm {f1} na cm {f2}.",
+    "rules.bp": "Igipimo kinini mu bipimo byawe bibiri ni cyo gifata icyemezo. {hnS}/{hnD} cyangwa birenga ni hejuru gato y'ibisanzwe, {htS}/{htD} cyangwa birenga ni mu rwego rw'umuvuduko ukabije, naho {uS}/{uD} cyangwa birenga bisaba kwivuza uyu munsi.",
+    "rules.phq9": "Duteranya ibisubizo byawe icyenda (0 kugeza 27). {mild} cyangwa birenga ni bike, {moderate} cyangwa birenga ni biringaniye, {ms} cyangwa birenga ni byinshi, naho {severe} cyangwa birenga ni byinshi cyane.",
+    "rules.gad7": "Duteranya ibisubizo byawe birindwi (0 kugeza 21). {mild} cyangwa birenga ni bike, {moderate} cyangwa birenga ni biringaniye, naho {severe} cyangwa birenga ni byinshi cyane.",
+    "rules.support": "Niba igiteranyo icyo ari cyo cyose kigeze kuri {tier1} cyangwa kirenga, Rinda yerekana ubutumwa bwo kugushyigikira n'aho wabona ubufasha. Ibisubizo by'imitekerereze n'umunaniro ntibijya biteranywa n'ibindi bisubizo.",
+    "rules.source": "Inkomoko: {source}"
   }
 }

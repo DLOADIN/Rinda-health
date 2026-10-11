@@ -13,6 +13,19 @@
     "email.report.greeting": "Hello. Here is a summary of your latest Rinda check-up. Each area is looked at on its own.",
     "email.report.disclaimer": "This summary is educational, not a diagnosis, and Rinda is not an emergency service. If you feel unwell or worried, talk to a health worker.",
     "email.report.open": "Open Rinda to read the full explanation",
-    "email.report.optout": "You get this email because you switched on email reports in your Rinda Profile. You can switch them off there at any time."
+    "email.report.optout": "You get this email because you switched on email reports in your Rinda Profile. You can switch them off there at any time.",
+    "rules.intro": "Every result comes from fixed rules taken from published health guidance. The same answers always give the same result. These rules are version {version}.",
+    "rules.skipped": "A skipped question is never counted as 0. When an area does not have enough answers, it shows \"Not enough information\".",
+    "rules.tobacco": "If you use any tobacco now, this result asks for attention.",
+    "rules.alcohol": "We add your three answers about drinking (0 to 12). A total of {male} or more for men, or {female} or more for women, asks for attention.",
+    "rules.activity": "We add your moderate minutes and {multiplier} times your vigorous minutes each week. {meetsAt} minutes or more meets the recommendation.",
+    "rules.diet": "{meetsAt} or more servings of fruit and vegetables a day meets the recommendation.",
+    "rules.bmi": "Body mass index is your weight in kilograms divided by your height in metres, squared. Below {normal} is underweight, {normal} up to {overweight} is the healthy range, {overweight} up to {obesity} is overweight, and {obesity} or more is obesity.",
+    "rules.waist": "For men, a waist of {m1} cm or more is increased and {m2} cm or more is substantially increased. For women, the same steps are {f1} cm and {f2} cm.",
+    "rules.bp": "The higher of your two readings decides. {hnS}/{hnD} or more is high-normal, {htS}/{htD} or more is in the hypertension range, and {uS}/{uD} or more means seek care today.",
+    "rules.phq9": "We add your nine answers (0 to 27). {mild} or more is mild, {moderate} or more moderate, {ms} or more moderately severe, and {severe} or more severe.",
+    "rules.gad7": "We add your seven answers (0 to 21). {mild} or more is mild, {moderate} or more moderate, and {severe} or more severe.",
+    "rules.support": "If either total is {tier1} or more, Rinda shows a supportive message and places to get help. Mood and stress results are never added to the other results.",
+    "rules.source": "Source: {source}"
   }
 }
