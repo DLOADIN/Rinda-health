@@ -26,7 +26,9 @@ for (const file of files) {
       // Ignore ISO timestamps and durations so the numeric sentinels only match values.
       const scrubbed = line
         .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+Z?/g, '')
-        .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '') // request IDs
+        .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '') // UUIDs
+        // Random request IDs are 24 hex characters; any digits inside them are not values (e.g. "...14187d4...").
+        .replace(/"reqId":"[0-9a-f]+"/gi, '')
         .replace(/"(time|durationMs|pid|port)":\d+/g, '');
       for (const s of SENTINELS)
         if (scrubbed.includes(s)) hits.push(`${file}:${i + 1} contains sentinel ${s}`);
