@@ -57,7 +57,8 @@
     "CONFLICT": "This change is not allowed right now.",
     "FLAG_GUARD": "This feature needs an approved ethics amendment first.",
     "OFFLINE": "You are offline. Please connect and try again.",
-    "INTERNAL": "Something went wrong. Please try again."
+    "INTERNAL": "Something went wrong. Please try again.",
+    "CONSENT_REQUIRED": "Please agree to take part before starting a check-up."
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -116,7 +117,9 @@
     "more": "More",
     "menu": "Main menu",
     "logout": "Sign out",
-    "account": "Account menu"
+    "account": "Account menu",
+    "feedback": "Feedback",
+    "howResults": "How results work"
   },
   "dashboard": {
     "greeting": "Hi, {{name}}!",
@@ -141,7 +144,9 @@
       "content_drafts": "Content drafts",
       "content_published": "Published content",
       "reviews_waiting": "Waiting for my review",
-      "reviews_done": "My reviews"
+      "reviews_done": "My reviews",
+      "sus_responses": "SUS answers",
+      "sus_average": "Average SUS score"
     },
     "latest": "Your latest check-up",
     "noCheckups": "You have not done a check-up yet.",
@@ -171,7 +176,9 @@
       "content_drafts": "Waiting for two approvals",
       "content_published": "Live for participants",
       "reviews_waiting": "Drafts you have not reviewed",
-      "reviews_done": "Approvals and change requests"
+      "reviews_done": "Approvals and change requests",
+      "sus_responses": "Participants with a complete usability form",
+      "sus_average": "Out of 100; 68 is about average"
     }
   },
   "profile": {
@@ -205,17 +212,21 @@
     "district": "District",
     "notSet": "Not set",
     "deleteTitle": "Withdraw and delete my data",
-    "deleteBody": "You can leave the study at any time. We will delete your check-ups and details within 14 days.",
+    "deleteBody": "You can leave the study at any time. We will delete your check-ups and details within 72 hours.",
     "deleteRequest": "Ask to delete my data",
     "deleteConfirm": "Do you want us to delete your data? This cannot be undone once it is done.",
-    "deleteRequested": "Request received on {{date}}. We will finish within 14 days.",
+    "deleteRequested": "Request received on {{date}}.",
     "signOut": "Sign out",
     "districts": {
       "gasabo": "Gasabo",
       "kicukiro": "Kicukiro",
       "nyarugenge": "Nyarugenge",
       "other": "Another district"
-    }
+    },
+    "consentsTitle": "My consent choices",
+    "consentsBody": "Change these choices at any time. Each change is saved as a new record. To stop taking part completely, ask for your data to be deleted below.",
+    "consentSaved": "Your choice was saved.",
+    "deleteDue": "Your data will be deleted by {{date}}."
   },
   "checkup": {
     "title": "Health check-up",
@@ -252,7 +263,13 @@
     },
     "submit": "See my results",
     "sending": "Working out your results…",
-    "mentalWellnessLater": "Questions about mood and stress will be added after review."
+    "wellness": {
+      "start": "Answer these questions",
+      "skip": "Skip this part",
+      "declined": "You chose to skip the mood and stress questions.",
+      "changeMind": "Answer them after all",
+      "stopped": "You stopped the mood and stress questions. You can still send the rest of your check-up."
+    }
   },
   "results": {
     "title": "My results",
@@ -289,7 +306,8 @@
     "nextStep": "Your next step",
     "noStep": "No change needed here. Keep going.",
     "askAbout": "Ask Rinda about this",
-    "open": "Open details for {{area}}"
+    "open": "Open details for {{area}}",
+    "wellnessTitle": "Mood and stress"
   },
   "domains": {
     "tobacco": "Tobacco",
@@ -448,7 +466,7 @@
   },
   "deletions": {
     "title": "Deletion requests",
-    "intro": "Complete each request within 14 days. Completing removes the participant's data and contact details.",
+    "intro": "Complete each request within 72 hours. Completing removes the participant's data and contact details.",
     "requested": "Requested",
     "due": "Due by",
     "complete": "Complete deletion",
@@ -574,5 +592,22 @@
     "send": "Email me this summary",
     "sent": "The summary was sent to your email.",
     "sendFailed": "The email could not be sent. Please try again later."
+  },
+  "consent": {
+    "continue": "Continue",
+    "needConnection": "Rinda needs an internet connection the first time, to save your consent choices. Please connect and try again."
+  },
+  "safetyScreen": {
+    "stop": "Stop these questions",
+    "continue": "Continue the questions"
+  },
+  "feedback": {
+    "submit": "Send my feedback",
+    "again": "Answer again"
+  },
+  "howResults": {
+    "title": "How results are calculated",
+    "ncd": "Health habits and body measurements",
+    "wellness": "Mood and stress"
   }
 }

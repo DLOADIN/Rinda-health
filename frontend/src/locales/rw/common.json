@@ -57,7 +57,8 @@
     "CONFLICT": "Iyi mpinduka ntiyemewe ubu.",
     "FLAG_GUARD": "Iki gikorwa kibanza gukenera uruhushya rushya rw'akanama k'imyitwarire.",
     "OFFLINE": "Nta interineti ufite. Ihuze wongere ugerageze.",
-    "INTERNAL": "Habaye ikibazo. Ongera ugerageze."
+    "INTERNAL": "Habaye ikibazo. Ongera ugerageze.",
+    "CONSENT_REQUIRED": "Banza wemere kwitabira mbere yo gutangira isuzuma."
   },
   "auth": {
     "loginTitle": "Murakaza neza",
@@ -116,7 +117,9 @@
     "more": "Ibindi",
     "menu": "Urutonde nyamukuru",
     "logout": "Sohoka muri konti",
-    "account": "Urutonde rwa konti"
+    "account": "Urutonde rwa konti",
+    "feedback": "Ibitekerezo",
+    "howResults": "Uko ibisubizo bibarwa"
   },
   "dashboard": {
     "greeting": "Muraho, {{name}}!",
@@ -141,7 +144,9 @@
       "content_drafts": "Inyandiko z'agateganyo",
       "content_published": "Ibikubiyemo byatangajwe",
       "reviews_waiting": "Bitegereje isuzuma ryanjye",
-      "reviews_done": "Amasuzuma nakoze"
+      "reviews_done": "Amasuzuma nakoze",
+      "sus_responses": "Ibisubizo bya SUS",
+      "sus_average": "Amanota ya SUS ugereranyije"
     },
     "latest": "Isuzuma ryawe riheruka",
     "noCheckups": "Ntabwo urakora isuzuma.",
@@ -171,7 +176,9 @@
       "content_drafts": "Bitegereje kwemezwa n’abantu babiri",
       "content_published": "Bigaragara ku bitabiriye",
       "reviews_waiting": "Inyandiko utarasuzuma",
-      "reviews_done": "Ibyo wemeje n’impinduka wasabye"
+      "reviews_done": "Ibyo wemeje n’impinduka wasabye",
+      "sus_responses": "Abitabiriye bujuje urupapuro rw'imikoreshereze",
+      "sus_average": "Kuri 100; 68 ni hafi hagati"
     }
   },
   "profile": {
@@ -205,17 +212,21 @@
     "district": "Akarere",
     "notSet": "Ntibyashyizweho",
     "deleteTitle": "Kuva mu bushakashatsi no gusiba amakuru yanjye",
-    "deleteBody": "Ushobora kuva mu bushakashatsi igihe icyo ari cyo cyose. Tuzasiba amasuzuma yawe n'amakuru yawe mu minsi 14.",
+    "deleteBody": "Ushobora kuva mu bushakashatsi igihe icyo ari cyo cyose. Tuzasiba amasuzuma yawe n'amakuru yawe mu masaha 72.",
     "deleteRequest": "Saba ko amakuru yanjye asibwa",
     "deleteConfirm": "Urashaka ko dusiba amakuru yawe? Nimara gusibwa ntibishobora gusubizwaho.",
-    "deleteRequested": "Icyifuzo cyakiriwe ku wa {{date}}. Tuzarangiza mu minsi 14.",
+    "deleteRequested": "Ubusabe bwakiriwe ku wa {{date}}.",
     "signOut": "Sohoka muri konti",
     "districts": {
       "gasabo": "Gasabo",
       "kicukiro": "Kicukiro",
       "nyarugenge": "Nyarugenge",
       "other": "Akandi karere"
-    }
+    },
+    "consentsTitle": "Ibyo nemeye",
+    "consentsBody": "Hindura ibi byemezo igihe icyo ari cyo cyose. Buri gihinduka kibikwa nk'inyandiko nshya. Kugira ngo uve mu bushakashatsi burundu, saba ko amakuru yawe asibwa hepfo.",
+    "consentSaved": "Icyemezo cyawe cyabitswe.",
+    "deleteDue": "Amakuru yawe azasibwa bitarenze {{date}}."
   },
   "checkup": {
     "title": "Isuzuma ry'ubuzima",
@@ -252,7 +263,13 @@
     },
     "submit": "Reba ibisubizo byanjye",
     "sending": "Turimo gutegura ibisubizo byawe…",
-    "mentalWellnessLater": "Ibibazo byerekeye imitekerereze n'umunaniro bizongerwaho nyuma yo gusuzumwa."
+    "wellness": {
+      "start": "Subiza ibi bibazo",
+      "skip": "Simbuka iki gice",
+      "declined": "Wahisemo gusimbuka ibibazo by'imitekerereze n'umunaniro.",
+      "changeMind": "Bisubize nyamara",
+      "stopped": "Wahagaritse ibibazo by'imitekerereze n'umunaniro. Ushobora kohereza ibindi bisigaye mu isuzuma ryawe."
+    }
   },
   "results": {
     "title": "Ibisubizo byanjye",
@@ -289,7 +306,8 @@
     "nextStep": "Intambwe ikurikira",
     "noStep": "Nta mpinduka ikenewe hano. Komereza aho.",
     "askAbout": "Baza Rinda kuri ibi",
-    "open": "Fungura ibisobanuro bya {{area}}"
+    "open": "Fungura ibisobanuro bya {{area}}",
+    "wellnessTitle": "Imitekerereze n'umunaniro"
   },
   "domains": {
     "tobacco": "Itabi",
@@ -448,7 +466,7 @@
   },
   "deletions": {
     "title": "Ibisabwa byo gusiba amakuru",
-    "intro": "Rangiza buri cyifuzo mu minsi 14. Kurangiza bisiba amakuru y'uwitabiriye n'uburyo bwo kumuvugisha.",
+    "intro": "Rangiza buri busabe mu masaha 72. Kurangiza bisiba amakuru y'uwitabiriye n'aho twamubona.",
     "requested": "Cyasabwe",
     "due": "Kigomba kurangira bitarenze",
     "complete": "Rangiza gusiba",
@@ -574,5 +592,22 @@
     "send": "Nyoherereza iyi ncamake kuri imeri",
     "sent": "Incamake yoherejwe kuri imeri yawe.",
     "sendFailed": "Imeri ntiyashoboye koherezwa. Ongera ugerageze nyuma."
+  },
+  "consent": {
+    "continue": "Komeza",
+    "needConnection": "Rinda ikeneye interineti ubwa mbere, kugira ngo ibike ibyo wemeye. Nyamuneka huza interineti wongere ugerageze."
+  },
+  "safetyScreen": {
+    "stop": "Hagarika ibi bibazo",
+    "continue": "Komeza ibibazo"
+  },
+  "feedback": {
+    "submit": "Ohereza ibitekerezo byanjye",
+    "again": "Ongera usubize"
+  },
+  "howResults": {
+    "title": "Uko ibisubizo bibarwa",
+    "ncd": "Imibereho n'ibipimo by'umubiri",
+    "wellness": "Imitekerereze n'umunaniro"
   }
 }
