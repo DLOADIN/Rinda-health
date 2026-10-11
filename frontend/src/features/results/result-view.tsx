@@ -2,10 +2,11 @@
 // per NCD area with the band word, icon and value; tapping a card opens its details (FR-01, FR-10, FR-32, FR-33,
 // FR-37). Never a combined score (C-04).
 import type { DomainResult, FocusArea, Plan } from '@rinda/rules';
-import { ChevronRight, CircleAlert, CloudOff, Hospital } from 'lucide-react';
+import { ChevronRight, CircleAlert, CloudOff, HeartHandshake, Hospital } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BandBadge } from '@/components/band-badge';
 import { GetHelp } from '@/components/get-help';
+import { ReferralList } from '@/components/referral-list';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -140,6 +141,53 @@ export function DomainCard({ result, assessment }: { result: DomainResult; asses
   );
 }
 
+/**
+ * Mood and stress, shown apart from the NCD areas and never combined with them (C-04). Calm wellness styling only.
+ * Tier 1 shows the supportive message and referral list (FR-25); Tier 2 the approved safety text (FR-11).
+ */
+function WellnessResults({ assessment }: { assessment: Assessment }) {
+  const { t } = useTranslation();
+  const { text } = useContent();
+  const label = useBandLabel();
+  const answered = assessment.results.wellness.filter((r) => r.band !== 'insufficient');
+  const tier = assessment.safety.tier;
+  if (answered.length === 0 && tier === null) return null;
+  return (
+    <section className="flex flex-col gap-3" aria-labelledby="wellness">
+      <h2 id="wellness" className="text-xl font-semibold">
+        {t('results.wellnessTitle')}
+      </h2>
+      <p className="text-muted-foreground">{text('q.wellness.separate')}</p>
+      {tier !== null ? (
+        <Card className="border-band-wellness bg-brand-blush-soft">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <HeartHandshake aria-hidden="true" className="size-5" />
+              {text(tier === 2 ? 'safety.screen.title' : 'safety.gethelp.title')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <p>{text(tier === 2 ? 'safety.screen.body' : 'safety.tier1.body')}</p>
+            <ReferralList />
+          </CardContent>
+        </Card>
+      ) : null}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {answered.map((r) => (
+          <Card key={r.domain} className="glass">
+            <CardHeader>
+              <CardTitle className="text-base">{t(`domains.${r.domain}`)}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BandBadge severity={r.severity} label={label(r)} />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function ResultView({ assessment, compact = false }: { assessment: Assessment; compact?: boolean }) {
   const { t } = useTranslation();
   const label = useBandLabel();
@@ -223,6 +271,8 @@ export function ResultView({ assessment, compact = false }: { assessment: Assess
           ))}
         </div>
       </section>
+
+      <WellnessResults assessment={assessment} />
     </div>
   );
 }
