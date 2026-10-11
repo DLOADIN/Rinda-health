@@ -167,12 +167,24 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     await admin?.end();
   });
 
-  const signup = async (role: string, identifier: string, password = 'correct-horse-1') => {
+  const signup = async (role: string, identifier: string, password = 'correct-horse-1', consent = true) => {
     const agent = request.agent(app);
     const res = await agent
       .post('/api/v1/auth/signup')
       .send({ role, identifier, password, preferredLanguage: 'en' });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    // Participants agree to take part first (FR-02); the consent test below signs up without this.
+    if (role === 'participant' && consent) {
+      await agent
+        .post('/api/v1/participant/consents')
+        .send({
+          purposeAcknowledged: true,
+          ageConfirmed: true,
+          consents: { core: true, mental_wellness: true, audio: false, follow_up: false },
+          language: 'en',
+        })
+        .expect(201);
+    }
     return { agent, me: res.body as { id: string; role: string } };
   };
 
@@ -593,6 +605,152 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     await submit().expect(201);
     await new Promise((r) => setTimeout(r, 500));
     expect(brevoCalls()).toHaveLength(0);
+  });
+
+  it('consent comes first: no check-up without taking part, and choices can change later (FR-02, FR-44)', async () => {
+    const { agent } = await signup('participant', 'no-consent-yet@example.com', 'correct-horse-1', false);
+    expect((await agent.get('/api/v1/participant/consents')).body).toEqual({
+      decided: false,
+      core: false,
+      mental_wellness: false,
+      audio: false,
+      follow_up: false,
+    });
+    const submit = () =>
+      agent
+        .post('/api/v1/participant/assessments')
+        .set('Idempotency-Key', randomUUID())
+        .send({ language: 'en', startedAt: new Date().toISOString(), answers });
+    expect((await submit()).body.error.code).toBe('CONSENT_REQUIRED');
+
+    // Age and purpose must be confirmed; an extra field is refused.
+    const consentBody = {
+      purposeAcknowledged: true,
+      ageConfirmed: true,
+      consents: { core: true, mental_wellness: false, audio: false, follow_up: true },
+      language: 'en',
+    };
+    await agent
+      .post('/api/v1/participant/consents')
+      .send({ ...consentBody, ageConfirmed: false })
+      .expect(400);
+    await agent
+      .post('/api/v1/participant/consents')
+      .send({ ...consentBody, nationalId: '1' })
+      .expect(400);
+    await agent.post('/api/v1/participant/consents').send(consentBody).expect(201);
+    await submit().expect(201);
+
+    // Without the mental-wellness consent, wellness answers are ignored (counted as declined).
+    const withWellness = await agent
+      .post('/api/v1/participant/assessments')
+      .set('Idempotency-Key', randomUUID())
+      .send({
+        language: 'en',
+        startedAt: new Date().toISOString(),
+        answers: { ...answers, wellness: { phq9: [3, 3, 3, 3, 3, 3, 3, 3, 0], gad7: [3, 3, 3, 3, 3, 3, 3] } },
+      })
+      .expect(201);
+    expect(withWellness.body.results.wellness.every((r: { band: string }) => r.band === 'insufficient')).toBe(
+      true,
+    );
+    expect(withWellness.body.safety.tier).toBeNull();
+
+    await agent
+      .put('/api/v1/participant/consents')
+      .send({ scope: 'mental_wellness', granted: true })
+      .expect(200);
+    await agent.put('/api/v1/participant/consents').send({ scope: 'core', granted: false }).expect(400);
+    expect((await agent.get('/api/v1/participant/consents')).body).toMatchObject({
+      decided: true,
+      core: true,
+      mental_wellness: true,
+      follow_up: true,
+    });
+  });
+
+  it('mental wellness: separate results, Tier 1 at 10 records a safety event without answers (FR-25)', async () => {
+    const { agent, me } = await signup('participant', 'wellness@example.com');
+    const send = (wellness: unknown) =>
+      agent
+        .post('/api/v1/participant/assessments')
+        .set('Idempotency-Key', randomUUID())
+        .send({ language: 'en', startedAt: new Date().toISOString(), answers: { ...answers, wellness } });
+
+    // PHQ-9 total 9, GAD-7 total 9: no tier. Skipped items are never 0.
+    const nine = await send({ phq9: [1, 1, 1, 1, 1, 1, 1, 2, 0], gad7: [2, 2, 2, 1, 1, 1, null] }).expect(
+      201,
+    );
+    expect(nine.body.safety.tier).toBeNull();
+    expect(nine.body.results.wellness.find((r: { domain: string }) => r.domain === 'gad7').band).toBe(
+      'insufficient',
+    );
+    // PHQ-9 total 10 with item 9 = 0: Tier 1.
+    const ten = await send({ phq9: [2, 1, 1, 1, 1, 1, 1, 2, 0], gad7: [0, 0, 0, 0, 0, 0, 0] }).expect(201);
+    expect(ten.body.safety).toMatchObject({ tier: 1, triggerType: 'score_threshold' });
+    expect(ten.body.results.ncd.map((r: { domain: string }) => r.domain)).not.toContain('phq9');
+    const events = await db.query(
+      'SELECT tier, trigger_type, actions, recorded_by_role FROM safety_events WHERE participant_id = $1',
+      [me.id],
+    );
+    expect(events.rows).toEqual([
+      {
+        tier: 1,
+        trigger_type: 'score_threshold',
+        actions: ['referral_list_shown'],
+        recorded_by_role: 'system',
+      },
+    ]);
+    await send({ phq9: [9, 0, 0, 0, 0, 0, 0, 0, 0], gad7: [0, 0, 0, 0, 0, 0, 0] }).expect(400);
+  });
+
+  it('item 9 safety events from the phone: stored once, never with answers (FR-11, FR-13)', async () => {
+    const { agent, me } = await signup('participant', 'item9@example.com');
+    const event = {
+      id: randomUUID(),
+      tier: 2,
+      triggerType: 'item9',
+      actions: ['safety_screen_shown', 'referral_list_shown'],
+      occurredAt: new Date().toISOString(),
+      recordedByRole: 'system',
+    };
+    await agent.post('/api/v1/participant/safety-events').send(event).expect(201);
+    await agent.post('/api/v1/participant/safety-events').send(event).expect(200); // resent after reconnecting
+    await agent
+      .post('/api/v1/participant/safety-events')
+      .send({ ...event, id: randomUUID(), phq9: [0, 0, 0, 0, 0, 0, 0, 0, 2] })
+      .expect(400);
+    await agent
+      .post('/api/v1/participant/safety-events')
+      .send({ ...event, id: randomUUID(), tier: 3, recordedByRole: 'facilitator' })
+      .expect(400);
+    const stored = await db.query('SELECT count(*)::int AS n FROM safety_events WHERE participant_id = $1', [
+      me.id,
+    ]);
+    expect(stored.rows[0].n).toBe(1);
+  });
+
+  it('SUS feedback is stored per item with its version and averaged for the admin (FR-17)', async () => {
+    const { agent } = await signup('participant', 'sus@example.com');
+    expect((await agent.get('/api/v1/participant/feedback')).body).toEqual({ submitted: false });
+    await agent
+      .post('/api/v1/participant/feedback')
+      .send({ formVersion: 'sus-1.0', items: [4, 2, 4, 2, 4, 2, 4, 2, 4, 9] })
+      .expect(400);
+    const sent = await agent
+      .post('/api/v1/participant/feedback')
+      .send({ formVersion: 'sus-1.0', items: [4, 2, 4, 2, 4, 2, 4, 2, 4, 2] })
+      .expect(201);
+    expect(sent.body).toEqual({ score: 75 });
+    expect((await agent.get('/api/v1/participant/feedback')).body).toEqual({ submitted: true });
+
+    const { agent: adminAgent } = await signup('researcher_admin', 'sus-admin@example.com');
+    const cards = (await adminAgent.get('/api/v1/dashboard')).body.cards as Array<{
+      key: string;
+      value: number;
+    }>;
+    expect(cards.find((c) => c.key === 'sus_responses')?.value).toBeGreaterThanOrEqual(1);
+    expect(cards.find((c) => c.key === 'sus_average')?.value).toBe(75);
   });
 
   it('dashboards include 14 days of chart data', async () => {
