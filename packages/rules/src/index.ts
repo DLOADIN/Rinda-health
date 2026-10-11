@@ -13,6 +13,7 @@ export {
   type ValidationIssue,
 } from './validate.ts';
 export { normalise } from './normalise.ts';
+export { susScore, wellnessInput, type WellnessForm } from './wellness.ts';
 export {
   allowedNumbers,
   composeGuideAnswer,
