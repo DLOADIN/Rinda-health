@@ -47,6 +47,7 @@ import {
   SusSubmission,
   EmailReportSend,
   SessionProgressRequest,
+  DeviceClaimRequest,
   WhatsAppPreference,
   AiPreference,
   LoginRequest,
@@ -1278,6 +1279,49 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1', system);
 
+  // This is how a study phone joins a session from the QR code, learns when to wipe itself, and confirms the wipe.
+  const devices = Router();
+  const deviceRow = async (req: Request) => {
+    const token = req.get('x-device-token');
+    if (!token || !/^[A-Za-z0-9_-]{20,80}$/.test(token)) return null;
+    return one<{ id: string; wipe_requested_at: Date | null; session_ended: boolean }>(
+      needDb(),
+      `SELECT d.id, d.wipe_requested_at, s.ended_at IS NOT NULL AS session_ended
+         FROM session_devices d JOIN facilitator_sessions s ON s.id = d.session_id WHERE d.device_token_hash = $1`,
+      [sha256(token)],
+    );
+  };
+
+  devices.post('/claim', authLimiter, async (req, res) => {
+    const database = needDb();
+    const body = DeviceClaimRequest.parse(req.body);
+    const token = randomBytes(32).toString('base64url');
+    const row = await one<{ language: 'en' | 'rw'; device_label: string | null }>(
+      database,
+      `UPDATE session_devices d SET device_token_hash = $2, claimed_at = now()
+         FROM facilitator_sessions s JOIN users u ON u.id = s.participant_id
+        WHERE d.code_hash = $1 AND d.session_id = s.id AND d.claimed_at IS NULL AND d.expires_at > now()
+          AND s.ended_at IS NULL
+        RETURNING u.preferred_language AS language, s.device_label`,
+      [sha256(body.code), sha256(token)],
+    );
+    if (!row) throw new AppError(404, 'NOT_FOUND', 'This set-up code has expired or was already used.');
+    res.json({ deviceToken: token, language: row.language, deviceLabel: row.device_label });
+  });
+
+  devices.get('/status', async (req, res) => {
+    const row = await deviceRow(req);
+    // An unknown token (for example a deleted session) also means: clear this phone.
+    res.json({ wipe: !row || Boolean(row.wipe_requested_at) });
+  });
+
+  devices.post('/wiped', async (req, res) => {
+    const row = await deviceRow(req);
+    if (row) await needDb().query('UPDATE session_devices SET wiped_at = now() WHERE id = $1', [row.id]);
+    res.status(204).end();
+  });
+  mount('/api/v1/devices', devices);
+
   const auth = Router();
   auth.get('/providers', (_req, res) => {
     res.json({ password: true, google: googleConfigured(config) });
@@ -1998,6 +2042,15 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       'SELECT tier, trigger_type, occurred_at FROM safety_events WHERE participant_id = $1 AND occurred_at >= $2 ORDER BY occurred_at',
       [session.participant_id, session.started_at],
     );
+    const device = await one<{
+      claimed_at: Date | null;
+      wipe_requested_at: Date | null;
+      wiped_at: Date | null;
+    }>(
+      database,
+      'SELECT claimed_at, wipe_requested_at, wiped_at FROM session_devices WHERE session_id = $1 ORDER BY claimed_at DESC NULLS LAST, created_at DESC LIMIT 1',
+      [session.id],
+    );
     const now = Date.now();
     const timeline = steps.map((st) => ({
       step: st.step,
@@ -2016,12 +2069,52 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       current: open && !open.endedAt ? { step: open.step, startedAt: open.startedAt } : null,
       timeline,
       totals,
+      device: {
+        linked: Boolean(device?.claimed_at),
+        wipeRequested: Boolean(device?.wipe_requested_at),
+        wipedAt: device?.wiped_at?.toISOString() ?? null,
+      },
       alerts: alerts.map((al) => ({
         tier: al.tier,
         triggerType: al.trigger_type,
         occurredAt: al.occurred_at.toISOString(),
       })),
     });
+  });
+
+  // QR set-up: a one-time link (15 minutes) that ties a study phone to this session.
+  facilitator.post('/sessions/:id/device-link', requireRole('facilitator'), async (req, res) => {
+    const database = needDb();
+    const session = await ownSession(req);
+    if (session.ended_at) throw new AppError(409, 'CONFLICT', 'This session has ended.');
+    const code = randomBytes(18).toString('base64url');
+    const expires = new Date(Date.now() + 15 * 60_000);
+    await database.query(
+      'INSERT INTO session_devices (session_id, code_hash, expires_at) VALUES ($1, $2, $3)',
+      [session.id, sha256(code), expires],
+    );
+    await audit(database, me(req), 'device.link', { type: 'facilitator_session', id: session.id });
+    res.status(201).json({ url: `${config.PUBLIC_URL}/setup/${code}`, expiresAt: expires.toISOString() });
+  });
+
+  // End the session and ask every linked study phone to wipe itself.
+  facilitator.post('/sessions/:id/wipe', requireRole('facilitator'), async (req, res) => {
+    const database = needDb();
+    const session = await ownSession(req);
+    await database.query(
+      'UPDATE session_devices SET wipe_requested_at = coalesce(wipe_requested_at, now()) WHERE session_id = $1 AND claimed_at IS NOT NULL',
+      [session.id],
+    );
+    await database.query(
+      'UPDATE facilitator_sessions SET ended_at = coalesce(ended_at, now()) WHERE id = $1',
+      [session.id],
+    );
+    await database.query(
+      'UPDATE session_progress SET ended_at = now() WHERE session_id = $1 AND ended_at IS NULL',
+      [session.id],
+    );
+    await audit(database, me(req), 'device.wipe', { type: 'facilitator_session', id: session.id });
+    res.json(toSession(await ownSession(req)));
   });
 
   facilitator.delete('/sessions/:id', requireRole('facilitator'), async (req, res) => {
