@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import en from './en/common.json';
 import rw from './rw/common.json';
+import enLanding from './en/landing.json';
+import rwLanding from './rw/landing.json';
 
 const keys = (obj: object, prefix = ''): string[] =>
   Object.entries(obj).flatMap(([k, v]) =>
@@ -10,6 +12,7 @@ const keys = (obj: object, prefix = ''): string[] =>
 describe('interface strings', () => {
   it('en and rw have the same keys', () => {
     expect(keys(rw).sort()).toEqual(keys(en).sort());
+    expect(keys(rwLanding).sort()).toEqual(keys(enLanding).sort());
   });
 
   it('every English string is filled in', () => {

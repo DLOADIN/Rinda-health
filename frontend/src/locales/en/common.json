@@ -29,7 +29,17 @@
   "landing": {
     "login": "Sign in",
     "signup": "Create an account",
-    "educational": "Educational, not a diagnosis. Not an emergency service."
+    "educational": "Educational, not a diagnosis. Not an emergency service.",
+    "nav": {
+      "features": "Features",
+      "how": "How it works",
+      "about": "About",
+      "faq": "FAQ",
+      "contact": "Contact",
+      "getStarted": "Get started",
+      "menu": "Open menu",
+      "home": "Rinda home"
+    }
   },
   "neutral": {
     "back": "Back to start"

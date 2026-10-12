@@ -1,0 +1,151 @@
+{
+  "landing": {
+    "hero": {
+      "badge": "Free · Private · English and Kinyarwanda",
+      "title1": "Know your health,",
+      "title2": "one calm step",
+      "title3": "at a time.",
+      "subtitle": "Rinda is a short, private check of six everyday health habits for young adults in Rwanda. You get a clear, explained result for each one, and real places to get help.",
+      "primary": "Start your free check-up",
+      "secondary": "See how it works"
+    },
+    "phone": {
+      "greeting": "Good morning",
+      "latest": "Your latest check-up",
+      "areas": "areas looked at",
+      "nextStep": "Your next small step",
+      "step": "About 20 more minutes of activity on 3 days",
+      "minutes": "{{value}} / {{target}} min"
+    },
+    "float": {
+      "offline": "Works without internet",
+      "private": "Encrypted on your phone",
+      "mood": "Mood check-in, only if you want"
+    },
+    "stats": {
+      "areas": "health areas",
+      "languages": "languages",
+      "ads": "ads or trackers",
+      "minutes": "minutes for a check-up"
+    },
+    "features": {
+      "eyebrow": "What Rinda does",
+      "title": "Everything you need to understand your health",
+      "subtitle": "No jargon and no judgement. Just your results, why they matter, and one thing you can do next.",
+      "checkup": {
+        "title": "A check-up in about ten minutes",
+        "body": "Tobacco, alcohol, activity, food, body size and blood pressure. Skip anything you prefer not to answer."
+      },
+      "results": {
+        "title": "Clear results, explained",
+        "body": "Each area shows a word and an icon, never just a colour, with the reason in plain language."
+      },
+      "steps": {
+        "title": "Small next steps",
+        "body": "Rinda picks the few areas to work on first and suggests one small, realistic change."
+      },
+      "mood": {
+        "title": "Mood and stress, privately",
+        "body": "An optional check-in on how you have been feeling, shown on its own and never added to other results."
+      },
+      "guide": {
+        "title": "Ask Rinda",
+        "body": "Tap a question and get your results explained in friendly words, from approved guidance."
+      },
+      "offline": {
+        "title": "Works without internet",
+        "body": "Install Rinda on your phone. Check-ups are scored on the phone and sent when you are back online."
+      }
+    },
+    "how": {
+      "eyebrow": "How it works",
+      "title": "Three steps, about ten minutes",
+      "s1": {
+        "title": "Create a free account",
+        "body": "Use your email or phone number, or sign in with Google. Choose English or Kinyarwanda."
+      },
+      "s2": {
+        "title": "Answer a short check-up",
+        "body": "Simple questions and a few measurements. Every question can be skipped."
+      },
+      "s3": {
+        "title": "Read your results",
+        "body": "See each area explained, your next small step, and where to get help if you need it."
+      }
+    },
+    "rwanda": {
+      "eyebrow": "Made for young adults in Rwanda",
+      "title": "Healthy habits start long before problems do",
+      "body": "Many heart and lifestyle conditions grow quietly through our twenties and thirties. Rinda helps you notice early, in your own language, and points you to real services in Rwanda."
+    },
+    "privacy": {
+      "eyebrow": "Private by design",
+      "title": "Your answers belong to you",
+      "p1": "No ads, no trackers, no selling of data.",
+      "p2": "What you save on your phone is encrypted.",
+      "p3": "You choose what to share, and can change it any time.",
+      "p4": "Ask for your data to be deleted, and it is gone within 72 hours.",
+      "p5": "\"Get help now\" is always one tap away."
+    },
+    "about": {
+      "eyebrow": "About Rinda",
+      "title": "Made for you, and for young people across Rwanda",
+      "body": "Rinda is for young adults who want to understand their health without a clinic visit, a long form or any judgement. You answer a few simple questions, see where you stand in each area, and get one small step you can actually take. Your answers stay yours, and help is always one tap away.",
+      "forWhoLabel": "Who it is for",
+      "forWho": "Young adults aged 18 to 35",
+      "whereLabel": "Where",
+      "where": "Anywhere in Rwanda, even offline",
+      "costLabel": "Cost",
+      "cost": "Free, with no ads"
+    },
+    "faq": {
+      "eyebrow": "Questions",
+      "title": "Frequently asked questions",
+      "q1": "Is Rinda a diagnosis?",
+      "a1": "No. Rinda is educational. It helps you understand everyday habits and tells you when it is a good idea to see a health worker.",
+      "q2": "Is it free?",
+      "a2": "Yes. Rinda is free, with no ads.",
+      "q3": "Who can see my answers?",
+      "a3": "Only you see your results. Study staff see counts and masked names, never your answers.",
+      "q4": "Does it work without internet?",
+      "a4": "Yes. After the first visit you can install Rinda. Check-ups done offline are scored on your phone and sent later.",
+      "q5": "What if I do not feel safe?",
+      "a5": "Tap \"Get help now\" at any time to see hotlines and services you can call straight away. Rinda is not an emergency service.",
+      "q6": "Which languages can I use?",
+      "a6": "English and Kinyarwanda. You can switch at any time."
+    },
+    "contact": {
+      "eyebrow": "Contact",
+      "title": "Get in touch",
+      "body": "Questions about Rinda or the study? We would love to hear from you.",
+      "email": "Email",
+      "phone": "Phone",
+      "location": "Location",
+      "locationValue": "Kigali, Rwanda"
+    },
+    "cta": {
+      "title": "Ready for your first check-up?",
+      "body": "It takes about ten minutes, it is free, and you can stop at any time."
+    },
+    "footer": {
+      "rights": "© 2026 Rinda Health",
+      "photos": "Photos from Unsplash"
+    }
+  },
+  "authPanel": {
+    "previous": "Previous picture",
+    "next": "Next picture",
+    "s1": {
+      "title": "Your health, explained in plain words.",
+      "body": "Six everyday habits, one clear result for each."
+    },
+    "s2": {
+      "title": "Small steps you can actually keep.",
+      "body": "Rinda suggests one realistic change at a time."
+    },
+    "s3": {
+      "title": "Private, free and in your language.",
+      "body": "English or Kinyarwanda, on your phone, even offline."
+    }
+  }
+}

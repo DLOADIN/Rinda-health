@@ -1,0 +1,151 @@
+{
+  "landing": {
+    "hero": {
+      "badge": "Ni ubuntu · Ni ibanga · Icyongereza n'Ikinyarwanda",
+      "title1": "Menya ubuzima bwawe,",
+      "title2": "intambwe imwe ituje",
+      "title3": "ku yindi.",
+      "subtitle": "Rinda ni isuzuma rigufi kandi ry'ibanga ry'imibereho itandatu ya buri munsi, rigenewe urubyiruko mu Rwanda. Ubona igisubizo gisobanutse kuri buri gice, n'aho wabona ubufasha nyabwo.",
+      "primary": "Tangira isuzuma ryawe ry’ubuntu",
+      "secondary": "Reba uko ikora"
+    },
+    "phone": {
+      "greeting": "Mwaramutse",
+      "latest": "Isuzuma ryawe riheruka",
+      "areas": "ibice byarebwe",
+      "nextStep": "Intambwe yawe nto ikurikira",
+      "step": "Iminota hafi 20 y'inyongera y'imyitozo mu minsi 3",
+      "minutes": "{{value}} / {{target}} iminota"
+    },
+    "float": {
+      "offline": "Ikora nta interineti",
+      "private": "Ibitswe mu ibanga kuri telefoni yawe",
+      "mood": "Isuzuma ry'imitekerereze, ubishatse gusa"
+    },
+    "stats": {
+      "areas": "ibice by'ubuzima",
+      "languages": "indimi",
+      "ads": "amatangazo cyangwa abakurikirana",
+      "minutes": "iminota y'isuzuma"
+    },
+    "features": {
+      "eyebrow": "Ibyo Rinda ikora",
+      "title": "Ibyo ukeneye byose kugira ngo wumve ubuzima bwawe",
+      "subtitle": "Nta magambo akomeye, nta gucira urubanza. Ibisubizo byawe gusa, impamvu bifite akamaro, n’ikintu kimwe wakora gikurikira.",
+      "checkup": {
+        "title": "Isuzuma mu minota hafi icumi",
+        "body": "Itabi, inzoga, imyitozo, ibiryo, ingano y'umubiri n'umuvuduko w'amaraso. Simbuka icyo udashaka gusubiza."
+      },
+      "results": {
+        "title": "Ibisubizo bisobanutse",
+        "body": "Buri gice cyerekana ijambo n'ikimenyetso, si ibara gusa, hamwe n'impamvu mu magambo yoroshye."
+      },
+      "steps": {
+        "title": "Intambwe nto zikurikira",
+        "body": "Rinda ihitamo ibice bike byo kwitaho mbere kandi igatanga impinduka imwe nto ishoboka."
+      },
+      "mood": {
+        "title": "Imitekerereze n'umunaniro, mu ibanga",
+        "body": "Isuzuma ritari itegeko ry'uko wiyumvise, ryerekanwa ukwaryo kandi ntirivangwa n'ibindi bisubizo."
+      },
+      "guide": {
+        "title": "Baza Rinda",
+        "body": "Kanda ku kibazo maze ibisubizo byawe bisobanurwe mu magambo y'ubucuti, avuye mu mabwiriza yemejwe."
+      },
+      "offline": {
+        "title": "Ikora nta interineti",
+        "body": "Shyira Rinda kuri telefoni yawe. Amasuzuma abarirwa kuri telefoni kandi akoherezwa iyo interineti igarutse."
+      }
+    },
+    "how": {
+      "eyebrow": "Uko ikora",
+      "title": "Intambwe eshatu, iminota hafi icumi",
+      "s1": {
+        "title": "Fungura konti y’ubuntu",
+        "body": "Koresha imeri cyangwa nimero ya telefoni, cyangwa winjire na Google. Hitamo Icyongereza cyangwa Ikinyarwanda."
+      },
+      "s2": {
+        "title": "Subiza isuzuma rigufi",
+        "body": "Ibibazo byoroshye n'ibipimo bike. Buri kibazo gishobora gusimbukwa."
+      },
+      "s3": {
+        "title": "Soma ibisubizo byawe",
+        "body": "Reba buri gice gisobanuwe, intambwe yawe nto ikurikira, n'aho wabona ubufasha ubukeneye."
+      }
+    },
+    "rwanda": {
+      "eyebrow": "Byakorewe urubyiruko mu Rwanda",
+      "title": "Imibereho myiza itangira mbere y’uko ibibazo biza",
+      "body": "Indwara nyinshi z'umutima n'iz'imibereho zikura bucece mu myaka yacu ya makumyabiri na mirongo itatu. Rinda igufasha kubimenya kare, mu rurimi rwawe, kandi ikakwereka serivisi nyazo mu Rwanda."
+    },
+    "privacy": {
+      "eyebrow": "Ibanga ni ryo shingiro",
+      "title": "Ibisubizo byawe ni ibyawe",
+      "p1": "Nta matangazo, nta bakurikirana, nta kugurisha amakuru.",
+      "p2": "Ibyo ubika kuri telefoni yawe biba bihishwe (encrypted).",
+      "p3": "Uhitamo ibyo usangiza, kandi ushobora kubihindura igihe icyo ari cyo cyose.",
+      "p4": "Saba ko amakuru yawe asibwa, azaba yavuyeho mu masaha 72.",
+      "p5": "\"Shaka ubufasha ubu\" buri gihe kiri hafi, ukanda rimwe gusa."
+    },
+    "about": {
+      "eyebrow": "Ibyerekeye Rinda",
+      "title": "Yakorewe wowe, n'urubyiruko rwose mu Rwanda",
+      "body": "Rinda ni iy'urubyiruko rushaka kumva ubuzima bwarwo nta kujya kwa muganga, nta fishi ndende kandi nta gucirwa urubanza. Usubiza ibibazo bike byoroshye, ukareba aho uhagaze muri buri gice, kandi ukabona intambwe imwe nto ushobora gutera koko. Ibisubizo byawe bihora ari ibyawe, kandi ubufasha buri hafi, ukanda rimwe gusa.",
+      "forWhoLabel": "Ni iya nde",
+      "forWho": "Urubyiruko rufite imyaka 18 kugeza kuri 35",
+      "whereLabel": "Hehe",
+      "where": "Ahantu hose mu Rwanda, ndetse nta interineti",
+      "costLabel": "Igiciro",
+      "cost": "Ni ubuntu, nta matangazo"
+    },
+    "faq": {
+      "eyebrow": "Ibibazo",
+      "title": "Ibibazo bikunze kubazwa",
+      "q1": "Ese Rinda ni isuzuma rya muganga?",
+      "a1": "Oya. Rinda ni iyo kwiga. Igufasha kumva imibereho ya buri munsi kandi ikakubwira igihe ari byiza kubonana n'umukozi w'ubuzima.",
+      "q2": "Ese ni ubuntu?",
+      "a2": "Yego. Rinda ni ubuntu, nta matangazo.",
+      "q3": "Ni nde ushobora kubona ibisubizo byanjye?",
+      "a3": "Ni wowe wenyine ubona ibisubizo byawe. Abakozi b'ubushakashatsi babona imibare n'amazina ahishwe, ntibabona ibisubizo byawe.",
+      "q4": "Ese ikora nta interineti?",
+      "a4": "Yego. Nyuma yo kuyifungura bwa mbere ushobora kuyishyira kuri telefoni. Amasuzuma akozwe nta interineti abarirwa kuri telefoni yawe akoherezwa nyuma.",
+      "q5": "Bite niba numva ntameze neza?",
+      "a5": "Kanda \"Shaka ubufasha ubu\" igihe icyo ari cyo cyose urebe imirongo n'aho wahamagara ako kanya. Rinda si serivisi y'ubutabazi bwihuse.",
+      "q6": "Ni izihe ndimi nakoresha?",
+      "a6": "Icyongereza n'Ikinyarwanda. Ushobora guhindura igihe icyo ari cyo cyose."
+    },
+    "contact": {
+      "eyebrow": "Twandikire",
+      "title": "Tuvugane",
+      "body": "Ufite ibibazo kuri Rinda cyangwa ku bushakashatsi? Twishimiye kukumva.",
+      "email": "Imeri",
+      "phone": "Telefoni",
+      "location": "Aho turi",
+      "locationValue": "Kigali, u Rwanda"
+    },
+    "cta": {
+      "title": "Witeguye isuzuma ryawe rya mbere?",
+      "body": "Bifata iminota hafi icumi, ni ubuntu, kandi ushobora guhagarara igihe icyo ari cyo cyose."
+    },
+    "footer": {
+      "rights": "© 2026 Rinda Health",
+      "photos": "Amafoto yavuye kuri Unsplash"
+    }
+  },
+  "authPanel": {
+    "previous": "Ifoto ibanza",
+    "next": "Ifoto ikurikira",
+    "s1": {
+      "title": "Ubuzima bwawe, busobanuwe mu magambo yoroshye.",
+      "body": "Imibereho itandatu ya buri munsi, igisubizo kimwe gisobanutse kuri buri imwe."
+    },
+    "s2": {
+      "title": "Intambwe nto ushobora gukomeza.",
+      "body": "Rinda igutekerereza impinduka imwe ishoboka icyarimwe."
+    },
+    "s3": {
+      "title": "Ni ibanga, ni ubuntu kandi ni mu rurimi rwawe.",
+      "body": "Icyongereza cyangwa Ikinyarwanda, kuri telefoni yawe, ndetse nta interineti."
+    }
+  }
+}

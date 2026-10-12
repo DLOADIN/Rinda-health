@@ -29,7 +29,17 @@
   "landing": {
     "login": "Injira",
     "signup": "Fungura konti",
-    "educational": "Ni iby'inyigisho, si isuzuma rya muganga. Si serivisi y'ubutabazi bwihuse."
+    "educational": "Ni iby'inyigisho, si isuzuma rya muganga. Si serivisi y'ubutabazi bwihuse.",
+    "nav": {
+      "features": "Ibiranga",
+      "how": "Uko ikora",
+      "about": "Abo turi bo",
+      "faq": "Ibibazo",
+      "contact": "Twandikire",
+      "getStarted": "Tangira",
+      "menu": "Fungura urutonde",
+      "home": "Ahabanza ha Rinda"
+    }
   },
   "neutral": {
     "back": "Subira ahabanza"
