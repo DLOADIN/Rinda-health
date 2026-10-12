@@ -49,8 +49,8 @@ export function SignupPage() {
   };
 
   return (
-    <AuthFrame heading={t('auth.signupHeading')}>
-      <Card className="w-full max-w-lg">
+    <AuthFrame heading={t('auth.signupHeading')} slide={2}>
+      <Card className="glass-strong w-full max-w-lg">
         <CardHeader>
           <CardTitle className="text-lg md:text-xl">{t('auth.signupTitle')}</CardTitle>
           <CardDescription>{t('auth.signupSubtitle')}</CardDescription>

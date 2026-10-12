@@ -39,7 +39,7 @@ export function LoginPage() {
 
   return (
     <AuthFrame heading={t('auth.loginHeading')}>
-      <Card className="w-full max-w-lg">
+      <Card className="glass-strong w-full max-w-lg">
         <CardHeader>
           <CardTitle className="text-lg md:text-xl">{t('auth.loginTitle')}</CardTitle>
           <CardDescription>{t('auth.loginSubtitle')}</CardDescription>
