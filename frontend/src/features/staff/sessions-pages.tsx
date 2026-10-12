@@ -1,12 +1,13 @@
 import { TASK_CODES } from '@rinda/schemas';
-import { Plus, Trash2 } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { Activity, CircleDot, HeartHandshake, Plus, Timer, Trash2, Wifi, WifiOff } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { ApiError } from '@/components/api-error';
 import { ConfirmAction } from '@/components/confirm-action';
 import { PageHeader } from '@/components/page-header';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +32,9 @@ import {
   useEndSessionMutation,
   useParticipantsQuery,
   useSaveTaskMutation,
+  useLiveSessionQuery,
   useSessionsQuery,
+  type LiveSession,
   type Session,
 } from '@/lib/api';
 import { formatDate } from '@/lib/format';
@@ -142,7 +145,15 @@ export function SessionsPage() {
   );
 }
 
-function TaskRow({ session, taskCode }: { session: Session; taskCode: string }) {
+function TaskRow({
+  session,
+  taskCode,
+  liveSeconds,
+}: {
+  session: Session;
+  taskCode: string;
+  liveSeconds?: number;
+}) {
   const { t } = useTranslation();
   const [save, { isLoading }] = useSaveTaskMutation();
   const existing = session.tasks.find((x) => x.taskCode === taskCode);
@@ -192,10 +203,116 @@ function TaskRow({ session, taskCode }: { session: Session; taskCode: string }) 
           disabled={Boolean(session.endedAt)}
         />
       </Field>
+      {liveSeconds && !existing ? (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setMinutes(String(Math.round((liveSeconds / 60) * 10) / 10))}
+          disabled={Boolean(session.endedAt)}
+        >
+          <Timer aria-hidden="true" data-icon="inline-start" />
+          {t('sessions.live.useTime', { minutes: Math.max(1, Math.round(liveSeconds / 60)) })}
+        </Button>
+      ) : null}
       <Button type="submit" variant="outline" disabled={!outcome || isLoading || Boolean(session.endedAt)}>
         {t('sessions.saveTask')}
       </Button>
     </form>
+  );
+}
+
+const STEPS = ['signin', 'consent', 'questionnaire', 'measurements', 'results', 'get_help'] as const;
+
+function minutesLabel(seconds: number) {
+  return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`;
+}
+
+/**
+ * This is the live session console. It follows the participant's step every few seconds and shows a calm alert if
+ * a safety screen opens. It never shows answers, scores or results.
+ */
+function LiveConsole({ live }: { live: LiveSession }) {
+  const { t } = useTranslation();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const currentIndex = live.current ? STEPS.indexOf(live.current.step as (typeof STEPS)[number]) : -1;
+  const inStep = live.current
+    ? Math.max(0, Math.round((now - Date.parse(live.current.startedAt)) / 1000))
+    : 0;
+  return (
+    <Card className="glass">
+      <CardHeader>
+        <CardTitle className="flex flex-wrap items-center gap-2 text-xl">
+          <Activity aria-hidden="true" className="size-5 text-brand-ember-strong" />
+          {t('sessions.live.title')}
+          {live.ended ? (
+            <Badge variant="outline">{t('sessions.ended')}</Badge>
+          ) : live.online ? (
+            <Badge className="gap-1">
+              <Wifi aria-hidden="true" className="size-3.5" />
+              {t('sessions.live.online')}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="gap-1">
+              <WifiOff aria-hidden="true" className="size-3.5" />
+              {t('sessions.live.waiting')}
+            </Badge>
+          )}
+        </CardTitle>
+        <CardDescription>{t('sessions.live.body')}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-5">
+        {live.alerts.length > 0 ? (
+          <Alert className="border-band-wellness bg-brand-blush-soft">
+            <HeartHandshake aria-hidden="true" />
+            <AlertTitle>{t('sessions.live.alertTitle')}</AlertTitle>
+            <AlertDescription>
+              {live.alerts.map((a) => (
+                <span key={a.occurredAt} className="block">
+                  {t('sessions.live.alert', { tier: a.tier, time: formatDate(a.occurredAt, true) })}
+                </span>
+              ))}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+        <ol className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          {STEPS.map((step, i) => {
+            const done = (live.totals[step] ?? 0) > 0 && i !== currentIndex;
+            const active = i === currentIndex;
+            return (
+              <li
+                key={step}
+                aria-current={active ? 'step' : undefined}
+                className={`rounded-2xl border p-3 text-sm ${active ? 'border-primary bg-brand-blush-soft' : done ? 'bg-card' : 'bg-card/40 text-muted-foreground'}`}
+              >
+                <p className="flex items-center gap-1.5 font-medium">
+                  {active ? (
+                    <CircleDot aria-hidden="true" className="size-4 text-brand-ember-strong" />
+                  ) : null}
+                  {t(`sessions.task.${step}`)}
+                </p>
+                <p className="mt-1 tabular-nums">
+                  {active ? minutesLabel(inStep) : live.totals[step] ? minutesLabel(live.totals[step]) : '—'}
+                </p>
+              </li>
+            );
+          })}
+        </ol>
+        {live.current ? (
+          <p className="text-sm text-muted-foreground">
+            {t('sessions.live.now', {
+              step: t(`sessions.task.${live.current.step}`),
+              time: minutesLabel(inStep),
+            })}
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t('sessions.live.notYet')}</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -207,6 +324,7 @@ export function SessionDetailPage() {
   const [end, { error: endError }] = useEndSessionMutation();
   const [remove] = useDeleteSessionMutation();
   const session = data?.find((s) => s.id === id);
+  const { data: live } = useLiveSessionQuery(id, { pollingInterval: 3000, skip: !id });
   if (isLoading) return <Skeleton className="h-64" />;
   if (!session) return <ApiError error={error ?? { status: 404, data: { error: { code: 'NOT_FOUND' } } }} />;
   return (
@@ -236,6 +354,7 @@ export function SessionDetailPage() {
         }
       />
       <ApiError error={endError} />
+      {live ? <LiveConsole live={live} /> : null}
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">{t('sessions.tasks')}</CardTitle>
@@ -246,7 +365,7 @@ export function SessionDetailPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {TASK_CODES.map((code) => (
-            <TaskRow key={code} session={session} taskCode={code} />
+            <TaskRow key={code} session={session} taskCode={code} liveSeconds={live?.totals[code]} />
           ))}
         </CardContent>
       </Card>

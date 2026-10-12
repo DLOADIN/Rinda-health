@@ -84,6 +84,47 @@ export interface Session {
   endedAt: string | null;
   tasks: Array<{ taskCode: string; outcome: string; durationSeconds: number }>;
 }
+export interface LiveSession {
+  ended: boolean;
+  online: boolean;
+  lastSeenAt: string | null;
+  current: { step: string; startedAt: string } | null;
+  timeline: Array<{ step: string; startedAt: string; endedAt: string | null; seconds: number }>;
+  totals: Record<string, number>;
+  alerts: Array<{ tier: number; triggerType: string; occurredAt: string }>;
+}
+export interface ResearchReport {
+  generatedAt: string;
+  rulesetVersion: string;
+  participants: {
+    total: number;
+    consented: number;
+    wellnessConsent: number;
+    withCheckup: number;
+    wellnessCompleted: number;
+  };
+  checkups: number;
+  sessions: { total: number; ended: number };
+  tasks: Array<{
+    task: string;
+    recorded: number;
+    completed: number;
+    withHelp: number;
+    notCompleted: number;
+    medianSeconds: number | null;
+  }>;
+  sus: {
+    responses: number;
+    mean: number | null;
+    median: number | null;
+    min: number | null;
+    max: number | null;
+    bands: Array<{ band: string; count: number }>;
+  };
+  bands: Record<string, Record<string, number>>;
+  safety: Array<{ tier: number; count: number }>;
+  languages: Array<{ language: string; count: number }>;
+}
 export interface ContentVersion {
   id: string;
   type: string;
@@ -312,6 +353,8 @@ export const api = createApi({
       providesTags: ['Participants'],
     }),
     sessions: b.query<Session[], void>({ query: () => '/facilitator/sessions', providesTags: ['Sessions'] }),
+    liveSession: b.query<LiveSession, string>({ query: (id) => `/facilitator/sessions/${id}/live` }),
+    researchReport: b.query<ResearchReport, void>({ query: () => '/admin/research-report' }),
     createSession: b.mutation<Session, { participantId: string; deviceLabel?: string }>({
       query: (body) => ({ url: '/facilitator/sessions', method: 'POST', body }),
       invalidatesTags: ['Sessions', 'Dashboard'],
@@ -452,6 +495,8 @@ export const {
   useSetAiOptInMutation,
   useParticipantsQuery,
   useSessionsQuery,
+  useLiveSessionQuery,
+  useResearchReportQuery,
   useCreateSessionMutation,
   useSaveTaskMutation,
   useEndSessionMutation,
