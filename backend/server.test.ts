@@ -88,7 +88,8 @@ describe('without a database', () => {
     await request(app)
       .post('/api/v1/auth/signup?pin=482915')
       .send({ identifier: 'x@y.co', password: 'Sentinel482915' });
-    const log = lines.join('');
+    // Random request IDs are hex, so digits inside them are not values.
+    const log = lines.join('').replace(/"reqId":"[0-9a-f]+"/g, '');
     expect(log).not.toContain('482915');
     expect(log).not.toContain('x@y.co');
   });
@@ -745,7 +746,8 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
   });
 
   it('logs hold no identifiers, passwords or health values (FR-15)', () => {
-    const log = lines.join('');
+    // Random request IDs are hex, so digits inside them are not values.
+    const log = lines.join('').replace(/"reqId":"[0-9a-f]+"/g, '');
     for (const sentinel of [
       'correct-horse-1',
       '0788',
