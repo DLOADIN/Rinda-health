@@ -177,6 +177,10 @@ export const TASK_CODES = [
 export const SessionProgressRequest = z.strictObject({ step: z.enum(TASK_CODES) });
 export type SessionProgressRequest = z.infer<typeof SessionProgressRequest>;
 
+/** A study phone claims its one-time set-up code from the facilitator's QR code. */
+export const DeviceClaimRequest = z.strictObject({ code: z.string().regex(/^[A-Za-z0-9_-]{20,64}$/) });
+export type DeviceClaimRequest = z.infer<typeof DeviceClaimRequest>;
+
 export const TaskResultRequest = z.strictObject({
   outcome: z.enum(['completed', 'completed_with_help', 'not_completed']),
   durationSeconds: z.number().int().min(0).max(86_400),
