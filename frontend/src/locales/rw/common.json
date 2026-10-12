@@ -619,5 +619,13 @@
     "title": "Uko ibisubizo bibarwa",
     "ncd": "Imibereho n'ibipimo by'umubiri",
     "wellness": "Imitekerereze n'umunaniro"
+  },
+  "whatsapp": {
+    "title": "Ubutumwa kuri WhatsApp",
+    "body": "Akira ubutumwa kuri WhatsApp igihe incamake y'isuzuma ryawe yiteguye. Ubutumwa ntibujya bushyiramo ibisubizo byawe.",
+    "toggle": "Nyoherereza ubutumwa kuri WhatsApp",
+    "needPhone": "Ongeraho nimero ya telefoni yawe muri \"Amakuru yanjye\" kugira ngo ukoreshe ibi.",
+    "unavailable": "Ubutumwa kuri WhatsApp ntiburatangira gukora.",
+    "saved": "Icyemezo cyawe cyabitswe."
   }
 }

@@ -59,6 +59,12 @@ export interface ConsentStatus {
   follow_up: boolean;
 }
 
+export interface WhatsAppStatus {
+  whatsapp: boolean;
+  available: boolean;
+  hasPhone: boolean;
+}
+
 export interface EmailReportStatus {
   email: boolean;
   available: boolean;
@@ -272,6 +278,14 @@ export const api = createApi({
     guideFeedback: b.mutation<void, { requestId: string; helpful: boolean }>({
       query: (body) => ({ url: '/guide/feedback', method: 'POST', body }),
     }),
+    whatsapp: b.query<WhatsAppStatus, void>({
+      query: () => '/participant/whatsapp',
+      providesTags: ['Messaging'],
+    }),
+    setWhatsApp: b.mutation<{ whatsapp: boolean }, { whatsapp: boolean }>({
+      query: (body) => ({ url: '/participant/whatsapp', method: 'PUT', body }),
+      invalidatesTags: ['Messaging'],
+    }),
     emailReports: b.query<EmailReportStatus, void>({
       query: () => '/participant/email-reports',
       providesTags: ['Messaging'],
@@ -430,6 +444,8 @@ export const {
   useExplainMutation,
   useGuideFeedbackMutation,
   useEmailReportsQuery,
+  useWhatsappQuery,
+  useSetWhatsAppMutation,
   useSetEmailReportsMutation,
   useSendEmailReportMutation,
   useAiOptInQuery,
