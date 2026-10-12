@@ -46,6 +46,7 @@ import {
   SafetyEvent,
   SusSubmission,
   EmailReportSend,
+  SessionProgressRequest,
   WhatsAppPreference,
   AiPreference,
   LoginRequest,
@@ -839,6 +840,31 @@ async function sendWhatsAppNotice(
   );
   return record(res.ok ? 'sent' : 'failed', res.ok ? null : `http_${res.status}`);
 }
+
+// The latest complete SUS form per person (FR-17); a form with a skipped item has no score.
+async function susScores(db: Db): Promise<number[]> {
+  const list = await rows<{ user_id: string; created_at: Date; item_code: string; value: number }>(
+    db,
+    "SELECT user_id, created_at, item_code, value FROM feedback_responses WHERE form_version = 'sus-1.0'",
+  );
+  const latest = new Map<string, { at: number; items: Array<number | null> }>();
+  for (const r of list) {
+    const at = r.created_at.getTime();
+    const current = latest.get(r.user_id);
+    if (!current || at > current.at) latest.set(r.user_id, { at, items: Array(10).fill(null) });
+    const form = latest.get(r.user_id);
+    const index = Number(r.item_code.replace('sus.', '')) - 1;
+    if (form && form.at === at && index >= 0 && index < 10) form.items[index] = r.value;
+  }
+  return [...latest.values()].map((f) => susScore(f.items)).filter((v): v is number => v !== null);
+}
+
+const median = (values: number[]): number | null => {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? (sorted[mid] ?? null) : ((sorted[mid - 1] ?? 0) + (sorted[mid] ?? 0)) / 2;
+};
 
 type EmailOutcome = 'sent' | 'failed' | 'skipped';
 
@@ -1792,6 +1818,38 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     });
     res.status(201).json({ score: susScore(body.items) });
   });
+  // The participant's app says which study step it is on while a facilitated session is open. Step names only.
+  participant.post('/session-progress', async (req, res) => {
+    const database = needDb();
+    const body = SessionProgressRequest.parse(req.body);
+    const session = await one<{ id: string }>(
+      database,
+      `SELECT id FROM facilitator_sessions WHERE participant_id = $1 AND ended_at IS NULL
+         AND started_at > now() - interval '12 hours' ORDER BY started_at DESC LIMIT 1`,
+      [me(req).id],
+    );
+    if (!session) {
+      res.status(204).end();
+      return;
+    }
+    await tx(database, async (client) => {
+      const last = (
+        await client.query<{ id: string; step: string }>(
+          'SELECT id, step FROM session_progress WHERE session_id = $1 AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1 FOR UPDATE',
+          [session.id],
+        )
+      ).rows[0];
+      if (!last || last.step !== body.step) {
+        if (last) await client.query('UPDATE session_progress SET ended_at = now() WHERE id = $1', [last.id]);
+        await client.query('INSERT INTO session_progress (session_id, step) VALUES ($1, $2)', [
+          session.id,
+          body.step,
+        ]);
+      }
+      await client.query('UPDATE facilitator_sessions SET last_seen_at = now() WHERE id = $1', [session.id]);
+    });
+    res.json({ tracking: true });
+  });
   mount('/api/v1/participant', participant);
 
   const facilitator = Router();
@@ -1912,8 +1970,58 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       'UPDATE facilitator_sessions SET ended_at = coalesce(ended_at, now()) WHERE id = $1',
       [session.id],
     );
+    await needDb().query(
+      'UPDATE session_progress SET ended_at = now() WHERE session_id = $1 AND ended_at IS NULL',
+      [session.id],
+    );
     await audit(needDb(), me(req), 'session.end', { type: 'facilitator_session', id: session.id });
     res.json(toSession(await ownSession(req)));
+  });
+
+  // This is the live session console: the step the participant is on, the timeline so far, and any safety
+  // alert since the session started. Never answers, scores or results.
+  facilitator.get('/sessions/:id/live', requireRole('facilitator'), async (req, res) => {
+    const database = needDb();
+    const session = await ownSession(req);
+    const steps = await rows<{ step: string; started_at: Date; ended_at: Date | null }>(
+      database,
+      'SELECT step, started_at, ended_at FROM session_progress WHERE session_id = $1 ORDER BY started_at',
+      [session.id],
+    );
+    const seen = await one<{ last_seen_at: Date | null }>(
+      database,
+      'SELECT last_seen_at FROM facilitator_sessions WHERE id = $1',
+      [session.id],
+    );
+    const alerts = await rows<{ tier: number; trigger_type: string; occurred_at: Date }>(
+      database,
+      'SELECT tier, trigger_type, occurred_at FROM safety_events WHERE participant_id = $1 AND occurred_at >= $2 ORDER BY occurred_at',
+      [session.participant_id, session.started_at],
+    );
+    const now = Date.now();
+    const timeline = steps.map((st) => ({
+      step: st.step,
+      startedAt: st.started_at.toISOString(),
+      endedAt: st.ended_at?.toISOString() ?? null,
+      seconds: Math.max(0, Math.round(((st.ended_at?.getTime() ?? now) - st.started_at.getTime()) / 1000)),
+    }));
+    const totals: Record<string, number> = {};
+    for (const item of timeline) totals[item.step] = (totals[item.step] ?? 0) + item.seconds;
+    const open = timeline.at(-1);
+    const lastSeen = seen?.last_seen_at?.getTime() ?? null;
+    res.json({
+      ended: Boolean(session.ended_at),
+      online: lastSeen !== null && now - lastSeen < 45_000,
+      lastSeenAt: seen?.last_seen_at?.toISOString() ?? null,
+      current: open && !open.endedAt ? { step: open.step, startedAt: open.startedAt } : null,
+      timeline,
+      totals,
+      alerts: alerts.map((al) => ({
+        tier: al.tier,
+        triggerType: al.trigger_type,
+        occurredAt: al.occurred_at.toISOString(),
+      })),
+    });
   });
 
   facilitator.delete('/sessions/:id', requireRole('facilitator'), async (req, res) => {
@@ -2210,6 +2318,100 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         createdAt: a.created_at.toISOString(),
       })),
     );
+  });
+
+  // This is the one-click research report: aggregate, de-identified numbers for the study write-up.
+  admin.get('/research-report', async (req, res) => {
+    const database = needDb();
+    const count = async (sql: string, params: unknown[] = []) =>
+      (await one<{ n: number }>(database, sql, params))?.n ?? 0;
+    const latestConsent = (scope: string) =>
+      count(
+        `SELECT count(*)::int AS n FROM (SELECT DISTINCT ON (user_id) granted FROM consent_events
+              WHERE scope = $1 ORDER BY user_id, created_at DESC) c WHERE granted`,
+        [scope],
+      );
+
+    const taskRows = await rows<{ task_code: string; outcome: string; duration_seconds: number }>(
+      database,
+      'SELECT task_code, outcome, duration_seconds FROM task_results',
+    );
+    const tasks = TASK_CODES.map((code) => {
+      const list = taskRows.filter((r) => r.task_code === code);
+      return {
+        task: code,
+        recorded: list.length,
+        completed: list.filter((r) => r.outcome === 'completed').length,
+        withHelp: list.filter((r) => r.outcome === 'completed_with_help').length,
+        notCompleted: list.filter((r) => r.outcome === 'not_completed').length,
+        medianSeconds: median(list.map((r) => r.duration_seconds)),
+      };
+    });
+
+    const scores = await susScores(database);
+    const susBands = [
+      { band: 'below_50', min: 0, max: 50 },
+      { band: '50_to_67', min: 50, max: 68 },
+      { band: '68_to_79', min: 68, max: 80 },
+      { band: '80_plus', min: 80, max: 101 },
+    ].map((b) => ({ band: b.band, count: scores.filter((v) => v >= b.min && v < b.max).length }));
+
+    const latest = await rows<{ results: AssessmentResult }>(
+      database,
+      'SELECT DISTINCT ON (user_id) results FROM assessments ORDER BY user_id, created_at DESC',
+    );
+    const bands: Record<string, Record<string, number>> = {};
+    let wellnessDone = 0;
+    for (const { results } of latest) {
+      for (const r of results.ncd) {
+        const domain = (bands[r.domain] ??= {});
+        domain[r.band] = (domain[r.band] ?? 0) + 1;
+      }
+      if (results.wellness.some((r) => r.band !== 'insufficient')) wellnessDone++;
+    }
+
+    const safety = await rows<{ tier: number; n: number }>(
+      database,
+      'SELECT tier, count(*)::int AS n FROM safety_events GROUP BY tier ORDER BY tier',
+    );
+    const languages = await rows<{ language: string; n: number }>(
+      database,
+      `SELECT preferred_language AS language, count(*)::int AS n FROM users
+        WHERE role = 'participant' AND deleted_at IS NULL GROUP BY preferred_language ORDER BY 1`,
+    );
+    await audit(database, me(req), 'report.view', { type: 'research_report', id: 'all' });
+    res.json({
+      generatedAt: new Date().toISOString(),
+      rulesetVersion: ruleset.version,
+      participants: {
+        total: await count(
+          "SELECT count(*)::int AS n FROM users WHERE role = 'participant' AND deleted_at IS NULL",
+        ),
+        consented: await latestConsent('core'),
+        wellnessConsent: await latestConsent('mental_wellness'),
+        withCheckup: latest.length,
+        wellnessCompleted: wellnessDone,
+      },
+      checkups: await count('SELECT count(*)::int AS n FROM assessments'),
+      sessions: {
+        total: await count('SELECT count(*)::int AS n FROM facilitator_sessions'),
+        ended: await count('SELECT count(*)::int AS n FROM facilitator_sessions WHERE ended_at IS NOT NULL'),
+      },
+      tasks,
+      sus: {
+        responses: scores.length,
+        mean: scores.length
+          ? Math.round((scores.reduce((x, y) => x + y, 0) / scores.length) * 10) / 10
+          : null,
+        median: median(scores),
+        min: scores.length ? Math.min(...scores) : null,
+        max: scores.length ? Math.max(...scores) : null,
+        bands: susBands,
+      },
+      bands,
+      safety: safety.map((r) => ({ tier: r.tier, count: r.n })),
+      languages: languages.map((r) => ({ language: r.language, count: r.n })),
+    });
   });
 
   admin.get('/flags', async (_req, res) => {
@@ -2513,22 +2715,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     }
 
     if (user.role === 'researcher_admin') {
-      const sus = await rows<{ user_id: string; created_at: Date; item_code: string; value: number }>(
-        database,
-        "SELECT user_id, created_at, item_code, value FROM feedback_responses WHERE form_version = 'sus-1.0'",
-      );
-      const latestForm = new Map<string, { at: number; items: Array<number | null> }>();
-      for (const r of sus) {
-        const at = r.created_at.getTime();
-        const current = latestForm.get(r.user_id);
-        if (!current || at > current.at) latestForm.set(r.user_id, { at, items: Array(10).fill(null) });
-        const form = latestForm.get(r.user_id);
-        const index = Number(r.item_code.replace('sus.', '')) - 1;
-        if (form && form.at === at && index >= 0 && index < 10) form.items[index] = r.value;
-      }
-      const susScores = [...latestForm.values()]
-        .map((f) => susScore(f.items))
-        .filter((v): v is number => v !== null);
+      const susScoresList = await susScores(database);
       const byRole = await rows<{ role: string; n: number }>(
         database,
         'SELECT role, count(*)::int AS n FROM users WHERE deleted_at IS NULL GROUP BY role ORDER BY role',
@@ -2555,10 +2742,12 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
             key: 'deletions_pending',
             value: await count("SELECT count(*)::int AS n FROM deletion_requests WHERE status = 'requested'"),
           },
-          { key: 'sus_responses', value: susScores.length },
+          { key: 'sus_responses', value: susScoresList.length },
           {
             key: 'sus_average',
-            value: susScores.length ? Math.round(susScores.reduce((a, b) => a + b, 0) / susScores.length) : 0,
+            value: susScoresList.length
+              ? Math.round(susScoresList.reduce((a, b) => a + b, 0) / susScoresList.length)
+              : 0,
           },
           {
             key: 'content_drafts',
