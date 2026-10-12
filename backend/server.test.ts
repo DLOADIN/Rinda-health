@@ -783,6 +783,57 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     expect(events.rows).toEqual([{ status: 'sent' }]);
   });
 
+  it('live session console: steps and times only, for the session facilitator', async () => {
+    const { agent: fac } = await signup('facilitator', 'live-fac@example.com');
+    const { agent: p, me: participant } = await signup('participant', 'live-p@example.com');
+    const progress = (step: string) => p.post('/api/v1/participant/session-progress').send({ step });
+    await progress('signin').expect(204); // no session yet
+
+    const session = await fac
+      .post('/api/v1/facilitator/sessions')
+      .send({ participantId: participant.id })
+      .expect(201);
+    const live = () => fac.get(`/api/v1/facilitator/sessions/${session.body.id}/live`);
+    for (const step of ['signin', 'consent', 'questionnaire', 'questionnaire'])
+      await progress(step).expect(200);
+    await p
+      .post('/api/v1/participant/session-progress')
+      .send({ step: 'questionnaire', answers: [1] })
+      .expect(400);
+
+    const now = (await live().expect(200)).body;
+    expect(now.current.step).toBe('questionnaire');
+    expect(now.online).toBe(true);
+    expect(now.timeline.map((x: { step: string }) => x.step)).toEqual(['signin', 'consent', 'questionnaire']);
+    expect(JSON.stringify(now)).not.toMatch(/systolic|band|phq|live-p@/);
+
+    const { agent: other } = await signup('facilitator', 'live-other@example.com');
+    await other.get(`/api/v1/facilitator/sessions/${session.body.id}/live`).expect(404);
+
+    await fac.post(`/api/v1/facilitator/sessions/${session.body.id}/end`).expect(200);
+    const after = (await live().expect(200)).body;
+    expect(after).toMatchObject({ ended: true, current: null });
+    await progress('results').expect(204); // nothing is tracked once the session ends
+  });
+
+  it('research report: aggregate numbers only, for researcher-admins', async () => {
+    const { agent: p } = await signup('participant', 'report-p@example.com');
+    await p
+      .post('/api/v1/participant/assessments')
+      .set('Idempotency-Key', randomUUID())
+      .send({ language: 'en', startedAt: new Date().toISOString(), answers })
+      .expect(201);
+    const { agent: adminAgent } = await signup('researcher_admin', 'report-admin@example.com');
+    const report = (await adminAgent.get('/api/v1/admin/research-report').expect(200)).body;
+    expect(report.participants.total).toBeGreaterThan(0);
+    expect(report.tasks).toHaveLength(6);
+    expect(report.sus).toHaveProperty('responses');
+    expect(report.bands.bp).toBeDefined();
+    expect(JSON.stringify(report)).not.toMatch(/@example\.com|0788|"id"/);
+
+    await p.get('/api/v1/admin/research-report').expect(403);
+  });
+
   it('dashboards include 14 days of chart data', async () => {
     const { agent } = await signup('researcher_admin', 'charts-admin@example.com');
     const dash = await agent.get('/api/v1/dashboard');
