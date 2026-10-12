@@ -5,8 +5,11 @@ import { Spinner } from '@/components/ui/spinner';
 import { RouteError } from '@/features/errors/route-error';
 import { NeutralScreen } from '@/features/exit/neutral-screen';
 import { UpdatePrompt } from '@/features/sync/update-prompt';
-import { WelcomeScreen } from '@/features/welcome/welcome-screen';
+import { PublicShell } from '@/features/landing/public-shell';
 
+const LandingPage = lazy(() =>
+  import('@/features/landing/landing-page').then((m) => ({ default: m.LandingPage })),
+);
 const LoginPage = lazy(() => import('@/features/auth/login-page').then((m) => ({ default: m.LoginPage })));
 const SignupPage = lazy(() => import('@/features/auth/signup-page').then((m) => ({ default: m.SignupPage })));
 const DashboardLayout = lazy(() =>
@@ -26,6 +29,21 @@ function PublicLayout() {
 
 export const router = createBrowserRouter([
   {
+    element: <PublicShell />,
+    errorElement: <RouteError standalone />,
+    children: [
+      {
+        element: <PublicLayout />,
+        errorElement: <RouteError />,
+        children: [
+          { path: '/', element: wait(<LandingPage />) },
+          { path: '/login', element: wait(<LoginPage />) },
+          { path: '/signup', element: wait(<SignupPage />) },
+        ],
+      },
+    ],
+  },
+  {
     element: <AppShell />,
     errorElement: <RouteError standalone />,
     children: [
@@ -33,9 +51,6 @@ export const router = createBrowserRouter([
         element: <PublicLayout />,
         errorElement: <RouteError />,
         children: [
-          { path: '/', element: <WelcomeScreen /> },
-          { path: '/login', element: wait(<LoginPage />) },
-          { path: '/signup', element: wait(<SignupPage />) },
           { path: '/exit', element: <NeutralScreen /> },
           { path: '*', element: <NeutralScreen /> },
         ],
