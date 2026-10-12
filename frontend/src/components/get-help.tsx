@@ -13,6 +13,7 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { useContent } from '@/lib/content';
+import { reportStep } from '@/lib/session-progress';
 import { cn } from '@/lib/utils';
 
 export function GetHelp({
@@ -26,7 +27,7 @@ export function GetHelp({
   const { text } = useContent();
 
   return (
-    <Drawer>
+    <Drawer onOpenChange={(open) => (open ? reportStep('get_help') : undefined)}>
       <DrawerTrigger asChild>
         <Button
           variant="secondary"

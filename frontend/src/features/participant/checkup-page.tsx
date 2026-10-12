@@ -26,10 +26,12 @@ import {
   type Assessment,
 } from '@/lib/api';
 import { addToOutbox, queueSafetyEvent, scoreOnPhone } from '@/lib/offline';
+import { reportStep } from '@/lib/session-progress';
 import { useCached } from '@/lib/use-cached';
 import { useContent } from '@/lib/content';
 
 type Answers = CheckupAnswers;
+const MEASUREMENTS: readonly string[] = ['heightCm', 'weightKg', 'waistCm', 'systolic', 'diastolic'];
 type NumberKey =
   | 'moderateMinutes'
   | 'vigorousMinutes'
@@ -132,6 +134,9 @@ export function CheckupPage() {
             min="0"
             value={raw[k] ?? ''}
             aria-invalid={Boolean(issue)}
+            onFocus={() => {
+              if (MEASUREMENTS.includes(k)) reportStep('measurements');
+            }}
             onChange={(e) => {
               const value = e.target.value;
               setRaw({ ...raw, [k]: value });

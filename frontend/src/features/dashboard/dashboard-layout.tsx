@@ -49,6 +49,7 @@ import {
   useMeQuery,
   useUpdateMeMutation,
 } from '@/lib/api';
+import { enableSessionProgress, reportStep } from '@/lib/session-progress';
 import { useCached } from '@/lib/use-cached';
 import { displayNameOf, initialsOf } from '@/lib/me';
 import { flushOutbox, useOutbox, useOutboxSync } from '@/lib/offline';
@@ -75,7 +76,11 @@ function ConsentGate({ me, children }: { me: Me; children: ReactNode }) {
       <Spinner className="mx-auto" />
     );
   }
-  return data.decided && data.core ? children : <ConsentPage />;
+  if (!(data.decided && data.core)) {
+    reportStep('consent');
+    return <ConsentPage />;
+  }
+  return children;
 }
 
 const QUICK_ACTION: Record<Role, { to: string; labelKey: string }> = {
@@ -302,6 +307,19 @@ function Shell({ me }: { me: Me }) {
     dispatch(api.util.invalidateTags(['Assessments', 'Dashboard']));
   }, [dispatch]);
   useOutboxSync(me, onSent);
+
+  // Lets the facilitator's live console follow which study step this participant is on.
+  useEffect(() => {
+    enableSessionProgress(isParticipant);
+    return () => enableSessionProgress(false);
+  }, [isParticipant]);
+  useEffect(() => {
+    if (!isParticipant) return;
+    if (pathname.startsWith('/app/checkup')) reportStep('questionnaire');
+    else if (pathname.startsWith('/app/results')) reportStep('results');
+    else if (pathname.startsWith('/app/help')) reportStep('get_help');
+    else if (pathname === '/app' || pathname === '/app/') reportStep('signin');
+  }, [isParticipant, pathname]);
 
   const signOut = async () => {
     await logout();
