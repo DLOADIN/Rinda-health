@@ -173,6 +173,10 @@ export const TASK_CODES = [
   'results',
   'get_help',
 ] as const;
+/** The participant's app reports which study step it is on, so the facilitator can follow along live. */
+export const SessionProgressRequest = z.strictObject({ step: z.enum(TASK_CODES) });
+export type SessionProgressRequest = z.infer<typeof SessionProgressRequest>;
+
 export const TaskResultRequest = z.strictObject({
   outcome: z.enum(['completed', 'completed_with_help', 'not_completed']),
   durationSeconds: z.number().int().min(0).max(86_400),
