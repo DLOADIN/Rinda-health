@@ -1,3 +1,4 @@
+import '@/features/staff/staff-strings';
 import type { Role } from '@rinda/schemas';
 import { Navigate, Route, Routes } from 'react-router';
 import { useMeQuery } from '@/lib/api';

@@ -3,6 +3,8 @@ import en from './en/common.json';
 import rw from './rw/common.json';
 import enLanding from './en/landing.json';
 import rwLanding from './rw/landing.json';
+import enStaff from './en/staff.json';
+import rwStaff from './rw/staff.json';
 
 const keys = (obj: object, prefix = ''): string[] =>
   Object.entries(obj).flatMap(([k, v]) =>
@@ -13,6 +15,7 @@ describe('interface strings', () => {
   it('en and rw have the same keys', () => {
     expect(keys(rw).sort()).toEqual(keys(en).sort());
     expect(keys(rwLanding).sort()).toEqual(keys(enLanding).sort());
+    expect(keys(rwStaff).sort()).toEqual(keys(enStaff).sort());
   });
 
   it('every English string is filled in', () => {

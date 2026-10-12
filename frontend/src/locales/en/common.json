@@ -335,197 +335,13 @@
     "title": "Get help",
     "intro": "Free and confidential services you can call."
   },
-  "participants": {
-    "title": "Participants",
-    "intro": "Participants are shown by a masked email or phone number only.",
-    "who": "Participant",
-    "order": "Order",
-    "joined": "Joined",
-    "checkups": "Check-ups",
-    "empty": "No participants yet.",
-    "startSession": "Start session"
-  },
   "sessions": {
-    "title": "Sessions",
     "new": "New session",
-    "participant": "Participant",
-    "choose": "Choose a participant",
-    "device": "Study phone (optional)",
-    "devicePlaceholder": "For example Phone 2",
-    "start": "Start session",
-    "started": "Started",
     "ended": "Ended",
-    "open": "In progress",
-    "end": "End session",
-    "delete": "Delete session",
-    "deleteConfirm": "Delete this session and its task results?",
-    "empty": "No sessions yet.",
-    "tasks": "Tasks",
-    "task": {
-      "signin": "Sign in",
-      "consent": "Consent",
-      "questionnaire": "Questionnaire",
-      "measurements": "Measurements",
-      "results": "Results",
-      "get_help": "Find help"
-    },
-    "outcome": "Outcome",
-    "outcomes": {
-      "completed": "Completed",
-      "completed_with_help": "Completed with help",
-      "not_completed": "Not completed"
-    },
-    "minutes": "Minutes",
-    "saveTask": "Save",
-    "taskSaved": "Task saved.",
-    "notRecorded": "Not recorded",
-    "orderReadOnly": "Order {{order}} (set by the study, cannot be changed)",
-    "live": {
-      "title": "Live session",
-      "body": "Follows which step the participant is on, updated every few seconds. No answers or results are shown.",
-      "online": "Participant connected",
-      "waiting": "Waiting for the participant",
-      "alertTitle": "A safety screen opened",
-      "alert": "Tier {{tier}} at {{time}}. Follow the session safety script and check in with the participant.",
-      "now": "Now on: {{step}} for {{time}}",
-      "notYet": "Nothing yet. Steps appear here once the participant signs in on their phone.",
-      "useTime": "Use live time ({{minutes}} min)"
-    }
-  },
-  "safety": {
-    "title": "Safety events",
-    "intro": "Records hold the tier, trigger and actions only, never answers or scores.",
-    "record": "Record distress",
-    "participant": "Participant",
-    "tier": "Tier",
-    "tiers": {
-      "2": "Tier 2: observed or disclosed distress",
-      "3": "Tier 3: plan or intent, or cannot keep safe"
-    },
-    "trigger": "What happened",
-    "triggers": {
-      "item9": "Mood question 9",
-      "score_threshold": "Score threshold",
-      "observed": "Observed distress",
-      "disclosed": "Disclosed distress"
-    },
-    "actions": "Actions taken",
-    "actionLabels": {
-      "safety_screen_shown": "Safety screen shown",
-      "referral_list_shown": "Referral list shown",
-      "facilitator_checkin": "Facilitator check-in",
-      "warm_handover_offered": "Warm handover offered",
-      "warm_handover_done": "Warm handover done",
-      "called_912": "Called 912",
-      "called_112": "Called 112",
-      "oncall_contacted": "On-call professional contacted",
-      "supervisor_informed": "Supervisor informed"
-    },
-    "save": "Save safety event",
-    "saved": "Safety event recorded.",
-    "when": "When",
-    "empty": "No safety events recorded."
+    "open": "In progress"
   },
   "users": {
-    "title": "Users",
-    "add": "Add user",
-    "search": "Search by name, email or phone",
-    "allRoles": "All roles",
-    "name": "Name",
-    "contact": "Email or phone",
-    "role": "Role",
-    "status": "Status",
-    "active": "Active",
-    "inactive": "Turned off",
-    "lastSignIn": "Last sign-in",
-    "never": "Never",
-    "edit": "Edit user",
-    "turnOff": "Turn off",
-    "turnOn": "Turn on",
-    "delete": "Delete user",
-    "deleteConfirm": "Delete this account and all its data? This cannot be undone.",
-    "created": "User added.",
-    "updated": "User updated.",
-    "deleted": "User deleted.",
-    "empty": "No users match."
-  },
-  "content": {
-    "title": "Content",
-    "reviewTitle": "Content reviews",
-    "intro": "Every version needs approval from two different people before it is published.",
-    "new": "New draft",
-    "type": "Type",
-    "key": "Key",
-    "version": "Version",
-    "language": "Language",
-    "languageNone": "Any language",
-    "body": "Content (JSON)",
-    "bodyInvalid": "This is not valid JSON.",
-    "status": "Status",
-    "statuses": {
-      "draft": "Draft",
-      "published": "Published",
-      "retired": "Retired"
-    },
-    "approvals": "{{count}} of 2 approvals",
-    "approve": "Approve",
-    "requestChanges": "Request changes",
-    "notes": "Notes for the author (optional)",
-    "publish": "Publish",
-    "edit": "Edit draft",
-    "delete": "Delete draft",
-    "deleteConfirm": "Delete this draft?",
-    "saved": "Draft saved.",
-    "published": "Published.",
-    "reviewed": "Review saved.",
-    "yourDraft": "You wrote this draft, so someone else must review it.",
-    "myDecision": "Your decision: {{decision}}",
-    "decisions": {
-      "approved": "Approved",
-      "changes_requested": "Changes requested"
-    },
-    "empty": "No content versions yet."
-  },
-  "deletions": {
-    "title": "Deletion requests",
-    "intro": "Complete each request within 72 hours. Completing removes the participant's data and contact details.",
-    "requested": "Requested",
-    "due": "Due by",
-    "complete": "Complete deletion",
-    "completeConfirm": "Delete this participant's check-ups, profile and contact details now? This cannot be undone.",
-    "completed": "Completed",
-    "done": "Deletion completed.",
-    "empty": "No deletion requests."
-  },
-  "audit": {
-    "title": "Audit log",
-    "intro": "Every staff action, in order. Entries can never be changed.",
-    "when": "When",
-    "who": "Who",
-    "action": "Action",
-    "target": "Target",
-    "empty": "No entries yet."
-  },
-  "flags": {
-    "title": "Features",
-    "intro": "Turn optional features on or off for this environment. Every change is recorded.",
-    "saved": "Feature updated.",
-    "names": {
-      "offlineSync": "Offline saving and sync",
-      "guideDeterministic": "Rinda guide (rule-based)",
-      "guideGenerative": "Rinda guide (AI rewording, needs ethics amendment)",
-      "measurementCoach": "Measurement coach",
-      "progressTrends": "Progress trends",
-      "whatIf": "What-if simulator",
-      "careNavigator": "Care directory",
-      "careGeolocation": "Nearby services by location",
-      "clinicCard": "Clinic summary card",
-      "sharedDeviceMode": "Shared-phone mode",
-      "readAloud": "Read aloud",
-      "usabilityEvents": "Screen timing for research",
-      "pilotInsights": "Pilot insights",
-      "messaging": "Email reports"
-    }
+    "add": "Add user"
   },
   "common": {
     "save": "Save",
@@ -640,36 +456,18 @@
     "unavailable": "WhatsApp notices are not switched on yet.",
     "saved": "Your choice was saved."
   },
-  "research": {
-    "title": "Research report",
-    "intro": "Study numbers for the write-up.",
-    "generated": "Generated {{date}} · rules version {{version}}",
-    "privacy": "Everything here is counted across all participants. No names, contacts, answers or IDs are included.",
-    "csv": "Download CSV",
-    "print": "Print or save as PDF",
-    "participants": "Participants",
-    "consented": "Agreed to take part",
-    "checkups": "Check-ups",
-    "susMean": "Average SUS score",
-    "tasksTitle": "Usability tasks",
-    "tasksBody": "{{sessions}} sessions, {{ended}} finished. The bar shows how many completed each task, with or without help.",
-    "task": "Task",
-    "medianTime": "Median time",
-    "susTitle": "System Usability Scale",
-    "susBody": "{{n}} complete answers · median {{median}} · lowest {{min}} · highest {{max}}",
-    "susBands": {
-      "below_50": "Below 50",
-      "50_to_67": "50 to 67",
-      "68_to_79": "68 to 79 (above average)",
-      "80_plus": "80 and above (excellent)"
+  "setup": {
+    "working": {
+      "title": "Setting up this phone…",
+      "body": "Linking this phone to your Rinda session."
     },
-    "othersTitle": "Other numbers",
-    "othersBody": "{{withCheckup}} participants did at least one check-up. {{wellness}} answered the mood and stress questions ({{wellnessConsent}} agreed to them).",
-    "safety": "Safety events",
-    "tier": "Tier {{tier}}: {{count}}",
-    "none": "None recorded.",
-    "languages": "Preferred language",
-    "bandsTitle": "Results by health area",
-    "bandsBody": "Each participant's latest check-up. Counts only."
+    "done": {
+      "title": "This phone is ready",
+      "body": "Taking you to sign in. Everything is cleared from this phone when the session ends."
+    },
+    "failed": {
+      "title": "This code did not work",
+      "body": "It may have expired or already been used. Ask the facilitator for a new code."
+    }
   }
 }

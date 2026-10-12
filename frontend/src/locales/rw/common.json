@@ -335,197 +335,13 @@
     "title": "Shaka ubufasha",
     "intro": "Serivisi z'ubuntu kandi z'ibanga ushobora guhamagara."
   },
-  "participants": {
-    "title": "Abitabiriye",
-    "intro": "Abitabiriye bagaragazwa gusa n'imeyili cyangwa nimero bihishe igice.",
-    "who": "Uwitabiriye",
-    "order": "Uko bikurikirana",
-    "joined": "Yinjiye",
-    "checkups": "Amasuzuma",
-    "empty": "Nta bitabiriye barabaho.",
-    "startSession": "Tangira igikorwa"
-  },
   "sessions": {
-    "title": "Ibikorwa",
     "new": "Igikorwa gishya",
-    "participant": "Uwitabiriye",
-    "choose": "Hitamo uwitabiriye",
-    "device": "Telefoni y'ubushakashatsi (si ngombwa)",
-    "devicePlaceholder": "Urugero: Telefoni ya 2",
-    "start": "Tangira igikorwa",
-    "started": "Cyatangiye",
     "ended": "Cyarangiye",
-    "open": "Kirakomeje",
-    "end": "Soza igikorwa",
-    "delete": "Siba igikorwa",
-    "deleteConfirm": "Urashaka gusiba iki gikorwa n'ibisubizo by'imirimo yacyo?",
-    "empty": "Nta bikorwa birabaho.",
-    "tasks": "Imirimo",
-    "task": {
-      "signin": "Kwinjira",
-      "consent": "Kwemera",
-      "questionnaire": "Ibibazo",
-      "measurements": "Ibipimo",
-      "results": "Ibisubizo",
-      "get_help": "Gushaka ubufasha"
-    },
-    "outcome": "Uko byagenze",
-    "outcomes": {
-      "completed": "Byarangiye",
-      "completed_with_help": "Byarangiye hifashishijwe undi",
-      "not_completed": "Ntibyarangiye"
-    },
-    "minutes": "Iminota",
-    "saveTask": "Bika",
-    "taskSaved": "Umurimo wabitswe.",
-    "notRecorded": "Ntibyanditswe",
-    "orderReadOnly": "Uko bikurikirana: {{order}} (byashyizweho n'ubushakashatsi, ntibihindurwa)",
-    "live": {
-      "title": "Igikorwa kiri kuba",
-      "body": "Gikurikira intambwe uwitabiriye agezeho, kigahinduka buri masegonda make. Nta bisubizo bigaragazwa.",
-      "online": "Uwitabiriye arahujwe",
-      "waiting": "Dutegereje uwitabiriye",
-      "alertTitle": "Ipaji y'umutekano yafunguwe",
-      "alert": "Urwego {{tier}} saa {{time}}. Kurikiza amabwiriza y'umutekano y'igikorwa maze uvugane n'uwitabiriye.",
-      "now": "Ubu ari kuri: {{step}} mu gihe cya {{time}}",
-      "notYet": "Nta kintu kiraboneka. Intambwe zizagaragara hano uwitabiriye amaze kwinjira kuri telefoni ye.",
-      "useTime": "Koresha igihe nyacyo (iminota {{minutes}})"
-    }
-  },
-  "safety": {
-    "title": "Ibibazo by'umutekano",
-    "intro": "Byandika urwego, icyabiteye n'ibyakozwe gusa, ntibyandika ibisubizo cyangwa amanota.",
-    "record": "Andika ikibazo cy'agahinda",
-    "participant": "Uwitabiriye",
-    "tier": "Urwego",
-    "tiers": {
-      "2": "Urwego rwa 2: agahinda kagaragaye cyangwa kavuzwe",
-      "3": "Urwego rwa 3: umugambi cyangwa ubushake, cyangwa ntashobora kwirinda"
-    },
-    "trigger": "Icyabaye",
-    "triggers": {
-      "item9": "Ikibazo cya 9 cy'imitekerereze",
-      "score_threshold": "Amanota yarenze urugero",
-      "observed": "Agahinda kagaragaye",
-      "disclosed": "Agahinda kavuzwe"
-    },
-    "actions": "Ibyakozwe",
-    "actionLabels": {
-      "safety_screen_shown": "Ipaji y'umutekano yeretswe",
-      "referral_list_shown": "Urutonde rwa serivisi rwerekanywe",
-      "facilitator_checkin": "Umuhuzabikorwa yaganiriye na we",
-      "warm_handover_offered": "Yahawe amahirwe yo guhuzwa n'umunyamwuga",
-      "warm_handover_done": "Yahujwe n'umunyamwuga",
-      "called_912": "Hahamagawe 912",
-      "called_112": "Hahamagawe 112",
-      "oncall_contacted": "Umunyamwuga uri ku izamu yamenyeshejwe",
-      "supervisor_informed": "Umuyobozi w'ubushakashatsi yamenyeshejwe"
-    },
-    "save": "Bika ikibazo cy'umutekano",
-    "saved": "Ikibazo cy'umutekano cyanditswe.",
-    "when": "Ryari",
-    "empty": "Nta kibazo cy'umutekano cyanditswe."
+    "open": "Kirakomeje"
   },
   "users": {
-    "title": "Abakoresha",
-    "add": "Ongeraho umukoresha",
-    "search": "Shakisha ukoresheje izina, imeyili cyangwa telefoni",
-    "allRoles": "Inshingano zose",
-    "name": "Izina",
-    "contact": "Imeyili cyangwa telefoni",
-    "role": "Uruhare",
-    "status": "Uko ihagaze",
-    "active": "Irakora",
-    "inactive": "Yahagaritswe",
-    "lastSignIn": "Yinjiye bwa nyuma",
-    "never": "Ntarinjira",
-    "edit": "Hindura umukoresha",
-    "turnOff": "Hagarika",
-    "turnOn": "Ongera ukoreshe",
-    "delete": "Siba umukoresha",
-    "deleteConfirm": "Urashaka gusiba iyi konti n'amakuru yayo yose? Ntibishobora gusubizwaho.",
-    "created": "Umukoresha yongeweho.",
-    "updated": "Umukoresha yavuguruwe.",
-    "deleted": "Umukoresha yasibwe.",
-    "empty": "Nta mukoresha uhuye n'ibyo washakishije."
-  },
-  "content": {
-    "title": "Ibikubiyemo",
-    "reviewTitle": "Isuzuma ry'ibikubiyemo",
-    "intro": "Buri verisiyo ikenera kwemezwa n'abantu babiri batandukanye mbere yo gutangazwa.",
-    "new": "Inyandiko nshya",
-    "type": "Ubwoko",
-    "key": "Izina ry'ikiranga",
-    "version": "Verisiyo",
-    "language": "Ururimi",
-    "languageNone": "Ururimi urwo ari rwo rwose",
-    "body": "Ibikubiyemo (JSON)",
-    "bodyInvalid": "Iyi si JSON yanditse neza.",
-    "status": "Uko bihagaze",
-    "statuses": {
-      "draft": "Agateganyo",
-      "published": "Byatangajwe",
-      "retired": "Byavanyweho"
-    },
-    "approvals": "Byemejwe na {{count}} kuri 2",
-    "approve": "Emeza",
-    "requestChanges": "Saba impinduka",
-    "notes": "Ubutumwa ku wanditse (si ngombwa)",
-    "publish": "Tangaza",
-    "edit": "Hindura inyandiko",
-    "delete": "Siba inyandiko",
-    "deleteConfirm": "Urashaka gusiba iyi nyandiko y'agateganyo?",
-    "saved": "Inyandiko yabitswe.",
-    "published": "Byatangajwe.",
-    "reviewed": "Isuzuma ryabitswe.",
-    "yourDraft": "Ni wowe wanditse iyi nyandiko, bityo undi muntu agomba kuyisuzuma.",
-    "myDecision": "Icyemezo cyawe: {{decision}}",
-    "decisions": {
-      "approved": "Byemejwe",
-      "changes_requested": "Hasabwe impinduka"
-    },
-    "empty": "Nta verisiyo y'ibikubiyemo irabaho."
-  },
-  "deletions": {
-    "title": "Ibisabwa byo gusiba amakuru",
-    "intro": "Rangiza buri busabe mu masaha 72. Kurangiza bisiba amakuru y'uwitabiriye n'aho twamubona.",
-    "requested": "Cyasabwe",
-    "due": "Kigomba kurangira bitarenze",
-    "complete": "Rangiza gusiba",
-    "completeConfirm": "Urashaka gusiba ubu amasuzuma, umwirondoro n'uburyo bwo kuvugisha uyu witabiriye? Ntibishobora gusubizwaho.",
-    "completed": "Byarangiye",
-    "done": "Gusiba byarangiye.",
-    "empty": "Nta cyifuzo cyo gusiba gihari."
-  },
-  "audit": {
-    "title": "Igitabo cy'ibikorwa",
-    "intro": "Buri gikorwa cy'abakozi, uko byakurikiranye. Ibyanditswe ntibishobora guhindurwa.",
-    "when": "Ryari",
-    "who": "Nde",
-    "action": "Igikorwa",
-    "target": "Icyakorewe",
-    "empty": "Nta cyanditswe kirabaho."
-  },
-  "flags": {
-    "title": "Ibiranga porogaramu",
-    "intro": "Fungura cyangwa ufunge ibice bitari ngombwa muri iyi porogaramu. Buri mpinduka irandikwa.",
-    "saved": "Byavuguruwe.",
-    "names": {
-      "offlineSync": "Kubika nta interineti no kohereza nyuma",
-      "guideDeterministic": "Umujyanama wa Rinda (ukurikiza amategeko)",
-      "guideGenerative": "Umujyanama wa Rinda (AI, bisaba uruhushya rw'akanama k'imyitwarire)",
-      "measurementCoach": "Umujyanama mu gupima",
-      "progressTrends": "Uko ugenda utera imbere",
-      "whatIf": "Igerageza rya \"bigenze bite\"",
-      "careNavigator": "Urutonde rwa serivisi z'ubuvuzi",
-      "careGeolocation": "Serivisi ziri hafi hakurikijwe aho uri",
-      "clinicCard": "Ikarita y'incamake yo kwereka muganga",
-      "sharedDeviceMode": "Telefoni isangiwe",
-      "readAloud": "Gusoma mu ijwi riranguruye",
-      "usabilityEvents": "Igihe kimara kuri buri paji (ubushakashatsi)",
-      "pilotInsights": "Incamake y'igerageza",
-      "messaging": "Raporo kuri imeri"
-    }
+    "add": "Ongeraho umukoresha"
   },
   "common": {
     "save": "Bika",
@@ -640,36 +456,18 @@
     "unavailable": "Ubutumwa kuri WhatsApp ntiburatangira gukora.",
     "saved": "Icyemezo cyawe cyabitswe."
   },
-  "research": {
-    "title": "Raporo y'ubushakashatsi",
-    "intro": "Imibare y'ubushakashatsi yo kwandika raporo.",
-    "generated": "Yakozwe {{date}} · verisiyo y’amategeko {{version}}",
-    "privacy": "Ibintu byose hano bibarwa ku bitabiriye bose hamwe. Nta mazina, aho twababona, ibisubizo cyangwa nimero ziranga umuntu birimo.",
-    "csv": "Kuramo CSV",
-    "print": "Capura cyangwa ubike nka PDF",
-    "participants": "Abitabiriye",
-    "consented": "Bemeye kwitabira",
-    "checkups": "Amasuzuma",
-    "susMean": "Amanota ya SUS ugereranyije",
-    "tasksTitle": "Imirimo y'imikoreshereze",
-    "tasksBody": "Ibikorwa {{sessions}}, {{ended}} byarangiye. Umurongo werekana abarangije buri murimo, bafashijwe cyangwa batafashijwe.",
-    "task": "Umurimo",
-    "medianTime": "Igihe cyo hagati",
-    "susTitle": "Igipimo cy'imikoreshereze (SUS)",
-    "susBody": "Ibisubizo byuzuye {{n}} · hagati {{median}} · gito {{min}} · kinini {{max}}",
-    "susBands": {
-      "below_50": "Munsi ya 50",
-      "50_to_67": "50 kugeza 67",
-      "68_to_79": "68 kugeza 79 (hejuru y’ikigereranyo)",
-      "80_plus": "80 no hejuru (byiza cyane)"
+  "setup": {
+    "working": {
+      "title": "Turimo gutegura iyi telefoni…",
+      "body": "Turimo guhuza iyi telefoni n’igikorwa cyawe cya Rinda."
     },
-    "othersTitle": "Indi mibare",
-    "othersBody": "Abitabiriye {{withCheckup}} bakoze nibura isuzuma rimwe. {{wellness}} basubije ibibazo by'imitekerereze n'umunaniro ({{wellnessConsent}} barabyemeye).",
-    "safety": "Ibyabaye by'umutekano",
-    "tier": "Urwego {{tier}}: {{count}}",
-    "none": "Nta na kimwe cyanditswe.",
-    "languages": "Ururimi bakunda",
-    "bandsTitle": "Ibisubizo kuri buri gice cy'ubuzima",
-    "bandsBody": "Isuzuma riheruka rya buri witabiriye. Imibare gusa."
+    "done": {
+      "title": "Iyi telefoni yiteguye",
+      "body": "Turakujyana kwinjira. Byose bisibwa kuri iyi telefoni igikorwa kirangiye."
+    },
+    "failed": {
+      "title": "Iyi kode ntiyakoze",
+      "body": "Ishobora kuba yararangiye cyangwa yarakoreshejwe. Saba uyobora igikorwa kode nshya."
+    }
   }
 }
