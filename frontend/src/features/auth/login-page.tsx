@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginRequest } from '@rinda/schemas';
+import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router';
@@ -28,6 +29,11 @@ export function LoginPage() {
     defaultValues: { identifier: '', password: '' },
   });
   const callbackError = params.get('error');
+
+  // A study phone waiting at sign-in still clears itself when the facilitator ends the session.
+  useEffect(() => {
+    void import('@/lib/study-device').then((m) => m.resumeStudyDevice());
+  }, []);
 
   const onSubmit = async (values: Values) => {
     const result = await login(values);

@@ -1,5 +1,17 @@
 import { TASK_CODES } from '@rinda/schemas';
-import { Activity, CircleDot, HeartHandshake, Plus, Timer, Trash2, Wifi, WifiOff } from 'lucide-react';
+import {
+  Activity,
+  CircleCheck,
+  CircleDot,
+  HeartHandshake,
+  Plus,
+  QrCode,
+  Smartphone,
+  Timer,
+  Trash2,
+  Wifi,
+  WifiOff,
+} from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -32,7 +44,9 @@ import {
   useEndSessionMutation,
   useParticipantsQuery,
   useSaveTaskMutation,
+  useDeviceLinkMutation,
   useLiveSessionQuery,
+  useWipeDeviceMutation,
   useSessionsQuery,
   type LiveSession,
   type Session,
@@ -316,6 +330,101 @@ function LiveConsole({ live }: { live: LiveSession }) {
   );
 }
 
+/**
+ * This is the study phone card: a one-time QR code that links a phone to this session, and the button that ends
+ * the session and wipes the phone. The QR library loads only here.
+ */
+function StudyPhoneCard({ session, live }: { session: Session; live: LiveSession | undefined }) {
+  const { t } = useTranslation();
+  const [link, { data: linkData, isLoading: linking, error: linkError }] = useDeviceLinkMutation();
+  const [wipe, { isLoading: wiping, error: wipeError }] = useWipeDeviceMutation();
+  const [qr, setQr] = useState<string | null>(null);
+  useEffect(() => {
+    if (!linkData) return;
+    let active = true;
+    void import('qrcode').then(async (QRCode) => {
+      const svg = await QRCode.toString(linkData.url, { type: 'svg', margin: 1, width: 240 });
+      if (active) setQr(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
+    });
+    return () => {
+      active = false;
+    };
+  }, [linkData]);
+  const device = live?.device;
+  return (
+    <Card className="glass">
+      <CardHeader>
+        <CardTitle className="flex flex-wrap items-center gap-2 text-xl">
+          <Smartphone aria-hidden="true" className="size-5 text-brand-ember-strong" />
+          {t('sessions.phone.title')}
+          {device?.wipedAt ? (
+            <Badge className="gap-1">
+              <CircleCheck aria-hidden="true" className="size-3.5" />
+              {t('sessions.phone.wiped')}
+            </Badge>
+          ) : device?.wipeRequested ? (
+            <Badge variant="outline">{t('sessions.phone.wiping')}</Badge>
+          ) : device?.linked ? (
+            <Badge className="gap-1">
+              <CircleCheck aria-hidden="true" className="size-3.5" />
+              {t('sessions.phone.linked')}
+            </Badge>
+          ) : null}
+        </CardTitle>
+        <CardDescription>{t('sessions.phone.body')}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {!session.endedAt && !device?.linked ? (
+          linkData && qr ? (
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
+              <img
+                src={qr}
+                alt={t('sessions.phone.qrAlt')}
+                className="size-60 rounded-2xl border bg-card p-2"
+              />
+              <div className="flex flex-col gap-2 text-sm">
+                <p>{t('sessions.phone.scan')}</p>
+                <p className="break-all text-muted-foreground">{linkData.url}</p>
+                <p className="text-muted-foreground">
+                  {t('sessions.phone.expires', { time: formatDate(linkData.expiresAt, true) })}
+                </p>
+                <Button
+                  variant="outline"
+                  className="self-start"
+                  onClick={() => void link(session.id)}
+                  disabled={linking}
+                >
+                  {t('sessions.phone.newCode')}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button className="self-start" onClick={() => void link(session.id)} disabled={linking}>
+              <QrCode aria-hidden="true" data-icon="inline-start" />
+              {t('sessions.phone.show')}
+            </Button>
+          )
+        ) : null}
+        {!session.endedAt ? (
+          <ConfirmAction
+            trigger={
+              <>
+                <Smartphone aria-hidden="true" data-icon="inline-start" />
+                {t('sessions.phone.endAndWipe')}
+              </>
+            }
+            title={t('sessions.phone.endAndWipe')}
+            description={t('sessions.phone.endAndWipeConfirm')}
+            onConfirm={() => void wipe(session.id)}
+          />
+        ) : null}
+        {wiping ? <p className="text-sm text-muted-foreground">{t('sessions.phone.wiping')}</p> : null}
+        <ApiError error={linkError ?? wipeError} />
+      </CardContent>
+    </Card>
+  );
+}
+
 export function SessionDetailPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -355,6 +464,7 @@ export function SessionDetailPage() {
       />
       <ApiError error={endError} />
       {live ? <LiveConsole live={live} /> : null}
+      <StudyPhoneCard session={session} live={live} />
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">{t('sessions.tasks')}</CardTitle>

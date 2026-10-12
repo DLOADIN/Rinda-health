@@ -308,6 +308,11 @@ function Shell({ me }: { me: Me }) {
   }, [dispatch]);
   useOutboxSync(me, onSent);
 
+  // On a study phone set up by QR code, this watches for the facilitator ending the session and clears the phone.
+  useEffect(() => {
+    if (isParticipant) void import('@/lib/study-device').then((m) => m.resumeStudyDevice());
+  }, [isParticipant]);
+
   // Lets the facilitator's live console follow which study step this participant is on.
   useEffect(() => {
     enableSessionProgress(isParticipant);

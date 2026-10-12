@@ -10,6 +10,7 @@ import { PublicShell } from '@/features/landing/public-shell';
 const LandingPage = lazy(() =>
   import('@/features/landing/landing-page').then((m) => ({ default: m.LandingPage })),
 );
+const SetupPage = lazy(() => import('@/features/setup/setup-page').then((m) => ({ default: m.SetupPage })));
 const LoginPage = lazy(() => import('@/features/auth/login-page').then((m) => ({ default: m.LoginPage })));
 const SignupPage = lazy(() => import('@/features/auth/signup-page').then((m) => ({ default: m.SignupPage })));
 const DashboardLayout = lazy(() =>
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
           { path: '/', element: wait(<LandingPage />) },
           { path: '/login', element: wait(<LoginPage />) },
           { path: '/signup', element: wait(<SignupPage />) },
+          { path: '/setup/:code', element: wait(<SetupPage />) },
         ],
       },
     ],

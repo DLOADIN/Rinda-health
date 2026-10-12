@@ -92,6 +92,7 @@ export interface LiveSession {
   timeline: Array<{ step: string; startedAt: string; endedAt: string | null; seconds: number }>;
   totals: Record<string, number>;
   alerts: Array<{ tier: number; triggerType: string; occurredAt: string }>;
+  device: { linked: boolean; wipeRequested: boolean; wipedAt: string | null };
 }
 export interface ResearchReport {
   generatedAt: string;
@@ -354,6 +355,13 @@ export const api = createApi({
     }),
     sessions: b.query<Session[], void>({ query: () => '/facilitator/sessions', providesTags: ['Sessions'] }),
     liveSession: b.query<LiveSession, string>({ query: (id) => `/facilitator/sessions/${id}/live` }),
+    deviceLink: b.mutation<{ url: string; expiresAt: string }, string>({
+      query: (id) => ({ url: `/facilitator/sessions/${id}/device-link`, method: 'POST' }),
+    }),
+    wipeDevice: b.mutation<Session, string>({
+      query: (id) => ({ url: `/facilitator/sessions/${id}/wipe`, method: 'POST' }),
+      invalidatesTags: ['Sessions', 'Dashboard'],
+    }),
     researchReport: b.query<ResearchReport, void>({ query: () => '/admin/research-report' }),
     createSession: b.mutation<Session, { participantId: string; deviceLabel?: string }>({
       query: (body) => ({ url: '/facilitator/sessions', method: 'POST', body }),
@@ -496,6 +504,8 @@ export const {
   useParticipantsQuery,
   useSessionsQuery,
   useLiveSessionQuery,
+  useDeviceLinkMutation,
+  useWipeDeviceMutation,
   useResearchReportQuery,
   useCreateSessionMutation,
   useSaveTaskMutation,
