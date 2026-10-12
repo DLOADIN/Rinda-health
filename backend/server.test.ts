@@ -834,6 +834,44 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     await p.get('/api/v1/admin/research-report').expect(403);
   });
 
+  it('QR set-up and wipe: one-time link, claimed once, wiped at the end', async () => {
+    const { agent: fac } = await signup('facilitator', 'qr-fac@example.com');
+    const { me: participant } = await signup('participant', 'qr-p@example.com');
+    const session = await fac
+      .post('/api/v1/facilitator/sessions')
+      .send({ participantId: participant.id, deviceLabel: 'Phone 2' })
+      .expect(201);
+    const link = (await fac.post(`/api/v1/facilitator/sessions/${session.body.id}/device-link`).expect(201))
+      .body;
+    expect(link.url).toMatch(/^http:\/\/localhost:5173\/setup\/[A-Za-z0-9_-]{20,}$/);
+    const code = String(link.url).split('/setup/')[1];
+
+    const phone = request(app);
+    await phone
+      .post('/api/v1/devices/claim')
+      .send({ code: 'x'.repeat(24) })
+      .expect(404);
+    const claim = (await phone.post('/api/v1/devices/claim').send({ code }).expect(200)).body;
+    expect(claim).toMatchObject({ language: 'en', deviceLabel: 'Phone 2' });
+    await phone.post('/api/v1/devices/claim').send({ code }).expect(404); // one-time only
+
+    const status = () => phone.get('/api/v1/devices/status').set('x-device-token', claim.deviceToken);
+    expect((await status().expect(200)).body).toEqual({ wipe: false });
+    expect((await phone.get('/api/v1/devices/status').set('x-device-token', 'y'.repeat(30))).body).toEqual({
+      wipe: true,
+    });
+    const live = () => fac.get(`/api/v1/facilitator/sessions/${session.body.id}/live`);
+    expect((await live()).body.device).toMatchObject({ linked: true, wipeRequested: false, wipedAt: null });
+
+    await fac.post(`/api/v1/facilitator/sessions/${session.body.id}/wipe`).expect(200);
+    expect((await status()).body).toEqual({ wipe: true });
+    await phone.post('/api/v1/devices/wiped').set('x-device-token', claim.deviceToken).expect(204);
+    const after = (await live()).body;
+    expect(after.ended).toBe(true);
+    expect(after.device.wipedAt).not.toBeNull();
+    await fac.post(`/api/v1/facilitator/sessions/${session.body.id}/device-link`).expect(409);
+  });
+
   it('dashboards include 14 days of chart data', async () => {
     const { agent } = await signup('researcher_admin', 'charts-admin@example.com');
     const dash = await agent.get('/api/v1/dashboard');
