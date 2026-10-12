@@ -116,6 +116,8 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     ETHICS_AMENDMENT_REF: 'SYNTHETIC-DEV-ONLY',
     BREVO_API_KEY: 'test-brevo-key',
     EMAIL_FROM: 'reports@rinda.test',
+    WHATSAPP_TOKEN: 'test-wa-token',
+    WHATSAPP_PHONE_NUMBER_ID: '1234567890',
     PUBLIC_URL: 'http://localhost:5173',
   });
   const { logger, lines } = sinkLogger();
@@ -136,6 +138,8 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
         { status: 200 },
       );
     }
+    if (url.includes('graph.facebook.com'))
+      return new Response('{"messages":[{"id":"wamid.test"}]}', { status: 200 });
     if (url.includes('api.brevo.com')) return new Response('{"messageId":"<test@brevo>"}', { status: 201 });
     return new Response(
       JSON.stringify({
@@ -737,6 +741,48 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     expect(cards.find((c) => c.key === 'sus_average')?.value).toBe(75);
   });
 
+  it('WhatsApp notices: only after opt-in, never with results', async () => {
+    const byEmail = await signup('participant', 'wa-no-phone@example.com');
+    await byEmail.agent.put('/api/v1/participant/whatsapp').send({ whatsapp: true }).expect(409);
+
+    const { agent, me } = await signup('participant', '0788 555 777');
+    expect((await agent.get('/api/v1/participant/whatsapp')).body).toEqual({
+      whatsapp: false,
+      available: true,
+      hasPhone: true,
+    });
+    const submit = () =>
+      agent
+        .post('/api/v1/participant/assessments')
+        .set('Idempotency-Key', randomUUID())
+        .send({ language: 'en', startedAt: new Date().toISOString(), answers });
+    const calls = () => outbound.filter((o) => o.url.includes('graph.facebook.com'));
+
+    outbound.length = 0;
+    await submit().expect(201);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(calls()).toHaveLength(0);
+
+    await agent.put('/api/v1/participant/whatsapp').send({ whatsapp: true, extra: 1 }).expect(400);
+    await agent.put('/api/v1/participant/whatsapp').send({ whatsapp: true }).expect(200);
+    await submit().expect(201);
+    for (let i = 0; i < 40 && calls().length === 0; i++) await new Promise((r) => setTimeout(r, 250));
+    await new Promise((r) => setTimeout(r, 400));
+    const call = calls()[0];
+    expect(call?.url).toContain('/1234567890/messages');
+    expect(JSON.parse(call?.body ?? '{}')).toMatchObject({
+      to: '250788555777',
+      type: 'template',
+      template: { name: 'rinda_summary_ready' },
+    });
+    expect(call?.body).not.toMatch(/hypertension|below|band|systolic|142/i);
+    const events = await db.query(
+      "SELECT status FROM message_events WHERE user_id = $1 AND channel = 'whatsapp'",
+      [me.id],
+    );
+    expect(events.rows).toEqual([{ status: 'sent' }]);
+  });
+
   it('dashboards include 14 days of chart data', async () => {
     const { agent } = await signup('researcher_admin', 'charts-admin@example.com');
     const dash = await agent.get('/api/v1/dashboard');
@@ -754,6 +800,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       'lockme@example.com',
       '250788555444',
       'test-brevo-key',
+      'test-wa-token',
       'reports-user@example.com',
       'test-gemini-key',
       '"systolic"',
