@@ -46,6 +46,7 @@ import {
   SafetyEvent,
   SusSubmission,
   EmailReportSend,
+  WhatsAppPreference,
   AiPreference,
   LoginRequest,
   parseIdentifier,
@@ -115,6 +116,12 @@ const EnvSchema = z
     EMAIL_FROM: optionalText,
     EMAIL_FROM_NAME: z.string().default('Rinda Health'),
     MESSAGING_APPROVAL_REF: optionalText,
+    WHATSAPP_TOKEN: optionalText,
+    WHATSAPP_PHONE_NUMBER_ID: optionalText,
+    WHATSAPP_TEMPLATE: z.string().default('rinda_summary_ready'),
+    WHATSAPP_TEMPLATE_LANGUAGE_EN: z.string().default('en'),
+    WHATSAPP_TEMPLATE_LANGUAGE_RW: z.string().default('en'),
+    WHATSAPP_API_VERSION: z.string().default('v21.0'),
     SEED_PASSWORD: optionalText,
   })
   .superRefine((env, ctx) => {
@@ -166,6 +173,7 @@ const generativeGuideAllowed = (c: AppConfig) =>
   Boolean(c.ETHICS_AMENDMENT_REF && c.GEMINI_API_KEY) &&
   (c.APP_ENV !== 'pilot' || c.GEMINI_PAID_TIER === 'true');
 const emailConfigured = (c: AppConfig) => Boolean(c.BREVO_API_KEY && c.EMAIL_FROM);
+const whatsappConfigured = (c: AppConfig) => Boolean(c.WHATSAPP_TOKEN && c.WHATSAPP_PHONE_NUMBER_ID);
 
 // Anything on this list is blanked out of the logs, so answers, results and passwords never end up there.
 const SENSITIVE_KEYS = [
@@ -763,6 +771,73 @@ export function composeReportEmail(
     '</table></div>',
   ].join('');
   return { subject: lookup('email.report.subject'), text, html };
+}
+
+// This sends the WhatsApp "your summary is ready" notice. It is an approved Meta template with no
+// parameters, so no result can ever be put into the message.
+async function sendWhatsAppNotice(
+  db: Db,
+  config: AppConfig,
+  logger: Logger,
+  fetchFn: typeof fetch,
+  userId: string,
+): Promise<'sent' | 'failed' | 'skipped'> {
+  if (!whatsappConfigured(config) || !(await currentFlags(db, config)).messaging) return 'skipped';
+  const consent = await one<{ granted: boolean }>(
+    db,
+    "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'whatsapp_notices' ORDER BY created_at DESC LIMIT 1",
+    [userId],
+  );
+  if (!consent?.granted) return 'skipped';
+  const user = await one<{ phone: string | null; preferred_language: 'en' | 'rw' }>(
+    db,
+    'SELECT phone, preferred_language FROM users WHERE id = $1 AND active AND deleted_at IS NULL',
+    [userId],
+  );
+  const record = async (status: 'sent' | 'failed' | 'skipped', errorCode: string | null) => {
+    await db.query(
+      'INSERT INTO message_events (user_id, channel, template, status, error_code) VALUES ($1, $2, $3, $4, $5)',
+      [userId, 'whatsapp', config.WHATSAPP_TEMPLATE, status, errorCode],
+    );
+    return status;
+  };
+  if (!user?.phone) return record('skipped', 'no_phone');
+  let res: globalThis.Response;
+  try {
+    res = await fetchFn(
+      `https://graph.facebook.com/${config.WHATSAPP_API_VERSION}/${config.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${config.WHATSAPP_TOKEN ?? ''}`,
+        },
+        signal: AbortSignal.timeout(15_000),
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: user.phone.replace(/^\+/, ''),
+          type: 'template',
+          template: {
+            name: config.WHATSAPP_TEMPLATE,
+            language: {
+              code:
+                user.preferred_language === 'rw'
+                  ? config.WHATSAPP_TEMPLATE_LANGUAGE_RW
+                  : config.WHATSAPP_TEMPLATE_LANGUAGE_EN,
+            },
+          },
+        }),
+      },
+    );
+  } catch {
+    logger.warn({ event: 'whatsapp_notice', status: 'failed' }, 'message');
+    return record('failed', 'network');
+  }
+  logger.info(
+    { event: 'whatsapp_notice', status: res.ok ? 'sent' : 'failed', httpStatus: res.status },
+    'message',
+  );
+  return record(res.ok ? 'sent' : 'failed', res.ok ? null : `http_${res.status}`);
 }
 
 type EmailOutcome = 'sent' | 'failed' | 'skipped';
@@ -1562,6 +1637,9 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     }
     res.status(inserted ? 201 : 200).json(toAssessment(row));
     if (inserted) {
+      void sendWhatsAppNotice(database, config, logger, fetchFn, userId).catch(() =>
+        logger.warn({ reqId: req.id, event: 'whatsapp_notice_error' }, 'message'),
+      );
       void sendReportEmail(database, config, logger, fetchFn, userId, row.id).catch(() =>
         logger.warn({ reqId: req.id, event: 'email_report_error' }, 'message'),
       );
@@ -2737,6 +2815,49 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.json({ status });
   });
   mount('/api/v1/participant/email-reports', emailReports);
+
+  // This is where a participant switches WhatsApp notices on or off. The notice never holds results.
+  const whatsapp = Router();
+  whatsapp.use(requireAuth, requireRole('participant'));
+
+  whatsapp.get('/', async (req, res) => {
+    const database = needDb();
+    const consent = await one<{ granted: boolean }>(
+      database,
+      "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'whatsapp_notices' ORDER BY created_at DESC LIMIT 1",
+      [me(req).id],
+    );
+    const user = await one<{ phone: string | null }>(database, 'SELECT phone FROM users WHERE id = $1', [
+      me(req).id,
+    ]);
+    const flags = await currentFlags(database, config);
+    res.json({
+      whatsapp: consent?.granted ?? false,
+      available: flags.messaging && whatsappConfigured(config),
+      hasPhone: Boolean(user?.phone),
+    });
+  });
+
+  whatsapp.put('/', async (req, res) => {
+    const database = needDb();
+    const body = WhatsAppPreference.parse(req.body);
+    const user = await one<{ preferred_language: 'en' | 'rw'; phone: string | null }>(
+      database,
+      'SELECT preferred_language, phone FROM users WHERE id = $1',
+      [me(req).id],
+    );
+    const flags = await currentFlags(database, config);
+    if (body.whatsapp && !(flags.messaging && whatsappConfigured(config) && user?.phone)) {
+      throw new AppError(409, 'CONFLICT', 'WhatsApp notices are not available.');
+    }
+    await database.query(
+      `INSERT INTO consent_events (user_id, scope, granted, consent_doc_version, language)
+       VALUES ($1, 'whatsapp_notices', $2, 'whatsapp-0.1.0', $3)`,
+      [me(req).id, body.whatsapp, user?.preferred_language ?? 'en'],
+    );
+    res.json(body);
+  });
+  mount('/api/v1/participant/whatsapp', whatsapp);
 
   const aiOptIn = Router();
   aiOptIn.use(requireAuth, requireRole('participant'));
