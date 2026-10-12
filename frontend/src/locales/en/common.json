@@ -129,7 +129,8 @@
     "logout": "Sign out",
     "account": "Account menu",
     "feedback": "Feedback",
-    "howResults": "How results work"
+    "howResults": "How results work",
+    "research": "Research report"
   },
   "dashboard": {
     "greeting": "Hi, {{name}}!",
@@ -378,7 +379,18 @@
     "saveTask": "Save",
     "taskSaved": "Task saved.",
     "notRecorded": "Not recorded",
-    "orderReadOnly": "Order {{order}} (set by the study, cannot be changed)"
+    "orderReadOnly": "Order {{order}} (set by the study, cannot be changed)",
+    "live": {
+      "title": "Live session",
+      "body": "Follows which step the participant is on, updated every few seconds. No answers or results are shown.",
+      "online": "Participant connected",
+      "waiting": "Waiting for the participant",
+      "alertTitle": "A safety screen opened",
+      "alert": "Tier {{tier}} at {{time}}. Follow the session safety script and check in with the participant.",
+      "now": "Now on: {{step}} for {{time}}",
+      "notYet": "Nothing yet. Steps appear here once the participant signs in on their phone.",
+      "useTime": "Use live time ({{minutes}} min)"
+    }
   },
   "safety": {
     "title": "Safety events",
@@ -627,5 +639,37 @@
     "needPhone": "Add your phone number in \"My details\" to use this.",
     "unavailable": "WhatsApp notices are not switched on yet.",
     "saved": "Your choice was saved."
+  },
+  "research": {
+    "title": "Research report",
+    "intro": "Study numbers for the write-up.",
+    "generated": "Generated {{date}} · rules version {{version}}",
+    "privacy": "Everything here is counted across all participants. No names, contacts, answers or IDs are included.",
+    "csv": "Download CSV",
+    "print": "Print or save as PDF",
+    "participants": "Participants",
+    "consented": "Agreed to take part",
+    "checkups": "Check-ups",
+    "susMean": "Average SUS score",
+    "tasksTitle": "Usability tasks",
+    "tasksBody": "{{sessions}} sessions, {{ended}} finished. The bar shows how many completed each task, with or without help.",
+    "task": "Task",
+    "medianTime": "Median time",
+    "susTitle": "System Usability Scale",
+    "susBody": "{{n}} complete answers · median {{median}} · lowest {{min}} · highest {{max}}",
+    "susBands": {
+      "below_50": "Below 50",
+      "50_to_67": "50 to 67",
+      "68_to_79": "68 to 79 (above average)",
+      "80_plus": "80 and above (excellent)"
+    },
+    "othersTitle": "Other numbers",
+    "othersBody": "{{withCheckup}} participants did at least one check-up. {{wellness}} answered the mood and stress questions ({{wellnessConsent}} agreed to them).",
+    "safety": "Safety events",
+    "tier": "Tier {{tier}}: {{count}}",
+    "none": "None recorded.",
+    "languages": "Preferred language",
+    "bandsTitle": "Results by health area",
+    "bandsBody": "Each participant's latest check-up. Counts only."
   }
 }

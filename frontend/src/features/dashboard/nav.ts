@@ -4,6 +4,7 @@ import {
   CalendarClock,
   ChartNoAxesColumn,
   ClipboardList,
+  FileChartColumn,
   FileCheck,
   FileText,
   House,
@@ -47,6 +48,7 @@ export const NAV: Record<Role, NavItem[]> = {
   ],
   researcher_admin: [
     home,
+    { to: '/app/research', labelKey: 'nav.research', icon: FileChartColumn },
     { to: '/app/users', labelKey: 'nav.users', icon: UserCog },
     { to: '/app/content', labelKey: 'nav.content', icon: FileText },
     { to: '/app/participants', labelKey: 'nav.participants', icon: Users },

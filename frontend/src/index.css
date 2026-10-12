@@ -355,3 +355,18 @@
     animation: none;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #research-report,
+  #research-report * {
+    visibility: visible;
+  }
+  #research-report {
+    position: absolute;
+    inset: 0 0 auto 0;
+    padding: 1rem;
+  }
+}

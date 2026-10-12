@@ -4,6 +4,7 @@ import { useMeQuery } from '@/lib/api';
 import { AuditPage, DeletionsPage, FlagsPage } from '@/features/staff/admin-pages';
 import { ContentPage } from '@/features/staff/content-page';
 import { ParticipantsPage } from '@/features/staff/participants-page';
+import { ResearchPage } from '@/features/staff/research-page';
 import { SafetyPage } from '@/features/staff/safety-page';
 import { SessionDetailPage, SessionsPage } from '@/features/staff/sessions-pages';
 import { UsersPage } from '@/features/staff/users-page';
@@ -33,6 +34,7 @@ export default function StaffRoutes({ role }: { role: Role }) {
           <Route path="deletions" element={<DeletionsPage />} />
           <Route path="audit" element={<AuditPage />} />
           <Route path="flags" element={<FlagsPage />} />
+          <Route path="research" element={<ResearchPage />} />
         </>
       ) : null}
       <Route path="*" element={<Navigate to="/app" replace />} />

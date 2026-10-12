@@ -129,7 +129,8 @@
     "logout": "Sohoka muri konti",
     "account": "Urutonde rwa konti",
     "feedback": "Ibitekerezo",
-    "howResults": "Uko ibisubizo bibarwa"
+    "howResults": "Uko ibisubizo bibarwa",
+    "research": "Raporo y'ubushakashatsi"
   },
   "dashboard": {
     "greeting": "Muraho, {{name}}!",
@@ -378,7 +379,18 @@
     "saveTask": "Bika",
     "taskSaved": "Umurimo wabitswe.",
     "notRecorded": "Ntibyanditswe",
-    "orderReadOnly": "Uko bikurikirana: {{order}} (byashyizweho n'ubushakashatsi, ntibihindurwa)"
+    "orderReadOnly": "Uko bikurikirana: {{order}} (byashyizweho n'ubushakashatsi, ntibihindurwa)",
+    "live": {
+      "title": "Igikorwa kiri kuba",
+      "body": "Gikurikira intambwe uwitabiriye agezeho, kigahinduka buri masegonda make. Nta bisubizo bigaragazwa.",
+      "online": "Uwitabiriye arahujwe",
+      "waiting": "Dutegereje uwitabiriye",
+      "alertTitle": "Ipaji y'umutekano yafunguwe",
+      "alert": "Urwego {{tier}} saa {{time}}. Kurikiza amabwiriza y'umutekano y'igikorwa maze uvugane n'uwitabiriye.",
+      "now": "Ubu ari kuri: {{step}} mu gihe cya {{time}}",
+      "notYet": "Nta kintu kiraboneka. Intambwe zizagaragara hano uwitabiriye amaze kwinjira kuri telefoni ye.",
+      "useTime": "Koresha igihe nyacyo (iminota {{minutes}})"
+    }
   },
   "safety": {
     "title": "Ibibazo by'umutekano",
@@ -627,5 +639,37 @@
     "needPhone": "Ongeraho nimero ya telefoni yawe muri \"Amakuru yanjye\" kugira ngo ukoreshe ibi.",
     "unavailable": "Ubutumwa kuri WhatsApp ntiburatangira gukora.",
     "saved": "Icyemezo cyawe cyabitswe."
+  },
+  "research": {
+    "title": "Raporo y'ubushakashatsi",
+    "intro": "Imibare y'ubushakashatsi yo kwandika raporo.",
+    "generated": "Yakozwe {{date}} · verisiyo y’amategeko {{version}}",
+    "privacy": "Ibintu byose hano bibarwa ku bitabiriye bose hamwe. Nta mazina, aho twababona, ibisubizo cyangwa nimero ziranga umuntu birimo.",
+    "csv": "Kuramo CSV",
+    "print": "Capura cyangwa ubike nka PDF",
+    "participants": "Abitabiriye",
+    "consented": "Bemeye kwitabira",
+    "checkups": "Amasuzuma",
+    "susMean": "Amanota ya SUS ugereranyije",
+    "tasksTitle": "Imirimo y'imikoreshereze",
+    "tasksBody": "Ibikorwa {{sessions}}, {{ended}} byarangiye. Umurongo werekana abarangije buri murimo, bafashijwe cyangwa batafashijwe.",
+    "task": "Umurimo",
+    "medianTime": "Igihe cyo hagati",
+    "susTitle": "Igipimo cy'imikoreshereze (SUS)",
+    "susBody": "Ibisubizo byuzuye {{n}} · hagati {{median}} · gito {{min}} · kinini {{max}}",
+    "susBands": {
+      "below_50": "Munsi ya 50",
+      "50_to_67": "50 kugeza 67",
+      "68_to_79": "68 kugeza 79 (hejuru y’ikigereranyo)",
+      "80_plus": "80 no hejuru (byiza cyane)"
+    },
+    "othersTitle": "Indi mibare",
+    "othersBody": "Abitabiriye {{withCheckup}} bakoze nibura isuzuma rimwe. {{wellness}} basubije ibibazo by'imitekerereze n'umunaniro ({{wellnessConsent}} barabyemeye).",
+    "safety": "Ibyabaye by'umutekano",
+    "tier": "Urwego {{tier}}: {{count}}",
+    "none": "Nta na kimwe cyanditswe.",
+    "languages": "Ururimi bakunda",
+    "bandsTitle": "Ibisubizo kuri buri gice cy'ubuzima",
+    "bandsBody": "Isuzuma riheruka rya buri witabiriye. Imibare gusa."
   }
 }
