@@ -41,6 +41,8 @@ One IndexedDB database, `rinda`, opened through `apps/web/src/lib/storage/`. Not
 | `outbox` | Submissions, safety events, feedback, export and deletion requests waiting to send | Yes | When the server confirms each item |
 | `results` | Results and plans returned by the server, for history and the dashboard | Yes | Shared-phone mode: at sign-out. Personal phones: per the retention setting in My data |
 | `meta` | Sync timestamps, mismatch counter, storage warnings shown | No (holds no personal values) | Wipe |
+| `handover-pass` (phone) | The server's hand-over public key, its id and this person's expiring proof, fetched while online (ADR-027) | Yes | Sign-out, wipe |
+| `handover-inbox` (facilitator laptop) | Sealed hand-over packages, each tagged with the facilitator who scanned it | Yes, and sealed to the server's key inside | When uploaded, when discarded, or after 14 days; kept through staff sign-out because the laptop cannot read them |
 
 Every encrypted record is `{ id, iv, ciphertext, createdAt }` with a fresh 96-bit IV from `crypto.getRandomValues`. The key never leaves the browser and cannot be exported, so a copied database file is unreadable on another device. Wiping deletes the key first, then the stores.
 
@@ -127,6 +129,7 @@ VitePWA({
       '**/assets/charts-*.js',
       '**/assets/guide-panel-*.js',
       '**/assets/clinic-card-*.js',
+      '**/assets/jsQR-*.js',
     ],
   },
   devOptions: { enabled: false },
@@ -175,10 +178,12 @@ registerRoute(
   new NetworkFirst({ cacheName: 'rinda-config', networkTimeoutSeconds: 3 }),
 );
 
-// Lazy participant chunks and the font, fetched during "Prepare this phone".
+// Lazy participant chunks and the font, fetched during "Prepare this phone". Staff screens and the QR reader are
+// kept after first use, so a facilitator's laptop can collect hand-overs offline later.
 registerRoute(
   ({ request, url }) =>
-    (request.destination === 'script' && /\/assets\/(charts|guide-panel|clinic-card)-/.test(url.pathname)) ||
+    (request.destination === 'script' &&
+      /\/assets\/(charts|guide-panel|clinic-card|staff-routes|jsQR)-/.test(url.pathname)) ||
     request.destination === 'font',
   new CacheFirst({ cacheName: 'rinda-assets' }),
 );

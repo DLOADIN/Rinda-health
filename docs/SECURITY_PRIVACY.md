@@ -14,6 +14,7 @@ Frame: Rwanda's Law No. 058/2021 on the protection of personal data and privacy,
 | Feedback and task outcomes | API database | Research data | Same as health data |
 | Participant email or phone number (E.164), used to sign in (ADR-017); email report choice | API database; with the participant's opt-in, the email address and an NCD result summary go to Brevo (ADR-020) to send the report. `message_events` keeps channel, status and error code only | Contact identifier | Deleted with the account; the transfer must be covered by the ethics approval (MESSAGING_APPROVAL_REF) before the pilot |
 | Staff email, phone number (E.164), Google subject ID, break-glass password hash (Argon2id), hashed sessions and SMS codes | API database; email goes to Google and phone number to the SMS provider at sign-in only (SRS Section 12, NFR-19) | Staff identifier | Duration of the project; SMS codes expire after 5 minutes |
+| Offline hand-over packages: waiting check-ups and item 9 events, sealed on the phone to the server's hand-over key (ECDH P-256, HKDF-SHA-256, AES-256-GCM), with an expiring per-person proof inside (ADR-027) | While being handed over: QR codes on the phone screen, then the facilitator's laptop (`handover-inbox` vault record, tagged with the facilitator's id). Only the server can open a package; the laptop never sees inside | Sealed health data | Laptop: until uploaded or discarded, at most 14 days. The phone keeps its own copy until it sends it itself |
 | Technical logs (route, status, duration, correlation ID) | Log store | Operational | 14 days |
 
 **Never collected anywhere in the system** (C-06): participant names, national ID numbers, phone numbers or email addresses, free-text answers, exact dates of birth, GPS location, photos, audio in the app, IP addresses in logs, device identifiers, third-party analytics or tracking.
@@ -24,6 +25,8 @@ Frame: Rwanda's Law No. 058/2021 on the protection of personal data and privacy,
 | --- | --- |
 | Someone else uses or sees a shared study phone | Shared-phone mode wipes everything at sign-out (FR-43); facilitator wipe (FR-27); quick exit and auto-lock (FR-42); drafts and outbox encrypted |
 | Lost or stolen phone | Short-lived local data (cleared once sent), encrypted IndexedDB, PIN lock, refresh token revocable from the console |
+| Someone films a phone's hand-over QR codes, or copies a facilitator laptop's packages | Packages are sealed to the server's key, so a recording or copy cannot be read; the proof inside expires after 30 days; uploads need a facilitator who had a session with that participant in the last 14 days; replays store nothing new. In the pilot the key comes from its own `HANDOVER_SECRET`, and `HANDOVER_SECRET_PREVIOUS` keeps packages already in the field working during a rotation |
+| Camera use (blood pressure reading, hand-over scanning) | Pictures are read in memory on the device and never stored or sent; the camera stops as soon as it is not needed (ADR-026) |
 | Network eavesdropping | HTTPS only with TLS 1.2 or later, HSTS, no mixed content |
 | Stolen database or backup | Pseudonymous codes only, no direct identifiers, host disk encryption, encrypted backups, least-privilege database role |
 | Staff misuse | Role-based access on every route, two-person content approval (FR-46), append-only audit log (FR-48), exports logged (FR-19) |

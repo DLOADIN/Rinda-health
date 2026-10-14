@@ -47,6 +47,7 @@ There is no text box (C-06). Chips are content-managed and versioned. Starting s
 | `overview` | What do my results mean? | Dashboard |
 | `first_step` | What is one small step I can start this week? | Dashboard |
 | `plan_week` | Make me a simple plan for this week | Dashboard |
+| `tips` | What can I do about my results? | Dashboard; offline answer set for the person's own focus areas (ADR-028) |
 | `explain.<domain>` | Explain my result for this area | Domain page (NCD domains only) |
 | `why_matters.<domain>` | Why does this matter at my age? | Domain page |
 | `measure_better.<domain>` | How do I measure this well next time? | BP, waist, BMI pages |
