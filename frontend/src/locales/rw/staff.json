@@ -232,5 +232,28 @@
     "languages": "Ururimi bakunda",
     "bandsTitle": "Ibisubizo kuri buri gice cy'ubuzima",
     "bandsBody": "Isuzuma riheruka rya buri witabiriye. Imibare gusa."
+  },
+  "collect": {
+    "title": "Gukusanya nta interineti",
+    "intro": "Iyo telefoni idafite interineti, fungura Ibisubizo kuri telefoni ukande 'Bihe uyobora igikorwa'. Erekeza kamera y'iyi mudasobwa kuri telefoni kugeza ibice byose byakiriwe.",
+    "scanTitle": "Soma telefoni",
+    "locked": "Ibipaki birafunze. Iyi mudasobwa ntishobora kubisoma; seriveri ya Rinda yonyine ni yo ishobora kubifungura.",
+    "start": "Tangiza kamera",
+    "stop": "Hagarika kamera",
+    "noCamera": "Kamera ntiboneka. Reba niba iyi mushakisha yemerewe kuyikoresha.",
+    "waitingPhone": "Dutegereje telefoni…",
+    "progress": "Byakiriwe {{have}} kuri {{total}}",
+    "received": "Igipaki cyakiriwe. Ushobora gusoma telefoni ikurikira.",
+    "duplicate": "Iki gipaki cyari cyarakiriwe.",
+    "inboxTitle": "Bitegereje koherezwa",
+    "inbox": "Ibipaki {{count}} bibitse kuri iyi mudasobwa",
+    "empty": "Nta kintu gitegereje koherezwa.",
+    "offline": "Nta interineti iraboneka. Ibipaki biguma kuri iyi mudasobwa kandi bishobora koherezwa nyuma.",
+    "upload": "Ohereza nonaha",
+    "uploading": "Birimo koherezwa…",
+    "result": "Byoherejwe: {{saved}} bishya, {{already}} byari byarakiriwe, {{invalid}} ntibyakoreshejwe.",
+    "undelivered": "Byasomwe {{date}}: seriveri ntiyashoboye kwakira iki gipaki. Telefoni iracyafite kopi yayo kandi izacyohereza ibonye interineti.",
+    "discard": "Kuraho",
+    "discardConfirm": "Kuraho iki gipaki kuri iyi mudasobwa? Telefoni igumana kopi yayo kandi izacyohereza ibonye interineti."
   }
 }

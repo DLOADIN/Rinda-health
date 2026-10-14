@@ -36,6 +36,7 @@ export default defineConfig({
           '**/assets/charts-*.js',
           '**/assets/guide-panel-*.js',
           '**/assets/clinic-card-*.js',
+          '**/assets/jsQR-*.js',
         ],
       },
       devOptions: { enabled: false },

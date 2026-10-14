@@ -130,7 +130,8 @@
     "account": "Urutonde rwa konti",
     "feedback": "Ibitekerezo",
     "howResults": "Uko ibisubizo bibarwa",
-    "research": "Raporo y'ubushakashatsi"
+    "research": "Raporo y'ubushakashatsi",
+    "collect": "Gukusanya nta interineti"
   },
   "dashboard": {
     "greeting": "Muraho, {{name}}!",
@@ -485,5 +486,20 @@
       "title": "Iyi kode ntiyakoze",
       "body": "Ishobora kuba yararangiye cyangwa yarakoreshejwe. Saba uyobora igikorwa kode nshya."
     }
+  },
+  "handover": {
+    "waitingTitle": "Igenzura {{count}} ribitse kuri iyi telefoni",
+    "waitingBody": "Bizoherezwa ubwabyo iyi telefoni nibona interineti. Nta interineti ihari? Ushobora kubiha uyobora igikorwa ubu.",
+    "open": "Bihe uyobora igikorwa",
+    "title": "Bihe uyobora igikorwa",
+    "intro": "Erekeza iyi ecran kuri kamera ya mudasobwa y'uyobora igikorwa kugeza avuze ko byakiriwe.",
+    "code": "Kode {{n}} kuri {{total}}",
+    "hold": "Fata telefoni neza; kode zihinduka ubwazo.",
+    "locked": "Ibisubizo byawe bifunze muri izi kode. Mudasobwa ntishobora kubisoma; seriveri ya Rinda yonyine ni yo ishobora kubifungura.",
+    "noPass": "Iyi telefoni igomba kubona interineti rimwe nyuma yo kwinjira kugira ngo ishobore kubitanga. Igenzura ryawe rirabitse neza kandi rizoherezwa ibonye interineti.",
+    "qrAlt": "Kode ya QR y'uyobora igikorwa yo gusoma",
+    "done": "Byarangiye",
+    "still": "Fata telefoni neza kugeza uyobora igikorwa avuze ko byakiriwe.",
+    "waitingOther": "Hari ibibitse kuri iyi telefoni"
   }
 }

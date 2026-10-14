@@ -130,7 +130,8 @@
     "account": "Account menu",
     "feedback": "Feedback",
     "howResults": "How results work",
-    "research": "Research report"
+    "research": "Research report",
+    "collect": "Collect without internet"
   },
   "dashboard": {
     "greeting": "Hi, {{name}}!",
@@ -485,5 +486,20 @@
       "title": "This code did not work",
       "body": "It may have expired or already been used. Ask the facilitator for a new code."
     }
+  },
+  "handover": {
+    "waitingTitle": "{{count}} check-up(s) saved on this phone",
+    "waitingBody": "They will send themselves when this phone is online again. No internet here? You can hand them to the facilitator now.",
+    "open": "Hand over to the facilitator",
+    "title": "Hand over to the facilitator",
+    "intro": "Hold this screen up to the facilitator's laptop camera until they say it is received.",
+    "code": "Code {{n}} of {{total}}",
+    "hold": "Keep the phone still; the codes change by themselves.",
+    "locked": "Your answers are locked inside the codes. The laptop cannot read them; only the Rinda server can open them.",
+    "noPass": "This phone needs to be online once after signing in before it can hand over. Your check-ups are safe and will send when it is online.",
+    "qrAlt": "QR code for the facilitator to scan",
+    "done": "Done",
+    "still": "Keep the phone still until the facilitator says it is received.",
+    "waitingOther": "Something is saved on this phone"
   }
 }

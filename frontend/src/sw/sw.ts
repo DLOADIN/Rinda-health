@@ -28,9 +28,11 @@ registerRoute(
   new NetworkFirst({ cacheName: 'rinda-config', networkTimeoutSeconds: 3 }),
 );
 
+// Staff screens and the QR reader are kept after first use, so a facilitator's laptop can collect offline later.
 registerRoute(
   ({ request, url }) =>
-    (request.destination === 'script' && /\/assets\/(charts|guide-panel|clinic-card)-/.test(url.pathname)) ||
+    (request.destination === 'script' &&
+      /\/assets\/(charts|guide-panel|clinic-card|staff-routes|jsQR)-/.test(url.pathname)) ||
     request.destination === 'font',
   new CacheFirst({ cacheName: 'rinda-assets' }),
 );

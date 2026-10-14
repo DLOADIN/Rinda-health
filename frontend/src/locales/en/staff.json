@@ -232,5 +232,28 @@
     "languages": "Preferred language",
     "bandsTitle": "Results by health area",
     "bandsBody": "Each participant's latest check-up. Counts only."
+  },
+  "collect": {
+    "title": "Collect without internet",
+    "intro": "When a phone has no internet, open Results on the phone and tap 'Hand over to the facilitator'. Point this laptop's camera at the phone until every part is received.",
+    "scanTitle": "Scan a phone",
+    "locked": "Packages are locked. This laptop cannot read them; only the Rinda server can open them.",
+    "start": "Start camera",
+    "stop": "Stop camera",
+    "noCamera": "The camera is not available. Check that this browser is allowed to use it.",
+    "waitingPhone": "Waiting for a phone…",
+    "progress": "Received {{have}} of {{total}} parts",
+    "received": "Package received. You can scan the next phone.",
+    "duplicate": "This package was already received.",
+    "inboxTitle": "Waiting to upload",
+    "inbox": "{{count}} package(s) kept on this laptop",
+    "empty": "Nothing waiting to upload.",
+    "offline": "No internet yet. Packages stay on this laptop and can be uploaded later.",
+    "upload": "Upload now",
+    "uploading": "Uploading…",
+    "result": "Uploaded: {{saved}} new, {{already}} already received, {{invalid}} could not be used.",
+    "undelivered": "Scanned {{date}}: the server could not accept this package. The phone still has its own copy and will send it when it is online.",
+    "discard": "Discard",
+    "discardConfirm": "Remove this package from this laptop? The phone keeps its own copy and sends it when it is online."
   }
 }

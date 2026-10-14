@@ -3,6 +3,7 @@ import type { Role } from '@rinda/schemas';
 import { Navigate, Route, Routes } from 'react-router';
 import { useMeQuery } from '@/lib/api';
 import { AuditPage, DeletionsPage, FlagsPage } from '@/features/staff/admin-pages';
+import { CollectPage } from '@/features/staff/collect-page';
 import { ContentPage } from '@/features/staff/content-page';
 import { ParticipantsPage } from '@/features/staff/participants-page';
 import { ResearchPage } from '@/features/staff/research-page';
@@ -24,6 +25,7 @@ export default function StaffRoutes({ role }: { role: Role }) {
         <>
           <Route path="sessions" element={<SessionsPage />} />
           <Route path="sessions/:id" element={<SessionDetailPage />} />
+          <Route path="collect" element={<CollectPage meId={me?.id ?? ''} />} />
         </>
       ) : null}
       {role === 'researcher_admin' || role === 'reviewer' ? (
