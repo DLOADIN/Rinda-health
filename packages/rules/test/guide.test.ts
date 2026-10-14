@@ -1,4 +1,5 @@
 import { BUNDLED_CONTENT } from '@rinda/content';
+import { GUIDE_ANSWERS } from '@rinda/content/guide-answers';
 import { describe, expect, it } from 'vitest';
 import {
   allowedNumbers,
@@ -9,7 +10,7 @@ import {
 } from '../src/index.ts';
 import { buildInput, ruleset, type FlatInput } from './helpers.ts';
 
-const text = (id: string) => BUNDLED_CONTENT.en.text[id] ?? id;
+const text = (id: string) => BUNDLED_CONTENT.en.text[id] ?? GUIDE_ANSWERS.en[id] ?? id;
 const ok: FlatInput = {
   sex: 'female',
   tobaccoUse: false,
@@ -88,7 +89,7 @@ describe('composeGuideAnswer', () => {
   });
 
   it('explains one area with its value and source, or says there is not enough information', () => {
-    expect(all(compose('explain.activity', { ...ok, moderateMinutes: 60 }).draft)).toBe(
+    expect(compose('explain.activity', { ...ok, moderateMinutes: 60 }).draft.paragraphs[0]?.text).toBe(
       'Physical activity: your result is "Below recommended". It comes from a fixed rule (Bull et al. (2020)), ' +
         'not a diagnosis. The value used was 60 minutes a week.',
     );
@@ -124,5 +125,108 @@ describe('helpers', () => {
     const { draft, result, plan } = compose('first_step', { ...ok, moderateMinutes: 60, servingsPerDay: 3 });
     const numbers = allowedNumbers(result, plan, draft, [150, 5]);
     for (const n of [60, 3, 20, 2, 150, 5]) expect(numbers).toContain(n);
+  });
+
+  it('what can I do: gives why and what helps for each focus area, from the offline answer set', () => {
+    const { draft } = compose('tips', { ...ok, moderateMinutes: 60, servingsPerDay: 3 });
+    expect(draft.paragraphs[0]?.sourceIds).toEqual(['guide.tpl.tips.intro']);
+    expect(all(draft)).toContain('Physical activity: Regular activity strengthens your heart');
+    expect(all(draft)).toContain('Fruit and vegetables:');
+    expect(draft.paragraphs.flatMap((p) => p.sourceIds)).toContain('ga.activity.below.tips');
+    expect(all(draft)).not.toMatch(/mood|stress|PHQ|GAD|TODO|\bga\.[a-z]/i);
+  });
+
+  it('what can I do with nothing to work on: says keep going and lists what helps', () => {
+    const { draft } = compose('tips', ok);
+    expect(draft.paragraphs[0]?.sourceIds).toEqual(['guide.tpl.tips.none']);
+    expect(draft.paragraphs.flatMap((p) => p.sourceIds)).toContain('ga.bp.normal.tips');
+    expect(draft.paragraphs.flatMap((p) => p.sourceIds)).not.toContain('ga.bp.normal.why');
+  });
+
+  it('explaining an area adds why it matters and what helps', () => {
+    const { draft } = compose('explain.bp', { ...ok, systolic: 135, diastolic: 86 });
+    expect(draft.paragraphs[1]?.sourceIds).toEqual(['ga.bp.high_normal.why', 'ga.bp.high_normal.tips']);
+    expect(draft.followUpChipIds).toEqual(['tips', 'first_step']);
+  });
+
+  it('adds nothing new where approved safety text already speaks, and never shows a raw ID', () => {
+    const { draft } = compose('explain.bp', { ...ok, systolic: 185, diastolic: 100 });
+    expect(draft.paragraphs[0]?.sourceIds).toEqual(['safety.bp.seek_care_today']);
+    expect(draft.paragraphs.flatMap((p) => p.sourceIds).some((id) => id.startsWith('ga.bp'))).toBe(false);
+    const bare = composeGuideAnswer(
+      'tips',
+      scoreAssessment(buildInput(ok), ruleset),
+      planNextSteps(scoreAssessment(buildInput(ok), ruleset), ruleset),
+      (id) => BUNDLED_CONTENT.en.text[id] ?? id,
+    );
+    expect(bare.paragraphs.map((p) => p.text).join(' ')).not.toMatch(/\bga\.[a-z]/);
+  });
+
+  it('what can I do skips an area with no result, and focus areas whose answer is missing', () => {
+    const { draft } = compose('tips', { ...ok, systolic: null });
+    expect(draft.paragraphs.flatMap((p) => p.sourceIds).some((id) => id.startsWith('ga.bp'))).toBe(false);
+    const result = scoreAssessment(buildInput({ ...ok, moderateMinutes: 60 }), ruleset);
+    const plan = planNextSteps(result, ruleset);
+    const noAnswers = composeGuideAnswer('tips', result, plan, (id) => BUNDLED_CONTENT.en.text[id] ?? id);
+    expect(noAnswers.paragraphs.map((p) => p.sourceIds)).toEqual([['guide.tpl.tips.intro']]);
+  });
+
+  it('never says all is well after the seek-care-today text, on any option', () => {
+    for (const chip of ['overview', 'tips', 'first_step', 'plan_week', 'explain.bp']) {
+      const { draft } = compose(chip, { ...ok, systolic: 185, diastolic: 100 });
+      expect(draft.paragraphs[0]?.sourceIds).toEqual(['safety.bp.seek_care_today']);
+      const ids = draft.paragraphs.flatMap((p) => p.sourceIds);
+      for (const id of ['guide.tpl.overview.ok', 'guide.tpl.tips.none', 'guide.tpl.first_step.none'])
+        expect(ids).not.toContain(id);
+      expect(draft.paragraphs.length).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it('what can I do follows the planner order and stays within four paragraphs', () => {
+    const { draft, plan } = compose('tips', {
+      ...ok,
+      systolic: 142,
+      diastolic: 91,
+      tobaccoUse: true,
+      moderateMinutes: 100,
+      vigorousMinutes: 10,
+      servingsPerDay: 4,
+    });
+    const order = plan.focus.flatMap((f) => f.domains);
+    const shown = [
+      ...new Set(
+        draft.paragraphs
+          .flatMap((p) => p.sourceIds)
+          .filter((id) => id.startsWith('ga.'))
+          .map((id) => id.split('.')[1]),
+      ),
+    ];
+    expect(shown).toEqual(order.filter((d) => shown.includes(d)));
+    expect(shown[0]).toBe(order[0]);
+    expect(draft.paragraphs.length).toBeLessThanOrEqual(4);
+  });
+
+  it('body size answers cover both areas and never show a number', () => {
+    const { draft } = compose('tips', { ...ok, sex: 'female', weightKg: 89.6, waistCm: 90 });
+    const ids = draft.paragraphs.flatMap((p) => p.sourceIds);
+    expect(ids).toContain('ga.bmi.obesity.tips');
+    expect(ids).toContain('ga.waist.substantially_increased.tips');
+    expect(
+      draft.paragraphs
+        .slice(1)
+        .map((p) => p.text)
+        .join(' '),
+    ).not.toMatch(/\d/);
+  });
+
+  it('no answer mentions mental wellness, a diagnosis or a number', () => {
+    for (const [id, value] of Object.entries(GUIDE_ANSWERS.en)) {
+      expect(id).not.toMatch(/^ga\.(phq9|gad7)\.|seek_care_today/);
+      expect(value).not.toMatch(/\d|you have|mood|stress|depress|anxi/i);
+    }
+  });
+
+  it('every answer exists in Kinyarwanda too', () => {
+    expect(Object.keys(GUIDE_ANSWERS.rw).sort()).toEqual(Object.keys(GUIDE_ANSWERS.en).sort());
   });
 });

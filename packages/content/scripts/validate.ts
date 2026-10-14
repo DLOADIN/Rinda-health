@@ -83,6 +83,28 @@ for (const ruleset of parsedRulesets) {
   }
 }
 
+// Every area and result the guide can explain needs its two offline answers, in every language.
+for (const ruleset of parsedRulesets) {
+  for (const lang of LANGUAGES) {
+    const answers = new Set(keysOf(bodies.get(`${lang}/guide-answers.json`) ?? { entries: {} }));
+    // Mood and stress never get guide answers, and "seek care today" keeps only its approved safety text.
+    for (const id of answers)
+      if (/^ga\.(phq9|gad7)\./.test(id) || /\.seek_care_today\./.test(id))
+        errors.push(`${lang}/guide-answers.json: ${id} is not allowed`);
+    for (const [domain, bands] of Object.entries(ruleset.severity)) {
+      if (domain === 'phq9' || domain === 'gad7') continue;
+      for (const band of Object.keys(bands)) {
+        if (band === 'seek_care_today') continue;
+        for (const part of ['why', 'tips'])
+          if (!answers.has(`ga.${domain}.${band}.${part}`))
+            errors.push(
+              `${lang}/guide-answers.json: no ga.${domain}.${band}.${part} (ruleset ${ruleset.version})`,
+            );
+      }
+    }
+  }
+}
+
 if (release && todos > 0)
   errors.push(`${todos} ${TODO_MARKER} placeholder(s) remain; a pilot release needs approved wording`);
 

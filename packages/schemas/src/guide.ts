@@ -7,6 +7,7 @@ export const CHIP_IDS = [
   'overview',
   'first_step',
   'plan_week',
+  'tips',
   ...NCD_DOMAINS.map((d) => `explain.${d}` as const),
   ...NCD_DOMAINS.map((d) => `why_matters.${d}` as const),
   ...MEASURED.map((d) => `measure_better.${d}` as const),

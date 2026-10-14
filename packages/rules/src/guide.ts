@@ -17,6 +17,7 @@ export const GUIDE_CHIPS = [
   'overview',
   'first_step',
   'plan_week',
+  'tips',
   ...NCD_DOMAINS.map((d) => `explain.${d}` as const),
 ];
 export type GuideChip = (typeof GUIDE_CHIPS)[number];
@@ -37,8 +38,29 @@ export function composeGuideAnswer(
   const area = (d: string) => t(`guide.area.${d}`);
   const step = (target: PlanTarget) => t(`guide.target.${target.kind}`, { ...target });
   const paragraphs: GuideParagraph[] = [];
+  // The offline answer set: why this result matters and what helps. An area whose approved safety text is already
+  // showing gets nothing more, and missing entries are left out, so the answer never shows a raw ID.
+  const advice = (
+    r: DomainResult,
+    parts: ReadonlyArray<'why' | 'tips'> = ['why', 'tips'],
+  ): GuideParagraph | null => {
+    if (r.band === 'insufficient' || r.domain === plan.urgent?.domain) return null;
+    const ids = parts.map((p) => `ga.${r.domain}.${r.band}.${p}`).filter((id) => text(id) !== id);
+    return ids.length ? { text: ids.map((id) => t(id)).join(' '), sourceIds: ids } : null;
+  };
 
   if (plan.urgent) paragraphs.push({ text: t(plan.urgent.contentId), sourceIds: [plan.urgent.contentId] });
+  // "All is well" wording never follows the approved seek-care text.
+  const allWell = !plan.urgent;
+  const adviceFor = (results: readonly DomainResult[], parts?: ReadonlyArray<'why' | 'tips'>) => {
+    const found = results.flatMap((r) => {
+      const more = advice(r, parts);
+      return more ? [{ text: `${area(r.domain)}: ${more.text}`, sourceIds: more.sourceIds }] : [];
+    });
+    return found.length
+      ? { text: found.map((p) => p.text).join(' '), sourceIds: found.flatMap((p) => p.sourceIds) }
+      : null;
+  };
 
   const focusLine = (f: Plan['focus'][number]): GuideParagraph => {
     const name = f.domains.map(area).join(', ');
@@ -66,8 +88,10 @@ export function composeGuideAnswer(
         sources.push('guide.tpl.explain.value', `guide.value.${r.domain}`);
       }
       paragraphs.push({ text: parts.join(' '), sourceIds: sources });
+      const more = advice(r);
+      if (more) paragraphs.push(more);
     }
-    return { paragraphs, followUpChipIds: ['overview', 'first_step'] };
+    return { paragraphs, followUpChipIds: ['tips', 'first_step'] };
   }
 
   if (chipId === 'first_step') {
@@ -80,15 +104,33 @@ export function composeGuideAnswer(
       });
     } else if (first) {
       paragraphs.push(focusLine(first));
-    } else {
+    } else if (allWell) {
       paragraphs.push({ text: t('guide.tpl.first_step.none'), sourceIds: ['guide.tpl.first_step.none'] });
     }
     return { paragraphs, followUpChipIds: ['plan_week', 'overview'] };
   }
 
+  if (chipId === 'tips') {
+    // Areas follow the planner's order, so the most important one comes first.
+    const chosen = plan.focus
+      .flatMap((f) => f.domains)
+      .flatMap((d) => result.ncd.filter((r) => r.domain === d));
+    if (chosen.length > 0) {
+      paragraphs.push({ text: t('guide.tpl.tips.intro'), sourceIds: ['guide.tpl.tips.intro'] });
+      const more = adviceFor(chosen);
+      if (more) paragraphs.push(more);
+    } else if (allWell) {
+      paragraphs.push({ text: t('guide.tpl.tips.none'), sourceIds: ['guide.tpl.tips.none'] });
+      const more = adviceFor(result.ncd, ['tips']);
+      if (more) paragraphs.push(more);
+    }
+    return { paragraphs, followUpChipIds: ['first_step', 'plan_week'] };
+  }
+
   if (chipId === 'plan_week') {
     if (plan.focus.length === 0) {
-      paragraphs.push({ text: t('guide.tpl.overview.ok'), sourceIds: ['guide.tpl.overview.ok'] });
+      if (allWell)
+        paragraphs.push({ text: t('guide.tpl.overview.ok'), sourceIds: ['guide.tpl.overview.ok'] });
     } else {
       const items = plan.focus.map(focusLine);
       paragraphs.push({
@@ -104,16 +146,16 @@ export function composeGuideAnswer(
     text: [t('guide.tpl.overview.intro'), ...lines].join(' '),
     sourceIds: ['guide.tpl.overview.intro', 'guide.tpl.area', ...result.ncd.map(bandId)],
   });
-  paragraphs.push(
-    plan.focus.length > 0
-      ? {
-          text: t('guide.tpl.overview.focus', {
-            areas: plan.focus.map((f) => f.domains.map(area).join(', ')).join('; '),
-          }),
-          sourceIds: ['guide.tpl.overview.focus'],
-        }
-      : { text: t('guide.tpl.overview.ok'), sourceIds: ['guide.tpl.overview.ok'] },
-  );
+  if (plan.focus.length > 0) {
+    paragraphs.push({
+      text: t('guide.tpl.overview.focus', {
+        areas: plan.focus.map((f) => f.domains.map(area).join(', ')).join('; '),
+      }),
+      sourceIds: ['guide.tpl.overview.focus'],
+    });
+  } else if (allWell) {
+    paragraphs.push({ text: t('guide.tpl.overview.ok'), sourceIds: ['guide.tpl.overview.ok'] });
+  }
   return { paragraphs, followUpChipIds: ['first_step', 'plan_week'] };
 }
 

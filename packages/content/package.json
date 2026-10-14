@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
+    "./guide-answers": "./src/guide-answers.ts",
     "./rulesets/*": "./rulesets/*",
     "./en/*": "./en/*",
     "./rw/*": "./rw/*"
