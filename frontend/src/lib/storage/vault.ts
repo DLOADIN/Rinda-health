@@ -59,7 +59,7 @@ export async function removeSecret(id: string): Promise<void> {
 }
 
 export async function clearPersonalCache(
-  keep: readonly string[] = ['outbox', 'safety-outbox'],
+  keep: readonly string[] = ['outbox', 'safety-outbox', 'handover-inbox'],
 ): Promise<void> {
   if (!vaultAvailable()) return;
   const database = await db();

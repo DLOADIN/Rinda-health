@@ -1,4 +1,5 @@
-import { ArrowRight, Mail, Trash2 } from 'lucide-react';
+import { ArrowRight, Mail, QrCode, Trash2 } from 'lucide-react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -20,9 +21,11 @@ import {
   useSendEmailReportMutation,
   type Assessment,
 } from '@/lib/api';
-import { pendingFor, useOutbox } from '@/lib/offline';
+import { pendingFor, pendingSafetyFor, useOutbox } from '@/lib/offline';
 import { useCached } from '@/lib/use-cached';
 import { formatDate } from '@/lib/format';
+
+const HandoverDialog = lazy(() => import('@/features/participant/handover-dialog'));
 
 export function ResultsPage() {
   const { t } = useTranslation();
@@ -30,6 +33,24 @@ export function ResultsPage() {
   const { data: live, isLoading, error } = useAssessmentsQuery();
   const { data: saved, fromCache } = useCached(me ? `assessments:${me.id}` : null, live, error);
   useOutbox();
+  const [handoverOpen, setHandoverOpen] = useState(false);
+  const [safetyWaiting, setSafetyWaiting] = useState(0);
+  const meId = me?.id;
+  // A safety event waiting on its own can also be handed over, even with no check-up waiting.
+  useEffect(() => {
+    if (!meId) return;
+    let active = true;
+    void pendingSafetyFor(meId)
+      .catch(() => [])
+      .then((events) => {
+        if (active) setSafetyWaiting(events.length);
+      });
+    return () => {
+      active = false;
+    };
+  }, [meId]);
+  const waitingCheckups = me ? pendingFor(me.id).length : 0;
+  const waiting = waitingCheckups + safetyWaiting;
   const data =
     saved || me ? [...(me ? pendingFor(me.id).map((i) => i.provisional) : []), ...(saved ?? [])] : undefined;
   return (
@@ -43,6 +64,29 @@ export function ResultsPage() {
         }
       />
       {fromCache ? null : <ApiError error={saved ? null : error} />}
+      {me && waiting > 0 ? (
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="text-lg">
+              {waitingCheckups > 0
+                ? t('handover.waitingTitle', { count: waitingCheckups })
+                : t('handover.waitingOther')}
+            </CardTitle>
+            <CardDescription>{t('handover.waitingBody')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={() => setHandoverOpen(true)}>
+              <QrCode aria-hidden="true" data-icon="inline-start" />
+              {t('handover.open')}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+      {me && handoverOpen ? (
+        <Suspense fallback={null}>
+          <HandoverDialog userId={me.id} open={handoverOpen} onOpenChange={setHandoverOpen} />
+        </Suspense>
+      ) : null}
       {isLoading ? <Skeleton className="h-40" /> : null}
       {data && data.length === 0 ? (
         <Empty className="border border-dashed">

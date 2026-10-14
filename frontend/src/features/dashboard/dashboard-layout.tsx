@@ -313,6 +313,11 @@ function Shell({ me }: { me: Me }) {
     if (isParticipant) void import('@/lib/study-device').then((m) => m.resumeStudyDevice());
   }, [isParticipant]);
 
+  // Keeps what this phone needs to seal an offline hand-over, fetched while there is internet.
+  useEffect(() => {
+    if (isParticipant) void import('@/lib/handover').then((m) => m.refreshHandoverPass(me.id));
+  }, [isParticipant, me.id]);
+
   // Lets the facilitator's live console follow which study step this participant is on.
   useEffect(() => {
     enableSessionProgress(isParticipant);
