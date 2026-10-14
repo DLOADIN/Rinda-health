@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { Language, Sex } from './common.ts';
-import { SafetyAction } from './safety.ts';
+import { SafetyAction, SafetyEvent } from './safety.ts';
 
 export const ROLES = ['participant', 'facilitator', 'researcher_admin', 'reviewer'] as const;
 export const Role = z.enum(ROLES);
@@ -160,6 +160,40 @@ export const CheckupSubmission = z.strictObject({
 });
 export type CheckupSubmission = z.infer<typeof CheckupSubmission>;
 
+/**
+ * Offline hand-over: a study phone seals its waiting check-ups to the server's public key and shows them as QR codes;
+ * the facilitator's laptop scans and uploads the sealed package, which only the server can open.
+ */
+const b64url = z.string().regex(/^[A-Za-z0-9_-]+$/);
+const handoverKid = z.string().regex(/^[0-9a-f]{8}$/);
+const handoverToken = z.string().regex(/^\d{9,11}\.[A-Za-z0-9_-]{43}$/);
+export const HandoverEnvelope = z.strictObject({
+  v: z.literal(1),
+  kid: handoverKid,
+  epk: b64url.max(100),
+  iv: b64url.max(24),
+  ct: b64url.max(140_000),
+  gz: z.boolean(),
+});
+export type HandoverEnvelope = z.infer<typeof HandoverEnvelope>;
+
+export const HandoverPayload = z.strictObject({
+  v: z.literal(1),
+  userId: z.uuid(),
+  token: handoverToken,
+  createdAt: z.iso.datetime(),
+  checkups: z.array(z.strictObject({ key: z.uuid(), body: CheckupSubmission })).max(20),
+  safetyEvents: z.array(SafetyEvent).max(20),
+});
+export type HandoverPayload = z.infer<typeof HandoverPayload>;
+
+export const HandoverPass = z.strictObject({
+  publicKey: b64url.max(100),
+  kid: handoverKid,
+  token: handoverToken,
+});
+export type HandoverPass = z.infer<typeof HandoverPass>;
+
 export const SessionCreateRequest = z.strictObject({
   participantId: z.uuid(),
   deviceLabel: z.string().trim().max(40).optional(),
@@ -215,6 +249,7 @@ export const CONTENT_TYPES = [
   'consent_doc',
   'feedback_form',
   'guide_chips',
+  'guide_answers',
   'band_labels',
   'safety',
   'general',
