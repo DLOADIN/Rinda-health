@@ -1,6 +1,7 @@
+import { GUIDE_ANSWERS } from '@rinda/content/guide-answers';
 import { composeGuideAnswer } from '@rinda/rules';
 import { Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOnline } from '@/components/offline-badge';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +22,15 @@ interface Props {
 
 export default function GuidePanel({ assessment, open, onOpenChange, initialChip }: Props) {
   const { t } = useTranslation();
-  const { text, lang } = useContent();
+  const { text: appText, lang } = useContent();
+  // The offline answer set lives with the guide, so it works without Gemini and without internet.
+  const text = useCallback(
+    (id: string) => {
+      const found = appText(id);
+      return found !== id ? found : (GUIDE_ANSWERS[lang][id] ?? id);
+    },
+    [appText, lang],
+  );
   const online = useOnline();
   const [chip, setChip] = useState<string | null>(initialChip ?? null);
   const [served, setServed] = useState<{ chip: string; answer: GuideResponse } | null>(null);
@@ -59,7 +68,7 @@ export default function GuidePanel({ assessment, open, onOpenChange, initialChip
     setVotedFor(chip);
   };
 
-  const mainChips = ['overview', 'first_step', 'plan_week'];
+  const mainChips = ['overview', 'tips', 'first_step', 'plan_week'];
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
