@@ -6,8 +6,8 @@
   "status": "draft",
   "reviewers": ["mental_health", "language"],
   "entries": {
-    "safety.gethelp.title": "TODO(content): mental-health reviewer",
-    "safety.gethelp.intro": "TODO(content): mental-health reviewer",
+    "safety.gethelp.title": "Get help now",
+    "safety.gethelp.intro": "Talk to someone. These lines are free and open 24 hours. If you or someone near you is in danger right now, call 112 or 912.",
     "safety.screen.title": "TODO(content): mental-health reviewer",
     "safety.screen.body": "TODO(content): mental-health reviewer",
     "safety.tier1.body": "TODO(content): mental-health reviewer",

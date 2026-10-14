@@ -48,6 +48,11 @@ for (const lang of LANGUAGES) {
     if (result.data.language !== lang)
       errors.push(`${lang}/${file}: language field is "${result.data.language}"`);
     todos += JSON.stringify(body).split(TODO_MARKER).length - 1;
+    // This is where a pilot release stops until a reviewer has really confirmed every phone number.
+    if (release && 'entries' in result.data && Array.isArray(result.data.entries))
+      for (const entry of result.data.entries)
+        if (!entry.verifiedOn || !entry.verifiedBy)
+          errors.push(`${lang}/${file}: ${entry.id} has not been confirmed by a reviewer`);
     bodies.set(`${lang}/${file}`, body);
   }
 }

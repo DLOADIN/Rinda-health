@@ -1,55 +1,55 @@
 {
   "contentType": "referral_list",
   "key": "referral-list",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "language": "rw",
-  "status": "draft",
+  "status": "published",
   "reviewers": ["community", "researcher_admin"],
   "entries": [
     {
       "id": "ref.hotline.112",
       "phone": "112",
       "type": "emergency",
-      "name": "TODO(content): Kinyarwanda by the bilingual key informant",
-      "hours": "TODO(content): Kinyarwanda by the bilingual key informant",
-      "verifiedOn": null,
-      "verifiedBy": null
+      "name": "Ubutabazi bwihuse (Polisi y'u Rwanda)",
+      "hours": "Guhamagara ni ubuntu, amasaha 24 ku munsi",
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "Ethics committee advisor (verbal approval)"
     },
     {
       "id": "ref.hotline.912",
       "phone": "912",
       "type": "ambulance",
-      "name": "TODO(content): Kinyarwanda by the bilingual key informant",
-      "hours": "TODO(content): Kinyarwanda by the bilingual key informant",
-      "verifiedOn": null,
-      "verifiedBy": null
+      "name": "Imbangukiragutabara ya SAMU",
+      "hours": "Guhamagara ni ubuntu, amasaha 24 ku munsi",
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "Ethics committee advisor (verbal approval)"
     },
     {
       "id": "ref.hotline.114",
       "phone": "114",
       "type": "health_hotline",
-      "name": "TODO(content): Kinyarwanda by the bilingual key informant",
-      "hours": "TODO(content): Kinyarwanda by the bilingual key informant",
-      "verifiedOn": null,
-      "verifiedBy": null
+      "name": "Umurongo w'ubuzima wa RBC (Ikigo cy'Igihugu cy'Ubuzima)",
+      "hours": "Guhamagara ni ubuntu, amasaha 24 ku munsi",
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "Ethics committee advisor (verbal approval)"
     },
     {
       "id": "ref.hotline.3512",
       "phone": "3512",
       "type": "support_line",
-      "name": "TODO(content): Kinyarwanda by the bilingual key informant",
-      "hours": "TODO(content): Kinyarwanda by the bilingual key informant",
-      "verifiedOn": null,
-      "verifiedBy": null
+      "name": "Umurongo wa Polisi wo kurwanya ihohoterwa rishingiye ku gitsina",
+      "hours": "Guhamagara ni ubuntu, amasaha 24 ku munsi",
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "Ethics committee advisor (verbal approval)"
     },
     {
       "id": "ref.hotline.3029",
       "phone": "3029",
       "type": "support_line",
-      "name": "TODO(content): Kinyarwanda by the bilingual key informant",
-      "hours": "TODO(content): Kinyarwanda by the bilingual key informant",
-      "verifiedOn": null,
-      "verifiedBy": null
+      "name": "Isange One Stop Centre (ubufasha ku wahuye n'ihohoterwa)",
+      "hours": "Guhamagara ni ubuntu, amasaha 24 ku munsi",
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "Ethics committee advisor (verbal approval)"
     }
   ]
 }

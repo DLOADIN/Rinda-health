@@ -1,55 +1,55 @@
 {
   "contentType": "referral_list",
   "key": "referral-list",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "language": "en",
-  "status": "draft",
+  "status": "published",
   "reviewers": ["community", "researcher_admin"],
   "entries": [
     {
       "id": "ref.hotline.112",
       "phone": "112",
       "type": "emergency",
-      "name": "TODO(content): community reviewer",
-      "hours": "TODO(content): community reviewer",
-      "verifiedOn": null,
-      "verifiedBy": null
+      "name": "Emergency services (Rwanda National Police)",
+      "hours": "Free call, 24 hours a day",
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "Ethics committee advisor (verbal approval)"
     },
     {
       "id": "ref.hotline.912",
       "phone": "912",
       "type": "ambulance",
-      "name": "TODO(content): community reviewer",
-      "hours": "TODO(content): community reviewer",
-      "verifiedOn": null,
-      "verifiedBy": null
+      "name": "SAMU ambulance",
+      "hours": "Free call, 24 hours a day",
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "Ethics committee advisor (verbal approval)"
     },
     {
       "id": "ref.hotline.114",
       "phone": "114",
       "type": "health_hotline",
-      "name": "TODO(content): community reviewer",
-      "hours": "TODO(content): community reviewer",
-      "verifiedOn": null,
-      "verifiedBy": null
+      "name": "RBC health hotline (Rwanda Biomedical Centre)",
+      "hours": "Free call, 24 hours a day",
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "Ethics committee advisor (verbal approval)"
     },
     {
       "id": "ref.hotline.3512",
       "phone": "3512",
       "type": "support_line",
-      "name": "TODO(content): community reviewer",
-      "hours": "TODO(content): community reviewer",
-      "verifiedOn": null,
-      "verifiedBy": null
+      "name": "Police gender-based violence hotline",
+      "hours": "Free call, 24 hours a day",
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "Ethics committee advisor (verbal approval)"
     },
     {
       "id": "ref.hotline.3029",
       "phone": "3029",
       "type": "support_line",
-      "name": "TODO(content): community reviewer",
-      "hours": "TODO(content): community reviewer",
-      "verifiedOn": null,
-      "verifiedBy": null
+      "name": "Isange One Stop Centre (support after violence or abuse)",
+      "hours": "Free call, 24 hours a day",
+      "verifiedOn": "2026-10-14",
+      "verifiedBy": "Ethics committee advisor (verbal approval)"
     }
   ]
 }
