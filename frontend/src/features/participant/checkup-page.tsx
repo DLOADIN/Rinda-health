@@ -1,7 +1,8 @@
 import { RULESET_V1 } from '@rinda/content';
 import { validateMeasurement, type MeasurementType } from '@rinda/rules';
 import type { CheckupAnswers, CheckupSubmission } from '@rinda/schemas';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { Camera } from 'lucide-react';
+import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { ApiError } from '@/components/api-error';
@@ -29,6 +30,8 @@ import { addToOutbox, queueSafetyEvent, scoreOnPhone } from '@/lib/offline';
 import { reportStep } from '@/lib/session-progress';
 import { useCached } from '@/lib/use-cached';
 import { useContent } from '@/lib/content';
+
+const BpCamera = lazy(() => import('@/features/participant/bp-camera'));
 
 type Answers = CheckupAnswers;
 const MEASUREMENTS: readonly string[] = ['heightCm', 'weightKg', 'waistCm', 'systolic', 'diastolic'];
@@ -82,6 +85,7 @@ export function CheckupPage() {
   const [raw, setRaw] = useState<Partial<Record<NumberKey, string>>>({});
   const [wellness, setWellness] = useState(WELLNESS_START);
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const { data: me } = useMeQuery();
   const { data: profile } = useParticipantProfileQuery();
@@ -328,6 +332,30 @@ export function CheckupPage() {
           {number('systolic', 'q.bp.systolic', t('checkup.units.mmHg'))}
           {number('diastolic', 'q.bp.diastolic', t('checkup.units.mmHg'))}
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="self-start"
+          onClick={() => {
+            reportStep('measurements');
+            setCameraOpen(true);
+          }}
+        >
+          <Camera aria-hidden="true" data-icon="inline-start" />
+          {t('checkup.camera.open')}
+        </Button>
+        {cameraOpen ? (
+          <Suspense fallback={null}>
+            <BpCamera
+              open={cameraOpen}
+              onOpenChange={setCameraOpen}
+              onUse={({ systolic, diastolic }) => {
+                setRaw({ ...raw, systolic: String(systolic), diastolic: String(diastolic) });
+                setAnswers({ ...answers, systolic, diastolic });
+              }}
+            />
+          </Suspense>
+        ) : null}
       </Section>
 
       {wellnessOffered ? (

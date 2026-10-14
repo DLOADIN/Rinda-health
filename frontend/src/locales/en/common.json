@@ -280,6 +280,22 @@
       "declined": "You chose to skip the mood and stress questions.",
       "changeMind": "Answer them after all",
       "stopped": "You stopped the mood and stress questions. You can still send the rest of your check-up."
+    },
+    "camera": {
+      "open": "Read from the monitor",
+      "title": "Read your blood pressure monitor",
+      "intro": "Point the camera at the monitor's screen. The picture stays on this device and is never saved or sent.",
+      "hold": "Fit the numbers inside the frame and hold still.",
+      "capture": "Read now",
+      "photo": "Use a photo instead",
+      "noCamera": "The camera is not available here. You can use a photo, or type the numbers yourself.",
+      "notRead": "We could not read the numbers. Try moving closer and avoiding glare, or type them yourself.",
+      "found": "We read",
+      "reading": "{{sys}} over {{dia}}",
+      "check": "Check these match the monitor before you use them.",
+      "use": "Use these numbers",
+      "retry": "Try again",
+      "type": "Type them myself"
     }
   },
   "results": {
