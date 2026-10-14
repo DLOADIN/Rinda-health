@@ -1,10 +1,22 @@
 // This is the whole Rinda API in one file: settings, logging, the database, sign-in, every route, and the
 // migrate, seed and db-check commands at the bottom.
-import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import {
+  createDecipheriv,
+  createECDH,
+  createHash,
+  createHmac,
+  hkdfSync,
+  randomBytes,
+  randomInt,
+  timingSafeEqual,
+  type ECDH,
+} from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { gunzipSync } from 'node:zlib';
 import { BUNDLED_CONTENT, RULESET_V1 } from '@rinda/content';
+import { GUIDE_ANSWERS } from '@rinda/content/guide-answers';
 import {
   allowedNumbers,
   assessSafety,
@@ -47,6 +59,8 @@ import {
   SusSubmission,
   EmailReportSend,
   SessionProgressRequest,
+  HandoverEnvelope,
+  HandoverPayload,
   DeviceClaimRequest,
   WhatsAppPreference,
   AiPreference,
@@ -125,6 +139,8 @@ const EnvSchema = z
     WHATSAPP_TEMPLATE_LANGUAGE_RW: z.string().default('en'),
     WHATSAPP_API_VERSION: z.string().default('v21.0'),
     SEED_PASSWORD: optionalText,
+    HANDOVER_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
+    HANDOVER_SECRET_PREVIOUS: z.string().min(32, 'must be at least 32 characters').optional(),
   })
   .superRefine((env, ctx) => {
     if (env.APP_ENV !== 'development' && env.APP_ENV !== 'test' && !env.DATABASE_URL) {
@@ -133,6 +149,10 @@ const EnvSchema = z
         path: ['DATABASE_URL'],
         message: `is required when APP_ENV=${env.APP_ENV}`,
       });
+    }
+    // The offline hand-over key must be its own secret in the pilot, so the session secret can rotate on its own.
+    if (env.APP_ENV === 'pilot' && !env.HANDOVER_SECRET) {
+      ctx.addIssue({ code: 'custom', path: ['HANDOVER_SECRET'], message: 'is required when APP_ENV=pilot' });
     }
     if (env.APP_ENV === 'pilot' && env.ETHICS_AMENDMENT_REF?.toUpperCase().startsWith('SYNTHETIC')) {
       ctx.addIssue({
@@ -232,6 +252,62 @@ export function createLogger(level: string, destination?: DestinationStream): Lo
     },
     destination,
   );
+}
+
+// This is the key that seals offline hand-overs, made from HANDOVER_SECRET (required in the pilot). Each key has a
+// short id, and the previous secret is kept during a rotation so packages already in the field can still be opened.
+export interface HandoverKey {
+  ecdh: ECDH;
+  publicKey: string;
+  kid: string;
+  secret: string;
+}
+export function handoverKey(secret: string): HandoverKey {
+  const ecdh = createECDH('prime256v1');
+  ecdh.setPrivateKey(Buffer.from(hkdfSync('sha256', secret, Buffer.alloc(0), 'rinda-handover-key-v1', 32)));
+  const publicKey = ecdh.getPublicKey().toString('base64url');
+  return { ecdh, publicKey, kid: sha256(publicKey).slice(0, 8), secret };
+}
+
+const HANDOVER_TOKEN_DAYS = 30;
+
+/** A per-person proof sealed inside each hand-over, so nobody can send check-ups in someone else's name. It expires. */
+export function handoverToken(
+  secret: string,
+  userId: string,
+  issued = Math.floor(Date.now() / 1000),
+): string {
+  const key = Buffer.from(hkdfSync('sha256', secret, Buffer.alloc(0), 'rinda-handover-token-v1', 32));
+  return `${issued}.${createHmac('sha256', key).update(`${userId}|${issued}`).digest('base64url')}`;
+}
+
+export function handoverTokenValid(
+  secrets: readonly string[],
+  userId: string,
+  token: string,
+  now = Date.now(),
+) {
+  const issued = Number(token.split('.')[0]);
+  const age = now / 1000 - issued;
+  if (!Number.isInteger(issued) || age > HANDOVER_TOKEN_DAYS * 86_400 || age < -86_400) return false;
+  return secrets.some((secret) => {
+    const expected = Buffer.from(handoverToken(secret, userId, issued));
+    const given = Buffer.from(token);
+    return expected.length === given.length && timingSafeEqual(expected, given);
+  });
+}
+
+/** Opens a sealed hand-over: ECDH P-256, HKDF-SHA-256, then AES-256-GCM, optionally gzipped inside. */
+export function openHandover(ecdh: ECDH, env: HandoverEnvelope): unknown {
+  const shared = ecdh.computeSecret(Buffer.from(env.epk, 'base64url'));
+  const key = Buffer.from(hkdfSync('sha256', shared, Buffer.alloc(0), 'rinda-handover-v1', 32));
+  const data = Buffer.from(env.ct, 'base64url');
+  if (data.length < 17) throw new Error('short');
+  const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(env.iv, 'base64url'));
+  decipher.setAuthTag(data.subarray(data.length - 16));
+  const plain = Buffer.concat([decipher.update(data.subarray(0, data.length - 16)), decipher.final()]);
+  const json = env.gz ? gunzipSync(plain, { maxOutputLength: 2_000_000 }) : plain;
+  return JSON.parse(json.toString('utf8'));
 }
 
 export class AppError extends Error {
@@ -1209,6 +1285,11 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   app.use(cookieParser());
   app.use(requestLogger(logger));
 
+  const handover = handoverKey(config.HANDOVER_SECRET ?? config.SESSION_SECRET);
+  const handoverKeys = [
+    handover,
+    ...(config.HANDOVER_SECRET_PREVIOUS ? [handoverKey(config.HANDOVER_SECRET_PREVIOUS)] : []),
+  ];
   const needDb = (): Db => {
     if (!db) throw new AppError(503, 'DB_UNAVAILABLE', 'The database is not connected yet.');
     return db;
@@ -1618,24 +1699,19 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     values: valuesOf(r.input),
   });
 
-  participant.post('/assessments', async (req, res) => {
-    const database = needDb();
-    const key = z.uuid().safeParse(req.get('idempotency-key'));
-    if (!key.success)
-      throw new AppError(400, 'IDEMPOTENCY_KEY_REQUIRED', 'An Idempotency-Key header (UUID) is required.');
-    const body = CheckupSubmission.parse(req.body);
+  // This is where a check-up is checked, scored and stored, whether it comes straight from the phone or through an
+  // offline hand-over. The same idempotency key always gives the same stored check-up.
+  const saveCheckup = async (
+    database: Db,
+    userId: string,
+    key: { data: string },
+    body: CheckupSubmission,
+    reqId: unknown,
+  ): Promise<
+    { issues: ReturnType<typeof measurementIssues> } | { status: 200 | 201; row: AssessmentRow }
+  > => {
     const issues = measurementIssues(body.answers);
-    if (issues.length > 0) {
-      res.status(400).json({
-        error: {
-          code: 'VALIDATION_FAILED',
-          message: 'Please check the highlighted readings.',
-          details: issues,
-        },
-      });
-      return;
-    }
-    const userId = me(req).id;
+    if (issues.length > 0) return { issues };
     const requestHash = sha256(normalise(body));
     const existing = await one<AssessmentRow>(
       database,
@@ -1650,8 +1726,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
           'This submission key was already used for different answers.',
         );
       }
-      res.json(toAssessment(existing));
-      return;
+      return { status: 200, row: existing };
     }
     const consents = await latestConsents(database, userId);
     // Nobody can send a check-up before agreeing to take part.
@@ -1705,15 +1780,44 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         [userId],
       );
     }
-    res.status(inserted ? 201 : 200).json(toAssessment(row));
     if (inserted) {
       void sendWhatsAppNotice(database, config, logger, fetchFn, userId).catch(() =>
-        logger.warn({ reqId: req.id, event: 'whatsapp_notice_error' }, 'message'),
+        logger.warn({ reqId, event: 'whatsapp_notice_error' }, 'message'),
       );
       void sendReportEmail(database, config, logger, fetchFn, userId, row.id).catch(() =>
-        logger.warn({ reqId: req.id, event: 'email_report_error' }, 'message'),
+        logger.warn({ reqId, event: 'email_report_error' }, 'message'),
       );
     }
+    return { status: inserted ? 201 : 200, row };
+  };
+
+  participant.post('/assessments', async (req, res) => {
+    const key = z.uuid().safeParse(req.get('idempotency-key'));
+    if (!key.success)
+      throw new AppError(400, 'IDEMPOTENCY_KEY_REQUIRED', 'An Idempotency-Key header (UUID) is required.');
+    const body = CheckupSubmission.parse(req.body);
+    const saved = await saveCheckup(needDb(), me(req).id, key, body, req.id);
+    if ('issues' in saved) {
+      res.status(400).json({
+        error: {
+          code: 'VALIDATION_FAILED',
+          message: 'Please check the highlighted readings.',
+          details: saved.issues,
+        },
+      });
+      return;
+    }
+    res.status(saved.status).json(toAssessment(saved.row));
+  });
+
+  // The phone keeps this so it can seal a hand-over while offline: the server's public key and its own proof.
+  participant.get('/handover-pass', (req, res) => {
+    res.set('cache-control', 'no-store');
+    res.json({
+      publicKey: handover.publicKey,
+      kid: handover.kid,
+      token: handoverToken(handover.secret, me(req).id),
+    });
   });
 
   participant.get('/assessments', async (req, res) => {
@@ -1824,18 +1928,24 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
 
   // The phone sends item 9 safety events here. Each has its own ID, so a resend is only stored once.
-  participant.post('/safety-events', async (req, res) => {
-    const body = SafetyEvent.parse(req.body);
+  // An item 9 event from the phone, sent directly or through a hand-over.
+  const saveItem9Event = async (database: Db, userId: string, body: SafetyEvent) => {
     if (body.tier !== 2 || body.triggerType !== 'item9' || body.recordedByRole !== 'system') {
       throw new AppError(400, 'VALIDATION_FAILED', 'Only item 9 safety events can be sent from the app.');
     }
     const row = await one<{ id: string }>(
-      needDb(),
+      database,
       `INSERT INTO safety_events (id, participant_id, tier, trigger_type, actions, occurred_at, recorded_by_role)
        VALUES ($1, $2, 2, 'item9', $3, $4, 'system') ON CONFLICT (id) DO NOTHING RETURNING id`,
-      [body.id, me(req).id, body.actions, body.occurredAt],
+      [body.id, userId, body.actions, body.occurredAt],
     );
-    res.status(row ? 201 : 200).json({ id: body.id });
+    return Boolean(row);
+  };
+
+  participant.post('/safety-events', async (req, res) => {
+    const body = SafetyEvent.parse(req.body);
+    const created = await saveItem9Event(needDb(), me(req).id, body);
+    res.status(created ? 201 : 200).json({ id: body.id });
   });
 
   participant.get('/feedback', async (req, res) => {
@@ -2080,6 +2190,76 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         occurredAt: al.occurred_at.toISOString(),
       })),
     });
+  });
+
+  // This is where the facilitator's laptop uploads sealed hand-overs collected from study phones without internet.
+  // The laptop never sees inside; the server opens each one, checks the person's proof and stores it as usual.
+  facilitator.post('/handover', requireRole('facilitator'), async (req, res) => {
+    const database = needDb();
+    const envelope = HandoverEnvelope.parse(req.body);
+    const key = handoverKeys.find((k) => k.kid === envelope.kid);
+    let payload: HandoverPayload;
+    try {
+      if (!key) throw new Error('unknown key');
+      payload = HandoverPayload.parse(openHandover(key.ecdh, envelope));
+    } catch {
+      throw new AppError(400, 'VALIDATION_FAILED', 'This hand-over could not be opened.');
+    }
+    const refused = () =>
+      new AppError(403, 'FORBIDDEN', 'This hand-over cannot be accepted from this account.');
+    if (
+      !handoverTokenValid(
+        handoverKeys.map((k) => k.secret),
+        payload.userId,
+        payload.token,
+      )
+    )
+      throw refused();
+    const linked = await one<{ id: string }>(
+      database,
+      `SELECT s.id FROM facilitator_sessions s JOIN users u ON u.id = s.participant_id
+        WHERE s.participant_id = $1 AND s.facilitator_id = $2 AND u.role = 'participant' AND u.active
+          AND s.started_at > now() - interval '14 days' LIMIT 1`,
+      [payload.userId, me(req).id],
+    );
+    if (!linked) throw refused();
+    let saved = 0;
+    let already = 0;
+    let invalid = 0;
+    // Safety events first, so an item 9 answer reaches the safety queue even if a check-up cannot be stored.
+    for (const event of payload.safetyEvents) {
+      const created = await saveItem9Event(database, payload.userId, event).catch((e: unknown) => {
+        if (e instanceof AppError) return null;
+        throw e;
+      });
+      if (created === null) invalid++;
+      else if (created) saved++;
+      else already++;
+    }
+    for (const item of payload.checkups) {
+      const result = await saveCheckup(database, payload.userId, { data: item.key }, item.body, req.id).catch(
+        (e: unknown) => {
+          if (e instanceof AppError) return null;
+          throw e;
+        },
+      );
+      if (!result || 'issues' in result) invalid++;
+      else if (result.status === 201) saved++;
+      else already++;
+    }
+    await audit(
+      database,
+      me(req),
+      'handover.upload',
+      { type: 'user', id: payload.userId },
+      {
+        checkups: payload.checkups.length,
+        safetyEvents: payload.safetyEvents.length,
+        saved,
+        invalid,
+      },
+    );
+    res.json({ saved, already, invalid });
   });
 
   // QR set-up: a one-time link (15 minutes) that ties a study phone to this session.
@@ -2917,7 +3097,11 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     if (!row) throw notFound();
     const chipId = (GUIDE_CHIPS as readonly string[]).includes(body.chipId) ? body.chipId : 'overview';
     const content = BUNDLED_CONTENT[body.language];
-    const lookup = (id: string) => content.text[id] ?? id;
+    const answers = GUIDE_ANSWERS[body.language];
+    const lookup = (id: string) => content.text[id] ?? answers[id] ?? id;
+    const ownAnswers = new Set(
+      row.results.ncd.flatMap((r) => [`ga.${r.domain}.${r.band}.why`, `ga.${r.domain}.${r.band}.tips`]),
+    );
     const draft = composeGuideAnswer(chipId, row.results, row.plan, lookup);
     const allowed = allowedNumbers(row.results, row.plan, draft, [
       ruleset.domains.activity.meetsAt,
@@ -2966,8 +3150,11 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       outcome = 'saved';
     } else if (!templatesOnly) {
       const library = Object.fromEntries(
-        Object.entries(content.text).filter(
-          ([id]) => (id.startsWith('guide.') || id.startsWith('band.')) && !/^band\.(phq9|gad7)\./.test(id),
+        Object.entries({ ...content.text, ...answers }).filter(
+          ([id]) =>
+            ((id.startsWith('guide.') || id.startsWith('band.')) && !/^band\.(phq9|gad7)\./.test(id)) ||
+            // Only the answers for this person's own results, so a generated answer cannot borrow another band's.
+            ownAnswers.has(id),
         ),
       );
       const facts = {

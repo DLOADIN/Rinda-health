@@ -2,11 +2,17 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { Writable } from 'node:stream';
 import { config as loadDotenv } from 'dotenv';
+import { CheckupSubmission } from '@rinda/schemas';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createCollector, sealHandover, toFrames } from '../frontend/src/lib/handover-seal.ts';
 import {
   createApp,
   createLogger,
+  handoverKey,
+  handoverToken,
+  handoverTokenValid,
+  openHandover,
   createPool,
   directUrlOf,
   FLAG_DEFAULTS,
@@ -31,6 +37,42 @@ function sinkLogger() {
 }
 
 describe('without a database', () => {
+  it('offline hand-over: the phone seals, the frames reassemble, and only the server key opens it', async () => {
+    const secret = randomBytes(48).toString('base64url');
+    const server = handoverKey(secret);
+    const payload = {
+      v: 1 as const,
+      userId: randomUUID(),
+      token: handoverToken(secret, 'someone'),
+      createdAt: new Date().toISOString(),
+      checkups: [],
+      safetyEvents: [],
+    };
+    const sealed = await sealHandover(payload, server.publicKey, server.kid);
+    expect(JSON.stringify(sealed)).not.toContain(payload.userId);
+    const frames = toFrames({ ...sealed, ct: sealed.ct + 'A'.repeat(1500) });
+    expect(frames.length).toBeGreaterThan(2);
+    const collect = createCollector();
+    let complete: string | null = null;
+    // Frames arrive out of order and repeated, as a camera sees a looping QR code.
+    for (const frame of [...frames].reverse().concat(frames)) complete ??= collect(frame)?.complete ?? null;
+    expect(JSON.parse(complete ?? '{}').ct).toBe(sealed.ct + 'A'.repeat(1500));
+    expect(openHandover(server.ecdh, sealed)).toEqual(payload);
+    expect(() => openHandover(handoverKey('another-secret-'.repeat(3)).ecdh, sealed)).toThrow();
+    const tampered = { ...sealed, ct: sealed.ct.slice(0, -2) + (sealed.ct.endsWith('AA') ? 'BB' : 'AA') };
+    expect(() => openHandover(server.ecdh, tampered)).toThrow();
+  });
+
+  it('offline hand-over proofs are tied to one person, work across a key rotation, and expire after 30 days', () => {
+    const [old, current] = [randomBytes(48).toString('base64url'), randomBytes(48).toString('base64url')];
+    const token = handoverToken(old, 'person-a');
+    expect(handoverTokenValid([current, old], 'person-a', token)).toBe(true);
+    expect(handoverTokenValid([current], 'person-a', token)).toBe(false);
+    expect(handoverTokenValid([old], 'person-b', token)).toBe(false);
+    const issued = Math.floor(Date.now() / 1000) - 31 * 86_400;
+    expect(handoverTokenValid([old], 'person-a', handoverToken(old, 'person-a', issued))).toBe(false);
+  });
+
   const config = loadConfig({ APP_ENV: 'test' });
   const { logger, lines } = sinkLogger();
   const app = createApp({ config, logger, db: null });
@@ -475,6 +517,13 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     });
     expect((await ask('first_step')).body.source).toBe('template');
     expect(outbound.some((o) => o.url.includes('generativelanguage'))).toBe(false);
+    // "What can I do?" works through the API too, with answers drawn from the offline answer set.
+    const tips = await ask('tips').expect(200);
+    expect(tips.body.source).toBe('template');
+    expect(tips.body.paragraphs.flatMap((p: { sourceIds: string[] }) => p.sourceIds)).toContain(
+      'ga.activity.below.tips',
+    );
+    expect(tips.body.paragraphs.length).toBeLessThanOrEqual(4);
     await agent.put('/api/v1/participant/ai-explanations').send({ ai: true }).expect(200);
     await agent.put('/api/v1/participant/ai-explanations').send({ ai: true, extra: 1 }).expect(400);
 
@@ -525,6 +574,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       .expect(204);
     const log = await db.query('SELECT source, validator_outcome FROM guide_request_log ORDER BY created_at');
     expect(log.rows.map((r) => r.validator_outcome)).toEqual([
+      'templates_only',
       'templates_only',
       'pass',
       'saved',
@@ -870,6 +920,102 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     expect(after.ended).toBe(true);
     expect(after.device.wipedAt).not.toBeNull();
     await fac.post(`/api/v1/facilitator/sessions/${session.body.id}/device-link`).expect(409);
+  });
+
+  it('offline hand-over: a facilitator uploads a sealed package once, for their own participant only', async () => {
+    const { agent: fac } = await signup('facilitator', 'ho-fac@example.com');
+    const { agent: other } = await signup('facilitator', 'ho-other@example.com');
+    const { agent: phone, me: participant } = await signup('participant', 'ho-p@example.com');
+    await fac.post('/api/v1/facilitator/sessions').send({ participantId: participant.id }).expect(201);
+    const pass = (await phone.get('/api/v1/participant/handover-pass').expect(200)).body as {
+      publicKey: string;
+      kid: string;
+      token: string;
+    };
+    const key = randomUUID();
+    const payload: Parameters<typeof sealHandover>[0] = {
+      v: 1 as const,
+      userId: participant.id,
+      token: pass.token,
+      createdAt: new Date().toISOString(),
+      checkups: [
+        {
+          key,
+          body: CheckupSubmission.parse({ language: 'en', startedAt: new Date().toISOString(), answers }),
+        },
+      ],
+      safetyEvents: [
+        {
+          id: randomUUID(),
+          tier: 2 as const,
+          triggerType: 'item9' as const,
+          actions: ['safety_screen_shown' as const, 'referral_list_shown' as const],
+          occurredAt: new Date().toISOString(),
+          recordedByRole: 'system' as const,
+        },
+      ],
+    };
+    const sealed = await sealHandover(payload, pass.publicKey, pass.kid);
+
+    await other.post('/api/v1/facilitator/handover').send(sealed).expect(403);
+    await phone.post('/api/v1/facilitator/handover').send(sealed).expect(403);
+    expect((await fac.post('/api/v1/facilitator/handover').send(sealed).expect(200)).body).toEqual({
+      saved: 2,
+      already: 0,
+      invalid: 0,
+    });
+    expect((await fac.post('/api/v1/facilitator/handover').send(sealed).expect(200)).body).toEqual({
+      saved: 0,
+      already: 2,
+      invalid: 0,
+    });
+    const mine = (await phone.get('/api/v1/participant/assessments').expect(200)).body as unknown[];
+    expect(mine).toHaveLength(1);
+    // The phone sending the same check-up itself later gives back the same stored one, not a second.
+    await phone
+      .post('/api/v1/participant/assessments')
+      .set('Idempotency-Key', key)
+      .send(payload.checkups[0]?.body)
+      .expect(200);
+
+    const forged = await sealHandover(
+      { ...payload, token: `${Math.floor(Date.now() / 1000)}.${'x'.repeat(43)}` },
+      pass.publicKey,
+      pass.kid,
+    );
+    await fac.post('/api/v1/facilitator/handover').send(forged).expect(403);
+    const garbled = { ...sealed, ct: sealed.ct.slice(0, -4) + 'AAAA' };
+    await fac.post('/api/v1/facilitator/handover').send(garbled).expect(400);
+    await fac
+      .post('/api/v1/facilitator/handover')
+      .send({ ...sealed, kid: '00000000' })
+      .expect(400);
+
+    // Someone who has not agreed to take part: the package opens, but nothing is stored.
+    const { agent: noConsent, me: other2 } = await signup(
+      'participant',
+      'ho-nc@example.com',
+      undefined,
+      false,
+    );
+    await fac.post('/api/v1/facilitator/sessions').send({ participantId: other2.id }).expect(201);
+    const ncPass = (await noConsent.get('/api/v1/participant/handover-pass').expect(200)).body as typeof pass;
+    const ncSealed = await sealHandover(
+      {
+        ...payload,
+        userId: other2.id,
+        token: ncPass.token,
+        safetyEvents: [],
+        checkups: [{ ...payload.checkups[0], key: randomUUID() } as (typeof payload.checkups)[number]],
+      },
+      ncPass.publicKey,
+      ncPass.kid,
+    );
+    expect((await fac.post('/api/v1/facilitator/handover').send(ncSealed).expect(200)).body).toEqual({
+      saved: 0,
+      already: 0,
+      invalid: 1,
+    });
   });
 
   it('dashboards include 14 days of chart data', async () => {
