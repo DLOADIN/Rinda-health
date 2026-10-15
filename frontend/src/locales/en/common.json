@@ -16,7 +16,7 @@
     "call": "Call {{phone}}",
     "close": "Close",
     "unverified": "Not yet verified",
-    "verifiedOn": "Checked on {{date}}"
+    "verifiedOn": ""
   },
   "status": {
     "offline": "Offline: answers saved on this phone",

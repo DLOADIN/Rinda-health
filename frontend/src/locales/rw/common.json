@@ -16,7 +16,7 @@
     "call": "Hamagara {{phone}}",
     "close": "Funga",
     "unverified": "Ntibiragenzurwa",
-    "verifiedOn": "Byagenzuwe ku wa {{date}}"
+    "verifiedOn": ""
   },
   "status": {
     "offline": "Nta interineti: ibisubizo bibitswe kuri iyi telefoni",

@@ -50,7 +50,7 @@
       },
       "guide": {
         "title": "Baza Rinda",
-        "body": "Kanda ku kibazo maze ibisubizo byawe bisobanurwe mu magambo y'ubucuti, avuye mu mabwiriza yemejwe."
+        "body": "Kanda ku kibazo maze ibisubizo byawe bisobanurwe neza, avuye mu mabwiriza yemejwe."
       },
       "offline": {
         "title": "Ikora nta interineti",
@@ -104,12 +104,12 @@
       "q1": "Ese Rinda ni isuzuma rya muganga?",
       "a1": "Oya. Rinda ni iyo kwiga. Igufasha kumva imibereho ya buri munsi kandi ikakubwira igihe ari byiza kubonana n'umukozi w'ubuzima.",
       "q2": "Ese ni ubuntu?",
-      "a2": "Yego. Rinda ni ubuntu, nta matangazo.",
+      "a2": "Yego. Rinda ni ubuntu.",
       "q3": "Ni nde ushobora kubona ibisubizo byanjye?",
       "a3": "Ni wowe wenyine ubona ibisubizo byawe. Abakozi b'ubushakashatsi babona imibare n'amazina ahishwe, ntibabona ibisubizo byawe.",
       "q4": "Ese ikora nta interineti?",
       "a4": "Yego. Nyuma yo kuyifungura bwa mbere ushobora kuyishyira kuri telefoni. Amasuzuma akozwe nta interineti abarirwa kuri telefoni yawe akoherezwa nyuma.",
-      "q5": "Bite niba numva ntameze neza?",
+      "q5": "Bigenda bite niba numva utameze neza?",
       "a5": "Kanda \"Shaka ubufasha ubu\" igihe icyo ari cyo cyose urebe imirongo n'aho wahamagara ako kanya. Rinda si serivisi y'ubutabazi bwihuse.",
       "q6": "Ni izihe ndimi nakoresha?",
       "a6": "Icyongereza n'Ikinyarwanda. Ushobora guhindura igihe icyo ari cyo cyose."
@@ -121,7 +121,7 @@
       "email": "Imeri",
       "phone": "Telefoni",
       "location": "Aho turi",
-      "locationValue": "Kigali, u Rwanda"
+      "locationValue": "Kigali, Mu Rwanda"
     },
     "cta": {
       "title": "Witeguye isuzuma ryawe rya mbere?",

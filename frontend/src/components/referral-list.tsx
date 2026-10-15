@@ -22,7 +22,6 @@ export function ReferralList() {
           </Button>
           <p className="text-sm text-muted-foreground">
             {r.hours}
-            {r.verifiedOn ? ` · ${t('shell.verifiedOn', { date: formatDate(r.verifiedOn) })}` : null}
           </p>
         </li>
       ))}
