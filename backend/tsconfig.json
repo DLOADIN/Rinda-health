@@ -4,5 +4,5 @@
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["server.ts", "server.test.ts"]
+  "include": ["server.ts", "server.test.ts", "vercel-app.ts", "vite.vercel.config.ts"]
 }

@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit -p .",
     "db:migrate": "tsx server.ts migrate",
     "db:seed": "tsx server.ts seed",
-    "db:check": "tsx server.ts db-check"
+    "db:check": "tsx server.ts db-check",
+    "build": "vite build --config vite.vercel.config.ts"
   },
   "dependencies": {
     "@rinda/content": "*",
@@ -34,6 +35,7 @@
     "supertest": "^7.3.1",
     "tsx": "^4.23.15",
     "typescript": "~6.0.2",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.3",
+    "vite": "^8.3.2"
   }
 }
