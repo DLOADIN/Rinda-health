@@ -19,6 +19,7 @@ import {
   FieldTitle,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/password-input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Spinner } from '@/components/ui/spinner';
 import { AuthFrame } from '@/features/auth/auth-frame';
@@ -119,10 +120,9 @@ export function SignupPage() {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="password">{t('auth.password')}</FieldLabel>
-                    <Input
+                    <PasswordInput
                       {...field}
                       id="password"
-                      type="password"
                       autoComplete="new-password"
                       aria-invalid={fieldState.invalid}
                     />
