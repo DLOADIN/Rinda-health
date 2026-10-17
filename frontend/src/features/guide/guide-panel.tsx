@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useExplainMutation, useGuideFeedbackMutation, type Assessment, type GuideResponse } from '@/lib/api';
 import { useContent } from '@/lib/content';
@@ -72,7 +73,7 @@ export default function GuidePanel({ assessment, open, onOpenChange, initialChip
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[92dvh]">
+      <DrawerContent className="max-h-[96dvh]">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 overflow-y-auto px-4 pb-6">
           <DrawerHeader className="px-0">
             <DrawerTitle className="flex items-center gap-2 text-xl">
@@ -114,12 +115,20 @@ export default function GuidePanel({ assessment, open, onOpenChange, initialChip
                     ? text('guide.label.generated')
                     : text('guide.label.template')}
                 </Badge>
-                {answer.paragraphs.map((p, i) => (
-                  <p key={i} className="leading-relaxed">
-                    {p.text}
-                  </p>
-                ))}
-                {isLoading && answer.source === 'template' ? <Skeleton className="h-4 w-2/3" /> : null}
+                {/* A tall answer area with a scrollbar that always shows, so long answers are easy to read on any screen. */}
+                <ScrollArea
+                  type="always"
+                  className="h-[min(50dvh,30rem)] rounded-xl border bg-card/60 [&_[data-slot=scroll-area-scrollbar]]:w-3.5 [&_[data-slot=scroll-area-thumb]]:bg-muted-foreground/50"
+                >
+                  <div className="flex flex-col gap-3 p-4 pr-6 text-base">
+                    {answer.paragraphs.map((p, i) => (
+                      <p key={i} className="leading-relaxed">
+                        {p.text}
+                      </p>
+                    ))}
+                    {isLoading && answer.source === 'template' ? <Skeleton className="h-4 w-2/3" /> : null}
+                  </div>
+                </ScrollArea>
                 {answer.source === 'generated' ? (
                   <p className="text-sm text-muted-foreground">{text('guide.label.disclaimer')}</p>
                 ) : null}
