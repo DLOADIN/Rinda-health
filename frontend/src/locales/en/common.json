@@ -14,9 +14,7 @@
     "exitLabel": "Exit to a neutral screen",
     "getHelp": "Get help now",
     "call": "Call {{phone}}",
-    "close": "Close",
-    "unverified": "Not yet verified",
-    "verifiedOn": ""
+    "close": "Close"
   },
   "status": {
     "offline": "Offline: answers saved on this phone",
@@ -58,6 +56,7 @@
     "FORBIDDEN": "You do not have access to this.",
     "NOT_FOUND": "We could not find this.",
     "RATE_LIMITED": "Too many attempts. Please wait a minute and try again.",
+    "DAILY_LIMIT": "You have done 5 check-ups in the last 24 hours, which is the most for one day. Please come back tomorrow.",
     "LOCKED": "Too many wrong attempts. Please try again in 15 minutes.",
     "INVALID_CREDENTIALS": "The email, phone number or password is not right.",
     "ALREADY_EXISTS": "An account with this email or phone number already exists.",
@@ -79,6 +78,8 @@
     "identifierHint": "For example name@gmail.com or 0788 123 456",
     "identifierInvalid": "Enter a valid email address or phone number.",
     "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "passwordHint": "At least 8 characters.",
     "passwordShort": "Your password needs at least 8 characters.",
     "displayName": "What should we call you? (optional)",
@@ -329,6 +330,7 @@
     },
     "details": "Details",
     "yourValue": "Your value",
+    "percentOfTarget": "{{percent}}% of the healthy target",
     "rule": "Rule and source",
     "rulesetVersion": "Rules version {{version}}",
     "nextStep": "Your next step",
@@ -498,6 +500,7 @@
     "locked": "Your answers are locked inside the codes. The laptop cannot read them; only the Rinda server can open them.",
     "noPass": "This phone needs to be online once after signing in before it can hand over. Your check-ups are safe and will send when it is online.",
     "qrAlt": "QR code for the facilitator to scan",
+    "refresh": "For your privacy, a new code appears every 2 minutes. Any code still on screen works.",
     "done": "Done",
     "still": "Keep the phone still until the facilitator says it is received.",
     "waitingOther": "Something is saved on this phone"

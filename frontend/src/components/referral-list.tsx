@@ -2,7 +2,6 @@ import { Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useContent } from '@/lib/content';
-import { formatDate } from '@/lib/format';
 
 export function ReferralList() {
   const { t } = useTranslation();
@@ -20,9 +19,7 @@ export function ReferralList() {
               <span className="sr-only">{t('shell.call', { phone: r.phone })}</span>
             </a>
           </Button>
-          <p className="text-sm text-muted-foreground">
-            {r.hours}
-          </p>
+          <p className="text-sm text-muted-foreground">{r.hours}</p>
         </li>
       ))}
     </ul>

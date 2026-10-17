@@ -14,9 +14,7 @@
     "exitLabel": "Sohoka ujye ku ipaji itarimo amakuru y'ubuzima",
     "getHelp": "Shaka ubufasha ubu",
     "call": "Hamagara {{phone}}",
-    "close": "Funga",
-    "unverified": "Ntibiragenzurwa",
-    "verifiedOn": ""
+    "close": "Funga"
   },
   "status": {
     "offline": "Nta interineti: ibisubizo bibitswe kuri iyi telefoni",
@@ -58,6 +56,7 @@
     "FORBIDDEN": "Nta burenganzira ufite kuri ibi.",
     "NOT_FOUND": "Ntitwabibonye.",
     "RATE_LIMITED": "Wagerageje inshuro nyinshi. Tegereza umunota umwe wongere ugerageze.",
+    "DAILY_LIMIT": "Wakoze igenzura 5 mu masaha 24 ashize, ari ryo rirenze ku munsi umwe. Uzagaruke ejo.",
     "LOCKED": "Wibeshye inshuro nyinshi. Ongera ugerageze nyuma y'iminota 15.",
     "INVALID_CREDENTIALS": "Imeyili, nimero ya telefoni cyangwa ijambo ry'ibanga si byo.",
     "ALREADY_EXISTS": "Hari konti isanzwe ikoresha iyi meyili cyangwa iyi nimero.",
@@ -79,6 +78,8 @@
     "identifierHint": "Urugero: izina@gmail.com cyangwa 0788 123 456",
     "identifierInvalid": "Andika imeyili cyangwa nimero ya telefoni nyayo.",
     "password": "Ijambo ry'ibanga",
+    "showPassword": "Erekana ijambo ry'ibanga",
+    "hidePassword": "Hisha ijambo ry'ibanga",
     "passwordHint": "Nibura inyuguti 8.",
     "passwordShort": "Ijambo ry'ibanga rigomba kugira nibura inyuguti 8.",
     "displayName": "Twakwita nde? (si ngombwa)",
@@ -329,6 +330,7 @@
     },
     "details": "Ibisobanuro",
     "yourValue": "Umubare wawe",
+    "percentOfTarget": "{{percent}}% by'intego nzima",
     "rule": "Itegeko n'inkomoko yaryo",
     "rulesetVersion": "Verisiyo y'amategeko {{version}}",
     "nextStep": "Intambwe ikurikira",
@@ -498,6 +500,7 @@
     "locked": "Ibisubizo byawe bifunze muri izi kode. Mudasobwa ntishobora kubisoma; seriveri ya Rinda yonyine ni yo ishobora kubifungura.",
     "noPass": "Iyi telefoni igomba kubona interineti rimwe nyuma yo kwinjira kugira ngo ishobore kubitanga. Igenzura ryawe rirabitse neza kandi rizoherezwa ibonye interineti.",
     "qrAlt": "Kode ya QR y'uyobora igikorwa yo gusoma",
+    "refresh": "Ku bw'ibanga ryawe, kode nshya igaragara buri minota 2. Kode iri kuri ecran yose irakora.",
     "done": "Byarangiye",
     "still": "Fata telefoni neza kugeza uyobora igikorwa avuze ko byakiriwe.",
     "waitingOther": "Hari ibibitse kuri iyi telefoni"
