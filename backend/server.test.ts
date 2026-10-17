@@ -50,13 +50,13 @@ describe('without a database', () => {
     };
     const sealed = await sealHandover(payload, server.publicKey, server.kid);
     expect(JSON.stringify(sealed)).not.toContain(payload.userId);
-    const frames = toFrames({ ...sealed, ct: sealed.ct + 'A'.repeat(1500) });
+    const frames = toFrames({ ...sealed, ct: sealed.ct + 'A'.repeat(4000) });
     expect(frames.length).toBeGreaterThan(2);
     const collect = createCollector();
     let complete: string | null = null;
     // Frames arrive out of order and repeated, as a camera sees a looping QR code.
     for (const frame of [...frames].reverse().concat(frames)) complete ??= collect(frame)?.complete ?? null;
-    expect(JSON.parse(complete ?? '{}').ct).toBe(sealed.ct + 'A'.repeat(1500));
+    expect(JSON.parse(complete ?? '{}').ct).toBe(sealed.ct + 'A'.repeat(4000));
     expect(openHandover(server.ecdh, sealed)).toEqual(payload);
     expect(() => openHandover(handoverKey('another-secret-'.repeat(3)).ecdh, sealed)).toThrow();
     const tampered = { ...sealed, ct: sealed.ct.slice(0, -2) + (sealed.ct.endsWith('AA') ? 'BB' : 'AA') };
@@ -623,6 +623,8 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       subject: 'Your Rinda check-up summary',
     });
     expect(payload.textContent).toContain('Blood pressure');
+    expect(payload.textContent).toContain('40% of the healthy target');
+    expect(payload.textContent).toContain('What this means for you');
     expect(payload.textContent).toContain(`http://localhost:5173/app/results/${checkup.body.id}`);
     expect(payload.textContent).not.toMatch(/phq|gad|mood|anxiety|depress/i);
     expect(payload.htmlContent).not.toContain('<script');
@@ -1016,6 +1018,25 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       already: 0,
       invalid: 1,
     });
+  });
+
+  it('allows at most five new check-ups a day per person, while repeats of the same one still answer', async () => {
+    const { agent } = await signup('participant', 'daily-limit@example.com');
+    const body = { language: 'en', startedAt: new Date().toISOString(), answers };
+    const keys = Array.from({ length: 5 }, () => randomUUID());
+    for (const key of keys)
+      await agent.post('/api/v1/participant/assessments').set('Idempotency-Key', key).send(body).expect(201);
+    const sixth = await agent
+      .post('/api/v1/participant/assessments')
+      .set('Idempotency-Key', randomUUID())
+      .send(body)
+      .expect(429);
+    expect(sixth.body.error.code).toBe('DAILY_LIMIT');
+    await agent
+      .post('/api/v1/participant/assessments')
+      .set('Idempotency-Key', keys[0] ?? '')
+      .send(body)
+      .expect(200);
   });
 
   it('dashboards include 14 days of chart data', async () => {

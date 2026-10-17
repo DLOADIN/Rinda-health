@@ -21,6 +21,8 @@ import {
   allowedNumbers,
   assessSafety,
   composeGuideAnswer,
+  fillSlots,
+  targetPercent,
   GUIDE_CHIPS,
   isValue,
   normalise,
@@ -270,6 +272,7 @@ export function handoverKey(secret: string): HandoverKey {
 }
 
 const HANDOVER_TOKEN_DAYS = 30;
+export const CHECKUPS_PER_DAY = 5;
 
 /** A per-person proof sealed inside each hand-over, so nobody can send check-ups in someone else's name. It expires. */
 export function handoverToken(
@@ -785,17 +788,29 @@ export function composeReportEmail(
   results: AssessmentResult,
   plan: Plan,
   link: string,
+  // The guide's explanation of these results: Gemini's when it was allowed and prepared, otherwise approved text.
+  explanation: { paragraphs: string[]; generated: boolean } | null = null,
 ): { subject: string; text: string; html: string } {
   const content = BUNDLED_CONTENT[language];
-  const lookup = (id: string) => content.text[id] ?? id;
+  const lookup = (id: string) => content.text[id] ?? GUIDE_ANSWERS[language][id] ?? id;
   const area = (domain: string) => lookup(`guide.area.${domain}`);
   const answered = results.ncd.filter((r) => r.band !== 'insufficient');
   const missing = results.ncd.filter((r) => r.band === 'insufficient').map((r) => area(r.domain));
-  const rowsOf = answered.map((r) => ({
-    area: area(r.domain),
-    band: lookup(`band.${r.domain}.${r.band}`),
-    r,
-  }));
+  const rowsOf = answered.map((r) => {
+    const percent = targetPercent(r, RULESET_V1);
+    const band = lookup(`band.${r.domain}.${r.band}`);
+    return {
+      area: area(r.domain),
+      band: percent === null ? band : `${band} · ${fillSlots(lookup('email.report.percent'), { percent })}`,
+      r,
+    };
+  });
+  const explained =
+    explanation ??
+    (() => {
+      const tips = composeGuideAnswer('tips', results, plan, lookup).paragraphs.map((p) => p.text);
+      return tips.length ? { paragraphs: tips, generated: false } : null;
+    })();
   const steps = [
     ...new Set(composeGuideAnswer('first_step', results, plan, lookup).paragraphs.map((p) => p.text)),
   ];
@@ -805,11 +820,17 @@ export function composeReportEmail(
   const optOut = lookup('email.report.optout');
   const missingLine = missing.length ? `${lookup('band.insufficient')}: ${missing.join(', ')}` : null;
 
+  const explanationTitle = lookup('email.report.explanation');
+  const generatedNote = explained?.generated
+    ? `${lookup('guide.label.generated')}. ${lookup('guide.label.disclaimer')}`
+    : null;
   const text = [
     greeting,
     rowsOf.map((x) => `- ${x.area}: ${x.band}`).join('\n'),
     missingLine,
     ...steps,
+    explained ? [explanationTitle, ...explained.paragraphs].join('\n\n') : null,
+    generatedNote,
     disclaimer,
     `${open}: ${link}`,
     optOut,
@@ -842,6 +863,17 @@ export function composeReportEmail(
     '<div style="margin:20px 0 0;padding:16px;background:#FBEECD;border-radius:12px">',
     ...steps.map((p) => `<p style="margin:0 0 8px;font-size:15px;line-height:1.5">${e(p)}</p>`),
     '</div>',
+    explained
+      ? [
+          `<h2 style="margin:24px 0 8px;font-size:17px;color:#2B1D16">${e(explanationTitle)}</h2>`,
+          ...explained.paragraphs.map(
+            (p) => `<p style="margin:0 0 10px;font-size:15px;line-height:1.6">${e(p)}</p>`,
+          ),
+          generatedNote
+            ? `<p style="margin:8px 0 0;font-size:12px;line-height:1.5;color:#665C54">${e(generatedNote)}</p>`
+            : '',
+        ].join('')
+      : '',
     `<p style="margin:24px 0 0"><a href="${e(link)}" style="display:inline-block;background:#D4380F;color:#FFFFFF;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px">${e(open)}</a></p>`,
     `<p style="margin:20px 0 0;font-size:13px;line-height:1.5;color:#665C54">${e(disclaimer)}</p>`,
     '</td></tr>',
@@ -980,11 +1012,18 @@ async function sendReportEmail(
   };
   if (!user?.email) return record('skipped', 'no_email');
   if (!row) return record('skipped', 'no_checkup');
+  // Gemini's overview is only here if it was allowed and prepared for this person; otherwise approved text is used.
+  const prepared = await one<{ paragraphs: Array<{ text: string }> }>(
+    db,
+    "SELECT paragraphs FROM guide_answers WHERE assessment_id = $1 AND chip_id = 'overview' AND language = $2",
+    [assessmentId, user.preferred_language],
+  );
   const email = composeReportEmail(
     user.preferred_language,
     row.results,
     row.plan,
     `${config.PUBLIC_URL}/app/results/${assessmentId}`,
+    prepared ? { paragraphs: prepared.paragraphs.map((p) => p.text), generated: true } : null,
   );
   let res: globalThis.Response;
   try {
@@ -1728,6 +1767,15 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       }
       return { status: 200, row: existing };
     }
+    // Up to five new check-ups a day per person, which also keeps the guide's AI use in check.
+    const today = await one<{ n: number }>(
+      database,
+      "SELECT count(*)::int AS n FROM assessments WHERE user_id = $1 AND created_at > now() - interval '24 hours'",
+      [userId],
+    );
+    if ((today?.n ?? 0) >= CHECKUPS_PER_DAY) {
+      throw new AppError(429, 'DAILY_LIMIT', 'You have reached the limit of check-ups for today.');
+    }
     const consents = await latestConsents(database, userId);
     // Nobody can send a check-up before agreeing to take part.
     if (!consents['core']) {
@@ -1784,9 +1832,19 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       void sendWhatsAppNotice(database, config, logger, fetchFn, userId).catch(() =>
         logger.warn({ reqId, event: 'whatsapp_notice_error' }, 'message'),
       );
-      void sendReportEmail(database, config, logger, fetchFn, userId, row.id).catch(() =>
-        logger.warn({ reqId, event: 'email_report_error' }, 'message'),
-      );
+      // The guide's overview is prepared first (only if Gemini is allowed for this person), so it is ready in the
+      // app and can go into the report email.
+      const language = body.language;
+      void (async () => {
+        await answerGuide(
+          database,
+          userId,
+          { assessmentId: row.id, chipId: 'overview', language },
+          reqId,
+          true,
+        ).catch(() => null);
+        await sendReportEmail(database, config, logger, fetchFn, userId, row.id);
+      })().catch(() => logger.warn({ reqId, event: 'email_report_error' }, 'message'));
     }
     return { status: inserted ? 201 : 200, row };
   };
@@ -3085,14 +3143,21 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   const generatedToday = new Map<string, { day: string; count: number }>();
   const GUIDE_DAILY_LIMIT = 20;
 
-  guide.post('/explain', async (req, res) => {
-    const database = needDb();
+  // This is where a guide answer is made: the approved template first, then Gemini only when every gate allows it.
+  // With prepare set, it runs right after a check-up so the answer is ready when the person opens the guide; it
+  // does nothing (and logs nothing) when Gemini is not allowed for this person.
+  const answerGuide = async (
+    database: Db,
+    userId: string,
+    body: { assessmentId: string; chipId: string; language: 'en' | 'rw' },
+    reqId: unknown,
+    prepare = false,
+  ) => {
     const started = Date.now();
-    const body = GuideExplainRequest.parse(req.body);
     const row = await one<{ results: AssessmentResult; plan: Plan; safety: SafetyAssessment }>(
       database,
       'SELECT results, plan, safety FROM assessments WHERE id = $1 AND user_id = $2',
-      [body.assessmentId, me(req).id],
+      [body.assessmentId, userId],
     );
     if (!row) throw notFound();
     const chipId = (GUIDE_CHIPS as readonly string[]).includes(body.chipId) ? body.chipId : 'overview';
@@ -3110,13 +3175,13 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     ]);
 
     const today = new Date().toISOString().slice(0, 10);
-    const usage = generatedToday.get(me(req).id);
+    const usage = generatedToday.get(userId);
     const used = usage?.day === today ? usage.count : 0;
     const flags = await currentFlags(database, config);
     const aiConsent = await one<{ granted: boolean }>(
       database,
       "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'ai_explanations' ORDER BY created_at DESC LIMIT 1",
-      [me(req).id],
+      [userId],
     );
     const templatesOnly =
       !flags.guideGenerative ||
@@ -3126,6 +3191,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       row.safety.tier !== null ||
       body.language === 'rw' ||
       used >= GUIDE_DAILY_LIMIT;
+    if (prepare && templatesOnly) return null;
 
     let answer: GuideAnswer = draft as GuideAnswer;
     let source: 'generated' | 'template' = 'template';
@@ -3170,7 +3236,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         templateAnswer: draft.paragraphs.map((p) => p.text).join('\n\n'),
         allowedNumbers: allowed,
       };
-      generatedToday.set(me(req).id, { day: today, count: used + 1 });
+      generatedToday.set(userId, { day: today, count: used + 1 });
       try {
         const result = await explainWithGemini(config, fetchFn, facts, library, allowed);
         tokens = { inputTokens: result.inputTokens, outputTokens: result.outputTokens };
@@ -3193,7 +3259,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         }
       } catch {
         outcome = 'error';
-        logger.warn({ reqId: req.id, event: 'guide_error' }, 'guide');
+        logger.warn({ reqId, event: 'guide_error' }, 'guide');
       }
     }
     const logRow = await one<{ id: string }>(
@@ -3210,12 +3276,17 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         tokens.outputTokens,
       ],
     );
-    res.json({
+    return {
       requestId: logRow?.id,
       source,
       paragraphs: answer.paragraphs,
       followUpChipIds: answer.followUpChipIds,
-    });
+    };
+  };
+
+  guide.post('/explain', async (req, res) => {
+    const body = GuideExplainRequest.parse(req.body);
+    res.json(await answerGuide(needDb(), me(req).id, body, req.id));
   });
 
   guide.post('/feedback', async (req, res) => {

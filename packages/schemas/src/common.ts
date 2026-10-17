@@ -25,6 +25,7 @@ export const ErrorCode = z.enum([
   'FORBIDDEN',
   'NOT_FOUND',
   'RATE_LIMITED',
+  'DAILY_LIMIT',
   'LOCKED',
   'IDEMPOTENCY_KEY_REQUIRED',
   'IDEMPOTENCY_MISMATCH',
