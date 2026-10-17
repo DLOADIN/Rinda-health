@@ -1,4 +1,5 @@
-import type { DomainResult, FocusArea, Plan } from '@rinda/rules';
+import { RULESET_V1 } from '@rinda/content';
+import { targetPercent, type DomainResult, type FocusArea, type Plan } from '@rinda/rules';
 import { ChevronRight, CircleAlert, CloudOff, HeartHandshake, Hospital } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BandBadge } from '@/components/band-badge';
@@ -17,6 +18,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item';
+import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { GuideButton } from '@/features/guide/guide-button';
 import type { Assessment } from '@/lib/api';
@@ -69,6 +71,29 @@ function stepFor(plan: Plan, domain: string) {
   );
 }
 
+// Each card is tinted by its band: green for good, amber for needs attention, red only for seek care today.
+// The word and the icon are always shown too, so colour is never the only signal.
+const CARD_TONE: Record<DomainResult['severity'], string> = {
+  ok: 'border-l-4 border-l-band-ok bg-band-ok/10',
+  attention: 'border-l-4 border-l-band-attention bg-band-attention/10',
+  confirm: 'border-l-4 border-l-band-confirm bg-band-confirm/10',
+  urgent: 'border-l-4 border-l-band-urgent bg-band-urgent/10',
+  wellness: 'border-l-4 border-l-band-wellness bg-band-wellness/10',
+  unknown: 'border-dashed',
+};
+
+function TargetProgress({ result }: { result: DomainResult }) {
+  const { t } = useTranslation();
+  const percent = targetPercent(result, RULESET_V1);
+  if (percent === null) return null;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-sm font-medium">{t('results.percentOfTarget', { percent })}</p>
+      <Progress value={percent} aria-label={t('results.percentOfTarget', { percent })} />
+    </div>
+  );
+}
+
 export function DomainCard({ result, assessment }: { result: DomainResult; assessment: Assessment }) {
   const { t } = useTranslation();
   const label = useBandLabel();
@@ -85,7 +110,7 @@ export function DomainCard({ result, assessment }: { result: DomainResult; asses
           className="group text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-xl"
         >
           <Card
-            className={`glass h-full transition-transform group-hover:-translate-y-0.5 ${result.severity === 'unknown' ? 'border-dashed' : ''}`}
+            className={`h-full transition-transform group-hover:-translate-y-0.5 ${CARD_TONE[result.severity]}`}
           >
             <CardHeader className="flex flex-row items-start justify-between gap-2">
               <CardTitle className="text-base">{area}</CardTitle>
@@ -94,6 +119,7 @@ export function DomainCard({ result, assessment }: { result: DomainResult; asses
             <CardContent className="flex flex-col gap-2">
               <BandBadge severity={result.severity} label={label(result)} />
               {value ? <p className="text-xl font-semibold tabular-nums">{value}</p> : null}
+              <TargetProgress result={result} />
             </CardContent>
           </Card>
         </button>
@@ -111,6 +137,7 @@ export function DomainCard({ result, assessment }: { result: DomainResult; asses
               <p className="text-2xl font-semibold tabular-nums">{value}</p>
             </div>
           ) : null}
+          <TargetProgress result={result} />
           <Separator />
           <div>
             <p className="text-sm text-muted-foreground">{t('results.rule')}</p>
@@ -190,9 +217,10 @@ export function ResultView({ assessment, compact = false }: { assessment: Assess
     return (
       <ItemGroup className="grid gap-2 sm:grid-cols-2">
         {results.ncd.map((r) => (
-          <Item key={r.domain} variant="outline" size="sm" className="bg-card/60">
+          <Item key={r.domain} variant="outline" size="sm" className={CARD_TONE[r.severity]}>
             <ItemContent>
               <ItemTitle>{t(`domains.${r.domain}`)}</ItemTitle>
+              <TargetProgress result={r} />
             </ItemContent>
             <BandBadge severity={r.severity} label={label(r)} />
           </Item>
