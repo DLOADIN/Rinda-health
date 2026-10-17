@@ -104,7 +104,8 @@ export function AuthFrame({
             decoding="async"
             className="h-36 w-full rounded-3xl object-cover lg:hidden"
           />
-          <RindaLogo className="self-start rounded-full" />
+          {/* The menu bar already shows the logo on phones, so this copy appears on large screens only. */}
+          <RindaLogo className="hidden self-start rounded-full lg:block" />
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{heading}</h1>
             <p className="text-muted-foreground">{t('landing.educational')}</p>
