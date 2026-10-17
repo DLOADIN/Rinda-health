@@ -42,7 +42,7 @@ describe('composeGuideAnswer', () => {
 
   it('overview shows "not enough information" for an area with missing answers', () => {
     expect(all(compose('overview', { ...ok, systolic: null }).draft)).toContain(
-      'Blood pressure: Not enough information.',
+      'Blood pressure: Not answered.',
     );
   });
 
@@ -95,11 +95,11 @@ describe('composeGuideAnswer', () => {
     );
     expect(all(compose('explain.tobacco', ok).draft)).not.toContain('The value used');
     expect(all(compose('explain.bp', { ...ok, systolic: null }).draft)).toContain(
-      'We did not have enough information',
+      'This area was not answered',
     );
     const { result, plan } = compose('overview', ok);
     const missing = composeGuideAnswer('explain.bp', { ...result, ncd: [] }, plan, text);
-    expect(all(missing)).toContain('We did not have enough information');
+    expect(all(missing)).toContain('This area was not answered');
   });
 
   it('puts the approved seek-care text first when blood pressure needs care today', () => {

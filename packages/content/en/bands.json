@@ -6,7 +6,7 @@
   "status": "draft",
   "reviewers": ["clinical", "mental_health", "language"],
   "entries": {
-    "band.insufficient": "Not enough information",
+    "band.insufficient": "Not answered",
     "band.tobacco.no_reported_risk": "No reported risk",
     "band.tobacco.attention": "Attention",
     "band.alcohol.lower_risk": "Lower risk",

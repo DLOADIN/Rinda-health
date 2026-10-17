@@ -26,6 +26,8 @@
     "rules.phq9": "Duteranya ibisubizo byawe icyenda (0 kugeza 27). {mild} cyangwa birenga ni bike, {moderate} cyangwa birenga ni biringaniye, {ms} cyangwa birenga ni byinshi, naho {severe} cyangwa birenga ni byinshi cyane.",
     "rules.gad7": "Duteranya ibisubizo byawe birindwi (0 kugeza 21). {mild} cyangwa birenga ni bike, {moderate} cyangwa birenga ni biringaniye, naho {severe} cyangwa birenga ni byinshi cyane.",
     "rules.support": "Niba igiteranyo icyo ari cyo cyose kigeze kuri {tier1} cyangwa kirenga, Rinda yerekana ubutumwa bwo kugushyigikira n'aho wabona ubufasha. Ibisubizo by'imitekerereze n'umunaniro ntibijya biteranywa n'ibindi bisubizo.",
-    "rules.source": "Inkomoko: {source}"
+    "rules.source": "Inkomoko: {source}",
+    "email.report.percent": "{percent}% by'intego nzima",
+    "email.report.explanation": "Icyo ibi bisobanuye kuri wowe"
   }
 }

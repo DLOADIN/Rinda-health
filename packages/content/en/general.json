@@ -26,6 +26,8 @@
     "rules.phq9": "We add your nine answers (0 to 27). {mild} or more is mild, {moderate} or more moderate, {ms} or more moderately severe, and {severe} or more severe.",
     "rules.gad7": "We add your seven answers (0 to 21). {mild} or more is mild, {moderate} or more moderate, and {severe} or more severe.",
     "rules.support": "If either total is {tier1} or more, Rinda shows a supportive message and places to get help. Mood and stress results are never added to the other results.",
-    "rules.source": "Source: {source}"
+    "rules.source": "Source: {source}",
+    "email.report.percent": "{percent}% of the healthy target",
+    "email.report.explanation": "What this means for you"
   }
 }

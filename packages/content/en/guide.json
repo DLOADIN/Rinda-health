@@ -21,7 +21,7 @@
     "guide.tpl.plan.talk": "{area}: talk to a health worker if you are concerned.",
     "guide.tpl.explain": "{area}: your result is \"{band}\". It comes from a fixed rule ({source}), not a diagnosis.",
     "guide.tpl.explain.value": "The value used was {value}.",
-    "guide.tpl.explain.missing": "We did not have enough information for this area, so it has no result yet.",
+    "guide.tpl.explain.missing": "This area was not answered, so it has no result yet. You can answer it in your next check-up.",
     "guide.target.activity_split": "about {minutesPerDay} more minutes of activity on {days} days",
     "guide.target.activity_week": "about {minutes} more minutes of activity this week",
     "guide.target.diet_servings": "add {servings} servings of fruit or vegetables a day",

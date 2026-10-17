@@ -21,7 +21,7 @@
     "guide.tpl.plan.talk": "{area}: vugana n'umukozi w'ubuzima niba bikuhangayikishije.",
     "guide.tpl.explain": "{area}: igisubizo cyawe ni \"{band}\". Gituruka ku itegeko ridahinduka ({source}), si isuzuma rya muganga.",
     "guide.tpl.explain.value": "Umubare wakoreshejwe ni {value}.",
-    "guide.tpl.explain.missing": "Nta makuru ahagije twari dufite kuri iki gice, bityo nta gisubizo kiraboneka.",
+    "guide.tpl.explain.missing": "Iki gice nticyasubijwe, bityo nta gisubizo kiraboneka. Ushobora kugisubiza mu igenzura rikurikira.",
     "guide.target.activity_split": "iminota igera kuri {minutesPerDay} yiyongera y'imyitozo mu minsi {days}",
     "guide.target.activity_week": "iminota igera kuri {minutes} yiyongera y'imyitozo muri iki cyumweru",
     "guide.target.diet_servings": "ongeraho ibipimo {servings} by'imbuto cyangwa imboga ku munsi",
