@@ -158,7 +158,7 @@ describe('readBpDisplay', () => {
       );
       if (r) expect(r).toMatchObject({ systolic: 136, diastolic: 88 });
     }
-  });
+  }, 30_000); // 60 pictures; slower machines and a busy test run need the extra time
 
   it('refuses a blank or implausible screen rather than guessing', () => {
     expect(readBpDisplay(drawScreen({ rows: [] }))).toBeNull();

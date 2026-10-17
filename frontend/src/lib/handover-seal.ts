@@ -3,7 +3,8 @@
 import type { HandoverEnvelope, HandoverPayload } from '@rinda/schemas';
 
 const PREFIX = 'RH1';
-const CHUNK = 480;
+// A usual hand-over (one check-up, gzipped and sealed) fits in a single code; only bigger ones split into parts.
+const CHUNK = 1400;
 
 export const b64url = (bytes: ArrayBuffer | Uint8Array) => {
   const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);

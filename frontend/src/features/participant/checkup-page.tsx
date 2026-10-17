@@ -1,7 +1,7 @@
 import { RULESET_V1 } from '@rinda/content';
 import { validateMeasurement, type MeasurementType } from '@rinda/rules';
 import type { CheckupAnswers, CheckupSubmission } from '@rinda/schemas';
-import { Camera } from 'lucide-react';
+import { Camera, QrCode } from 'lucide-react';
 import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -32,6 +32,7 @@ import { useCached } from '@/lib/use-cached';
 import { useContent } from '@/lib/content';
 
 const BpCamera = lazy(() => import('@/features/participant/bp-camera'));
+const HandoverDialog = lazy(() => import('@/features/participant/handover-dialog'));
 
 type Answers = CheckupAnswers;
 const MEASUREMENTS: readonly string[] = ['heightCm', 'weightKg', 'waistCm', 'systolic', 'diastolic'];
@@ -86,6 +87,7 @@ export function CheckupPage() {
   const [wellness, setWellness] = useState(WELLNESS_START);
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [handoverOpen, setHandoverOpen] = useState(false);
 
   const { data: me } = useMeQuery();
   const { data: profile } = useParticipantProfileQuery();
@@ -238,6 +240,18 @@ export function CheckupPage() {
     return (
       <div className="flex flex-col gap-6">
         <PageHeader title={t('checkup.title')} />
+        {/* Saved on this phone with no internet: the QR hand-over is offered right here. */}
+        {me ? (
+          <Button variant="outline" className="self-start" onClick={() => setHandoverOpen(true)}>
+            <QrCode aria-hidden="true" data-icon="inline-start" />
+            {t('handover.open')}
+          </Button>
+        ) : null}
+        {me && handoverOpen ? (
+          <Suspense fallback={null}>
+            <HandoverDialog userId={me.id} open={handoverOpen} onOpenChange={setHandoverOpen} />
+          </Suspense>
+        ) : null}
         <ResultView assessment={provisional} />
       </div>
     );

@@ -26,6 +26,8 @@ interface Props {
 
 type State = { kind: 'working' } | { kind: 'no-pass' } | { kind: 'ready'; codes: string[] };
 
+const CODE_LIFETIME_MS = 2 * 60_000;
+
 async function prepare(userId: string): Promise<State> {
   const pass = await readHandoverPass(userId);
   if (!pass) return { kind: 'no-pass' };
@@ -50,6 +52,14 @@ export default function HandoverDialog({ userId, open, onOpenChange }: Props) {
   const { t } = useTranslation();
   const [state, setState] = useState<State>({ kind: 'working' });
   const [index, setIndex] = useState(0);
+  const [round, setRound] = useState(0);
+
+  // A fresh code every two minutes: the package is sealed again with a new key, so an old photo of it is useless.
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setInterval(() => setRound((r) => r + 1), CODE_LIFETIME_MS);
+    return () => window.clearInterval(timer);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -62,7 +72,7 @@ export default function HandoverDialog({ userId, open, onOpenChange }: Props) {
     return () => {
       active = false;
     };
-  }, [open, userId]);
+  }, [open, userId, round]);
 
   // The codes take turns so the laptop can collect every part; the order does not matter.
   const total = state.kind === 'ready' ? state.codes.length : 0;
@@ -109,6 +119,7 @@ export default function HandoverDialog({ userId, open, onOpenChange }: Props) {
               <LockKeyhole aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
               {t('handover.locked')}
             </p>
+            <p className="text-sm text-muted-foreground">{t('handover.refresh')}</p>
           </div>
         ) : null}
         <DialogFooter>
