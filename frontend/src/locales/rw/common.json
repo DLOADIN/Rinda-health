@@ -504,5 +504,9 @@
     "done": "Byarangiye",
     "still": "Fata telefoni neza kugeza uyobora igikorwa avuze ko byakiriwe.",
     "waitingOther": "Hari ibibitse kuri iyi telefoni"
+  },
+  "theme": {
+    "toDark": "Koresha amabara yijimye",
+    "toLight": "Koresha amabara y'umucyo"
   }
 }

@@ -7,12 +7,10 @@ import { store } from '@/app/store';
 import { Toaster } from '@/components/ui/sonner';
 import '@/lib/i18n';
 import '@/lib/install';
+import { initTheme } from '@/lib/theme';
 import './index.css';
 
-const dark = window.matchMedia('(prefers-color-scheme: dark)');
-const applyTheme = () => document.documentElement.classList.toggle('dark', dark.matches);
-applyTheme();
-dark.addEventListener('change', applyTheme);
+initTheme();
 
 const root = document.getElementById('root');
 if (root) {

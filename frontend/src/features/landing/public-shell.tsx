@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, Outlet } from 'react-router';
 import { useEscapeTwiceToExit, useQuickExit } from '@/components/app-shell';
 import { GetHelp } from '@/components/get-help';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitch } from '@/components/language-switch';
 import { OfflineBadge } from '@/components/offline-badge';
 import { Button } from '@/components/ui/button';
@@ -111,7 +112,8 @@ export function PublicShell() {
         </div>
         <Outlet />
       </main>
-      <div className="fixed right-4 bottom-4 z-40 pb-[env(safe-area-inset-bottom)]">
+      <div className="fixed right-4 bottom-4 z-40 flex items-center gap-2 pb-[env(safe-area-inset-bottom)]">
+        <ThemeToggle className="size-12" />
         <GetHelp variant="floating" className="h-12" />
       </div>
     </div>

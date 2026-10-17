@@ -7,6 +7,7 @@ import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'reac
 import { clearSession } from '@/app/store';
 import { useEscapeTwiceToExit, useQuickExit } from '@/components/app-shell';
 import { GetHelp } from '@/components/get-help';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitch } from '@/components/language-switch';
 import { OfflineBadge } from '@/components/offline-badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -377,11 +378,10 @@ function Shell({ me }: { me: Me }) {
           </Suspense>
         </main>
       </SidebarInset>
-      {isParticipant ? (
-        <div className="fixed right-4 bottom-4 z-40 pb-[env(safe-area-inset-bottom)]">
-          <GetHelp variant="floating" />
-        </div>
-      ) : null}
+      <div className="fixed right-4 bottom-4 z-40 flex items-center gap-2 pb-[env(safe-area-inset-bottom)]">
+        <ThemeToggle />
+        {isParticipant ? <GetHelp variant="floating" /> : null}
+      </div>
     </SidebarProvider>
   );
 }

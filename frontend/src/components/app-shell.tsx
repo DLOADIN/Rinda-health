@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { Link, Outlet, useNavigate } from 'react-router';
 import { clearSession } from '@/app/store';
 import { GetHelp } from '@/components/get-help';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitch } from '@/components/language-switch';
 import { OfflineBadge } from '@/components/offline-badge';
 import { Button } from '@/components/ui/button';
@@ -77,8 +78,11 @@ export function AppShell() {
       </main>
 
       <footer className="sticky bottom-0 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-        <div className="mx-auto max-w-screen-sm px-4 py-3">
-          <GetHelp />
+        <div className="mx-auto flex max-w-screen-sm items-center gap-2 px-4 py-3">
+          <div className="flex-1">
+            <GetHelp />
+          </div>
+          <ThemeToggle className="shadow-none" />
         </div>
       </footer>
     </div>
