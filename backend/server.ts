@@ -991,12 +991,15 @@ async function sendReportEmail(
   fetchFn: typeof fetch,
   userId: string,
   assessmentId: string,
+  // For the automatic email after a check-up: only the choice the person had made by the time of that check-up
+  // counts, so a later opt-in never sends a report for an earlier check-up.
+  consentAsOf: Date = new Date(),
 ): Promise<EmailOutcome> {
   if (!emailConfigured(config) || !(await currentFlags(db, config)).messaging) return 'skipped';
   const consent = await one<{ granted: boolean }>(
     db,
-    "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'email_reports' ORDER BY created_at DESC LIMIT 1",
-    [userId],
+    "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'email_reports' AND created_at <= $2 ORDER BY created_at DESC LIMIT 1",
+    [userId, consentAsOf],
   );
   if (!consent?.granted) return 'skipped';
   const user = await one<{ email: string | null; preferred_language: 'en' | 'rw' }>(
@@ -1863,7 +1866,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
           reqId,
           true,
         ).catch(() => null);
-        await sendReportEmail(database, config, logger, fetchFn, userId, row.id);
+        await sendReportEmail(database, config, logger, fetchFn, userId, row.id, row.created_at);
       })().catch(() => logger.warn({ reqId, event: 'email_report_error' }, 'message'));
     }
     return { status: inserted ? 201 : 200, row };
