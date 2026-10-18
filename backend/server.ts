@@ -1530,9 +1530,22 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.status(204).end();
   });
 
+  // This is the site's own address for a sign-in. PUBLIC_URL wins, except when it still says localhost while the
+  // request clearly came through a real web address (such as rinda-health.vercel.app); then that address is used.
+  // Google only accepts return addresses registered in Google Cloud, so a made-up host cannot be used.
+  const siteUrl = (req: Request) => {
+    const local = (h: string) => /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(h);
+    const host = (req.get('x-forwarded-host') ?? req.get('host') ?? '').split(',')[0]?.trim() ?? '';
+    const configured = new URL(config.PUBLIC_URL).host;
+    if (local(configured) && host && !local(host) && /^[a-z0-9.-]+(:\d+)?$/i.test(host))
+      return `https://${host}`;
+    return config.PUBLIC_URL;
+  };
+
   auth.get('/google/start', (req, res) => {
     if (!googleConfigured(config))
       throw new AppError(503, 'NOT_CONFIGURED', 'Google sign-in is not set up yet.');
+    const site = siteUrl(req);
     const query = z
       .object({
         intent: z.enum(['login', 'signup']).default('login'),
@@ -1551,7 +1564,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     };
     res.cookie(OAUTH_COOKIE, sealState(config.SESSION_SECRET, state), {
       httpOnly: true,
-      secure: config.PUBLIC_URL.startsWith('https://'),
+      secure: site.startsWith('https://'),
       sameSite: 'lax',
       path: '/api/v1/auth/google',
       maxAge: 10 * 60_000,
@@ -1559,7 +1572,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     const url = new URL(GOOGLE_AUTH_URL);
     url.search = new URLSearchParams({
       client_id: config.GOOGLE_CLIENT_ID ?? '',
-      redirect_uri: `${config.PUBLIC_URL}/api/v1/auth/google/callback`,
+      redirect_uri: `${site}/api/v1/auth/google/callback`,
       response_type: 'code',
       scope: 'openid email',
       state: state.state,
@@ -1572,7 +1585,8 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
 
   auth.get('/google/callback', async (req, res) => {
-    const back = (error: string) => res.redirect(`${config.PUBLIC_URL}/login?error=${error}`);
+    const site = siteUrl(req);
+    const back = (error: string) => res.redirect(`${site}/login?error=${error}`);
     const cookies = req.cookies as Record<string, string | undefined>;
     const saved = openState(config.SESSION_SECRET, cookies[OAUTH_COOKIE]);
     res.clearCookie(OAUTH_COOKIE, { path: '/api/v1/auth/google' });
@@ -1594,7 +1608,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
           code: query.data.code,
           client_id: config.GOOGLE_CLIENT_ID ?? '',
           client_secret: config.GOOGLE_CLIENT_SECRET ?? '',
-          redirect_uri: `${config.PUBLIC_URL}/api/v1/auth/google/callback`,
+          redirect_uri: `${site}/api/v1/auth/google/callback`,
           grant_type: 'authorization_code',
           code_verifier: saved.verifier,
         }).toString(),
@@ -1638,7 +1652,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     }
     if (!user || !user.active) return back('account_off');
     await startSession(db, config, res, user, 'google');
-    res.redirect(`${config.PUBLIC_URL}/app`);
+    res.redirect(`${site}/app`);
   });
   mount('/api/v1/auth', auth);
 

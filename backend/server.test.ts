@@ -474,6 +474,16 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     const location = new URL(start.headers['location'] as string);
     expect(location.searchParams.get('code_challenge_method')).toBe('S256');
     expect(location.searchParams.get('scope')).toBe('openid email');
+    // On a PC Google returns to localhost; through the live address it returns there instead.
+    expect(location.searchParams.get('redirect_uri')).toBe(
+      'http://localhost:5173/api/v1/auth/google/callback',
+    );
+    const live = await request(app)
+      .get('/api/v1/auth/google/start')
+      .set('x-forwarded-host', 'rinda-health.vercel.app');
+    expect(new URL(live.headers['location'] as string).searchParams.get('redirect_uri')).toBe(
+      'https://rinda-health.vercel.app/api/v1/auth/google/callback',
+    );
     googleClaims = {
       iss: 'https://accounts.google.com',
       aud: 'test-client',
