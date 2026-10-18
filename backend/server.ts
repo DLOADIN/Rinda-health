@@ -181,9 +181,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   let generatedSecret = false;
   // On Vercel the site's own address is known, so Google sign-in, cookies and email links point there even when
   // PUBLIC_URL was not set. On a PC it stays http://localhost:5173.
-  if (!input['PUBLIC_URL'] && env['VERCEL_PROJECT_PRODUCTION_URL']) {
-    input['PUBLIC_URL'] = `https://${env['VERCEL_PROJECT_PRODUCTION_URL']}`;
-  }
+  const vercelHost = env['VERCEL_PROJECT_PRODUCTION_URL'] ?? env['VERCEL_URL'];
+  const pointsAtPc =
+    !input['PUBLIC_URL'] || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(input['PUBLIC_URL']);
+  if (vercelHost && pointsAtPc) input['PUBLIC_URL'] = `https://${vercelHost}`;
   if ((appEnv === 'development' || appEnv === 'test') && !input['SESSION_SECRET']) {
     input['SESSION_SECRET'] = randomBytes(48).toString('base64url');
     generatedSecret = true;
@@ -2351,7 +2352,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       [session.id, sha256(code), expires],
     );
     await audit(database, me(req), 'device.link', { type: 'facilitator_session', id: session.id });
-    res.status(201).json({ url: `${config.PUBLIC_URL}/setup/${code}`, expiresAt: expires.toISOString() });
+    res.status(201).json({ url: `${siteUrl(req)}/setup/${code}`, expiresAt: expires.toISOString() });
   });
 
   // End the session and ask every linked study phone to wipe itself.

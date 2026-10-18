@@ -95,6 +95,13 @@ describe('without a database', () => {
       'https://example.org',
     );
     expect(loadConfig({ APP_ENV: 'test' }).PUBLIC_URL).toBe('http://localhost:5173');
+    // On Vercel a PUBLIC_URL copied from a PC's .env never sends anyone to localhost.
+    expect(loadConfig({ ...vercel, PUBLIC_URL: 'http://localhost:5173' }).PUBLIC_URL).toBe(
+      'https://rinda-health.vercel.app',
+    );
+    expect(loadConfig({ APP_ENV: 'test', VERCEL_URL: 'rinda-abc.vercel.app' }).PUBLIC_URL).toBe(
+      'https://rinda-abc.vercel.app',
+    );
   });
 
   it('finds numbers written as digits or words (guide validator)', () => {
