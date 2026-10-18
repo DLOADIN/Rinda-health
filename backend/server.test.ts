@@ -88,6 +88,15 @@ describe('without a database', () => {
     expect(FLAG_DEFAULTS.pilot.messaging).toBe(false);
   });
 
+  it('uses the Vercel address for Google sign-in when PUBLIC_URL is not set, and localhost on a PC', () => {
+    const vercel = { APP_ENV: 'test', VERCEL_PROJECT_PRODUCTION_URL: 'rinda-health.vercel.app' };
+    expect(loadConfig(vercel).PUBLIC_URL).toBe('https://rinda-health.vercel.app');
+    expect(loadConfig({ ...vercel, PUBLIC_URL: 'https://example.org' }).PUBLIC_URL).toBe(
+      'https://example.org',
+    );
+    expect(loadConfig({ APP_ENV: 'test' }).PUBLIC_URL).toBe('http://localhost:5173');
+  });
+
   it('finds numbers written as digits or words (guide validator)', () => {
     expect(numbersIn('One small step: about 20 more minutes on three days, 2.5 km.')).toEqual([
       20, 2.5, 1, 3,

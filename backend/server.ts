@@ -179,6 +179,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const appEnv = env['APP_ENV'] ?? 'development';
   const input: Record<string, string | undefined> = { ...env };
   let generatedSecret = false;
+  // On Vercel the site's own address is known, so Google sign-in, cookies and email links point there even when
+  // PUBLIC_URL was not set. On a PC it stays http://localhost:5173.
+  if (!input['PUBLIC_URL'] && env['VERCEL_PROJECT_PRODUCTION_URL']) {
+    input['PUBLIC_URL'] = `https://${env['VERCEL_PROJECT_PRODUCTION_URL']}`;
+  }
   if ((appEnv === 'development' || appEnv === 'test') && !input['SESSION_SECRET']) {
     input['SESSION_SECRET'] = randomBytes(48).toString('base64url');
     generatedSecret = true;
