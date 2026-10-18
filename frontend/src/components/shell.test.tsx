@@ -31,7 +31,7 @@ function renderShell(path = '/') {
         element: <AppShell />,
         children: [
           { path: '/', element: <p>health content</p> },
-          { path: '/exit', element: <p>neutral</p> },
+          { path: '/login', element: <p>sign in</p> },
         ],
       },
     ],
@@ -49,7 +49,7 @@ describe('AppShell', () => {
   it('shows Get help now and Exit on every screen (FR-06, FR-12)', () => {
     renderShell();
     expect(screen.getByRole('button', { name: 'Get help now' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Exit to a neutral screen' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Exit and sign out' })).toBeTruthy();
   });
 
   it('Get help now opens the referral list with call links', async () => {
@@ -61,10 +61,10 @@ describe('AppShell', () => {
     );
   });
 
-  it('Exit replaces the history entry with the neutral screen (FR-42)', async () => {
+  it('Exit replaces the history entry with the sign-in page (FR-42, ADR-030)', async () => {
     const router = renderShell();
-    await userEvent.click(screen.getByRole('button', { name: 'Exit to a neutral screen' }));
-    expect(router.state.location.pathname).toBe('/exit');
+    await userEvent.click(screen.getByRole('button', { name: 'Exit and sign out' }));
+    expect(router.state.location.pathname).toBe('/login');
     expect(router.state.historyAction).toBe('REPLACE');
     expect(screen.queryByText('health content')).toBeNull();
   });

@@ -17,7 +17,7 @@ async function wipePhone(token: string) {
   await fetch('/api/v1/devices/wiped', { method: 'POST', headers: { 'x-device-token': token } }).catch(
     () => null,
   );
-  window.location.replace('/exit');
+  window.location.replace('/login');
 }
 
 function watch(token: string) {

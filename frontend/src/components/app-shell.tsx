@@ -18,7 +18,8 @@ export function useQuickExit() {
   const dispatch = useDispatch();
   return () => {
     void fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => undefined);
-    void navigate('/exit', { replace: true });
+    // Exit signs out and opens the sign-in page, replacing the history so Back cannot show earlier screens.
+    void navigate('/login', { replace: true });
     dispatch(api.util.resetApiState());
     dispatch(clearSession);
     void clearPersonalCache();

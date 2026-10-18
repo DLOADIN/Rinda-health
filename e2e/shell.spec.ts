@@ -13,7 +13,7 @@ test.describe('app shell', () => {
   });
 
   test('participant tap targets are at least 44 px (NFR-08)', async ({ page }) => {
-    for (const name of ['Get help now', 'Exit to a neutral screen']) {
+    for (const name of ['Get help now', 'Exit and sign out']) {
       const box = await page.getByRole('button', { name }).boundingBox();
       expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
     }
@@ -28,8 +28,8 @@ test.describe('app shell', () => {
   });
 
   test('Exit replaces history so Back shows no earlier content (FR-42)', async ({ page }) => {
-    await page.getByRole('button', { name: 'Exit to a neutral screen' }).click();
-    await expect(page).toHaveURL(/\/exit$/);
+    await page.getByRole('button', { name: 'Exit and sign out' }).click();
+    await expect(page).toHaveURL(/\/login$/);
     await page.goBack();
     await expect(page).not.toHaveURL('http://localhost:4173/');
   });
@@ -37,7 +37,7 @@ test.describe('app shell', () => {
   test('pressing Escape twice exits (FR-42)', async ({ page }) => {
     await page.keyboard.press('Escape');
     await page.keyboard.press('Escape');
-    await expect(page).toHaveURL(/\/exit$/);
+    await expect(page).toHaveURL(/\/login$/);
   });
 
   test('switching language sets <html lang> (FR-21)', async ({ page }) => {
@@ -97,5 +97,5 @@ test('Escape closes Get help now without exiting (FR-42 with FR-12)', async ({ p
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
-  await expect(page).not.toHaveURL(/\/exit$/);
+  await expect(page).not.toHaveURL(/\/login$/);
 });
