@@ -34,16 +34,31 @@ const all = (d: { paragraphs: Array<{ text: string }> }) => d.paragraphs.map((p)
 describe('composeGuideAnswer', () => {
   it('overview lists every NCD area with its band and the focus areas', () => {
     const { draft } = compose('overview', { ...ok, moderateMinutes: 60, servingsPerDay: 3 });
-    expect(all(draft)).toContain('Physical activity: Below recommended.');
-    expect(all(draft)).toContain('The areas to work on first are Physical activity; Fruit and vegetables.');
+    expect(all(draft)).toContain('Physical activity: this needs your attention (Below recommended).');
+    expect(all(draft)).toContain('Tobacco: this looks good (No reported risk).');
+    expect(all(draft)).toContain('Good places to start: Physical activity, Fruit and vegetables.');
     expect(all(draft)).not.toMatch(/mood|stress|PHQ|GAD/i);
     expect(draft.followUpChipIds).toEqual(['first_step', 'plan_week']);
   });
 
-  it('overview shows "not enough information" for an area with missing answers', () => {
+  it('overview says plainly when an area was not answered', () => {
     expect(all(compose('overview', { ...ok, systolic: null }).draft)).toContain(
-      'Blood pressure: Not answered.',
+      'Blood pressure: you did not answer this part, so there is no result yet.',
     );
+  });
+
+  it('overview speaks to results that need a check or care, and falls back to the short line', () => {
+    expect(all(compose('overview', { ...ok, systolic: 145, diastolic: 92 }).draft)).toContain(
+      'Blood pressure: please have this checked again at a health centre',
+    );
+    expect(all(compose('overview', { ...ok, systolic: 185, diastolic: 100 }).draft)).toContain(
+      'Blood pressure: please follow the advice at the top of this answer',
+    );
+    const result = scoreAssessment(buildInput(ok), ruleset);
+    const short = composeGuideAnswer('overview', result, planNextSteps(result, ruleset), (id) =>
+      id.startsWith('guide.tpl.area.') ? id : text(id),
+    );
+    expect(all(short)).toContain('Tobacco: No reported risk.');
   });
 
   it('allowedNumbers skips focus areas without a numeric target', () => {

@@ -10,9 +10,9 @@
     "guide.chip.first_step": "Ni iyihe ntambwe nto nshobora gutangira muri iki cyumweru?",
     "guide.chip.plan_week": "Nkorera gahunda yoroshye y'iki cyumweru",
     "guide.chip.explain": "Nsobanurira igisubizo cya {area}",
-    "guide.tpl.overview.intro": "Dore ibyo isuzuma ryawe riheruka ryerekana. Buri gice gisuzumwa ukwacyo.",
+    "guide.tpl.overview.intro": "Dore ibyo igenzura ryawe riheruka ryerekana. Buri gice tukireba ukwacyo.",
     "guide.tpl.area": "{area}: {band}.",
-    "guide.tpl.overview.focus": "Ibyo gukoraho mbere ni {areas}.",
+    "guide.tpl.overview.focus": "Aho wahera: {areas}.",
     "guide.tpl.overview.ok": "Ibyo washubije byose biri mu rugero rwasabwe. Komereza aho.",
     "guide.tpl.first_step": "Intambwe nto yo gutangira muri iki cyumweru: {step}.",
     "guide.tpl.first_step.none": "Uri mu nzira nziza. Komeza imyitwarire yawe y'ubu muri iki cyumweru.",
@@ -39,6 +39,11 @@
     "guide.area.bp": "Umuvuduko w'amaraso",
     "guide.label.template": "Bivuye mu nyigisho zemejwe",
     "guide.label.generated": "Byanditswe n'umujyanama wa Rinda hashingiwe ku bisubizo byawe",
-    "guide.label.disclaimer": "Ashobora kwibeshya. Ibisubizo byawe n'inama z'umutekano biva ku mategeko yemejwe."
+    "guide.label.disclaimer": "Ashobora kwibeshya. Ibisubizo byawe n'inama z'umutekano biva ku mategeko yemejwe.",
+    "guide.tpl.area.ok": "{area}: ibi bimeze neza ({band}).",
+    "guide.tpl.area.attention": "{area}: ibi bikeneye ko ubyitaho ({band}).",
+    "guide.tpl.area.confirm": "{area}: ni byiza kongera kubisuzumisha ku kigo nderabuzima ({band}).",
+    "guide.tpl.area.urgent": "{area}: kurikiza inama ziri hejuru y'iki gisubizo ({band}).",
+    "guide.tpl.area.unknown": "{area}: iki gice nticyasubijwe, bityo nta gisubizo kiraboneka."
   }
 }

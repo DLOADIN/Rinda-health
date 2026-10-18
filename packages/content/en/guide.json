@@ -10,9 +10,9 @@
     "guide.chip.first_step": "What is one small step I can start this week?",
     "guide.chip.plan_week": "Make me a simple plan for this week",
     "guide.chip.explain": "Explain my result for {area}",
-    "guide.tpl.overview.intro": "Here is what your latest check-up shows. Each area is looked at on its own.",
+    "guide.tpl.overview.intro": "Here is what your latest check-up shows. We look at each area on its own.",
     "guide.tpl.area": "{area}: {band}.",
-    "guide.tpl.overview.focus": "The areas to work on first are {areas}.",
+    "guide.tpl.overview.focus": "Good places to start: {areas}.",
     "guide.tpl.overview.ok": "All the areas you answered are in the recommended range. Keep going.",
     "guide.tpl.first_step": "One small step to start this week: {step}.",
     "guide.tpl.first_step.none": "You are doing well. Keep your current habits going this week.",
@@ -39,6 +39,11 @@
     "guide.area.bp": "Blood pressure",
     "guide.label.template": "From approved guidance",
     "guide.label.generated": "Written by Rinda's guide from your results",
-    "guide.label.disclaimer": "It can make mistakes. Your results and any safety advice come from approved rules."
+    "guide.label.disclaimer": "It can make mistakes. Your results and any safety advice come from approved rules.",
+    "guide.tpl.area.ok": "{area}: this looks good ({band}).",
+    "guide.tpl.area.attention": "{area}: this needs your attention ({band}).",
+    "guide.tpl.area.confirm": "{area}: please have this checked again at a health centre ({band}).",
+    "guide.tpl.area.urgent": "{area}: please follow the advice at the top of this answer ({band}).",
+    "guide.tpl.area.unknown": "{area}: you did not answer this part, so there is no result yet."
   }
 }

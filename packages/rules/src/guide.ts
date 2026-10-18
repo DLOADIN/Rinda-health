@@ -141,15 +141,21 @@ export function composeGuideAnswer(
     return { paragraphs, followUpChipIds: ['first_step', 'overview'] };
   }
 
-  const lines = result.ncd.map((r) => t('guide.tpl.area', { area: area(r.domain), band: t(bandId(r)) }));
+  // Each area gets a plain sentence that fits how it is doing ("this needs your attention"), with the band's own
+  // name kept in brackets. Wording that is missing falls back to the short "Area: band." line.
+  const lineId = (r: DomainResult) => {
+    const id = `guide.tpl.area.${r.severity}`;
+    return text(id) !== id ? id : 'guide.tpl.area';
+  };
+  const lines = result.ncd.map((r) => t(lineId(r), { area: area(r.domain), band: t(bandId(r)) }));
   paragraphs.push({
     text: [t('guide.tpl.overview.intro'), ...lines].join(' '),
-    sourceIds: ['guide.tpl.overview.intro', 'guide.tpl.area', ...result.ncd.map(bandId)],
+    sourceIds: ['guide.tpl.overview.intro', ...new Set(result.ncd.map(lineId)), ...result.ncd.map(bandId)],
   });
   if (plan.focus.length > 0) {
     paragraphs.push({
       text: t('guide.tpl.overview.focus', {
-        areas: plan.focus.map((f) => f.domains.map(area).join(', ')).join('; '),
+        areas: plan.focus.map((f) => f.domains.map(area).join(', ')).join(', '),
       }),
       sourceIds: ['guide.tpl.overview.focus'],
     });
