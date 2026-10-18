@@ -322,7 +322,9 @@
       "diet": "{{value}} servings a day",
       "bmi": "BMI {{value}}",
       "waist": "{{value}} cm",
-      "alcohol": "AUDIT-C score {{value}}"
+      "alcohol": "AUDIT-C score {{value}} of 12",
+      "tobaccoYes": "Uses tobacco now: Yes",
+      "tobaccoNo": "Uses tobacco now: No"
     },
     "targets": {
       "activity_split": "About {{minutesPerDay}} more minutes on {{days}} days this week",

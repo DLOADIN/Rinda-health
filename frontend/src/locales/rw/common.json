@@ -322,7 +322,9 @@
       "diet": "Ibipimo {{value}} ku munsi",
       "bmi": "BMI {{value}}",
       "waist": "{{value}} cm",
-      "alcohol": "Amanota ya AUDIT-C {{value}}"
+      "alcohol": "Amanota ya AUDIT-C {{value}} kuri 12",
+      "tobaccoYes": "Ukoresha itabi ubu: Yego",
+      "tobaccoNo": "Ukoresha itabi ubu: Oya"
     },
     "targets": {
       "activity_split": "Iminota igera kuri {{minutesPerDay}} yiyongera mu minsi {{days}} muri iki cyumweru",

@@ -39,16 +39,26 @@ function useValueText() {
     if (r.domain === 'bp' && assessment.values?.systolic != null && assessment.values.diastolic != null) {
       return `${assessment.values.systolic}/${assessment.values.diastolic} ${t('checkup.units.mmHg')}`;
     }
+    // Tobacco is a yes or no question, so its "value" is the person's own answer.
+    if (r.domain === 'tobacco' && r.band !== 'insufficient') {
+      return t(r.band === 'attention' ? 'results.value.tobaccoYes' : 'results.value.tobaccoNo');
+    }
     return r.value !== null && VALUE_DOMAINS.includes(r.domain)
       ? t(`results.value.${r.domain}`, { value: formatNumber(r.value) })
       : null;
   };
 }
 
-function FocusItem({ area, results }: { area: FocusArea; results: DomainResult[] }) {
+function FocusItem({ area, assessment }: { area: FocusArea; assessment: Assessment }) {
   const { t } = useTranslation();
   const label = useBandLabel();
+  const valueText = useValueText();
+  const results = assessment.results.ncd;
   const first = results.find((r) => r.domain === area.domains[0]);
+  const values = area.domains
+    .map((d) => results.find((r) => r.domain === d))
+    .map((r) => (r ? valueText(r, assessment) : null))
+    .filter((v): v is string => Boolean(v));
   return (
     <Item variant="outline" className="glass">
       <ItemContent>
@@ -56,6 +66,10 @@ function FocusItem({ area, results }: { area: FocusArea; results: DomainResult[]
           {area.domains.map((d) => t(`domains.${d}`)).join(' · ')}
           {first ? <BandBadge severity={first.severity} label={label(first)} /> : null}
         </ItemTitle>
+        {values.length > 0 ? (
+          <p className="text-base font-semibold tabular-nums">{values.join(' · ')}</p>
+        ) : null}
+        {first ? <TargetProgress result={first} /> : null}
         {area.target ? (
           <ItemDescription>{t(`results.targets.${area.target.kind}`, area.target)}</ItemDescription>
         ) : null}
@@ -211,6 +225,7 @@ function WellnessResults({ assessment }: { assessment: Assessment }) {
 export function ResultView({ assessment, compact = false }: { assessment: Assessment; compact?: boolean }) {
   const { t } = useTranslation();
   const label = useBandLabel();
+  const valueText = useValueText();
   const { results, plan } = assessment;
 
   if (compact) {
@@ -220,6 +235,9 @@ export function ResultView({ assessment, compact = false }: { assessment: Assess
           <Item key={r.domain} variant="outline" size="sm" className={CARD_TONE[r.severity]}>
             <ItemContent>
               <ItemTitle>{t(`domains.${r.domain}`)}</ItemTitle>
+              {valueText(r, assessment) ? (
+                <p className="text-sm font-semibold tabular-nums">{valueText(r, assessment)}</p>
+              ) : null}
               <TargetProgress result={r} />
             </ItemContent>
             <BandBadge severity={r.severity} label={label(r)} />
@@ -264,7 +282,7 @@ export function ResultView({ assessment, compact = false }: { assessment: Assess
         {plan.keepGoingId ? <p>{t('results.keepGoing')}</p> : null}
         <ItemGroup className="flex flex-col gap-2">
           {plan.focus.map((area) => (
-            <FocusItem key={area.id} area={area} results={results.ncd} />
+            <FocusItem key={area.id} area={area} assessment={assessment} />
           ))}
         </ItemGroup>
         {plan.other.length > 0 ? (
@@ -272,7 +290,7 @@ export function ResultView({ assessment, compact = false }: { assessment: Assess
             <h3 className="font-semibold">{t('results.otherResults')}</h3>
             <ItemGroup className="flex flex-col gap-2">
               {plan.other.map((area) => (
-                <FocusItem key={area.id} area={area} results={results.ncd} />
+                <FocusItem key={area.id} area={area} assessment={assessment} />
               ))}
             </ItemGroup>
           </>
