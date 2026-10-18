@@ -1,5 +1,6 @@
 // This is the camera helper for the blood pressure step. The picture is read on this device and then thrown away;
 // nothing is saved or sent, and the person always checks the numbers before they are used.
+import '@/features/participant/camera-strings';
 import { Camera, CircleAlert, ImageUp, RotateCcw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';

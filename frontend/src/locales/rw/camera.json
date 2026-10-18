@@ -1,0 +1,20 @@
+{
+  "checkup": {
+    "camera": {
+      "title": "Soma icyuma gipima umuvuduko w'amaraso",
+      "intro": "Erekeza kamera kuri ecran y'icyuma gipima. Ifoto iguma kuri iki gikoresho, ntibikwa kandi ntoherezwa.",
+      "hold": "Shyira imibare mu kazu kandi ufate igikoresho utanyeganyega.",
+      "capture": "Soma nonaha",
+      "photo": "Koresha ifoto",
+      "noCamera": "Kamera ntiboneka hano. Ushobora gukoresha ifoto, cyangwa ukandika imibare ubwawe.",
+      "notRead": "Ntitwashoboye gusoma imibare. Gerageza kwegera no kwirinda urumuri rwinshi, cyangwa uyandike ubwawe.",
+      "found": "Twasomye",
+      "reading": "{{sys}} kuri {{dia}}",
+      "check": "Reba ko bihuye n'ibiri ku cyuma mbere yo kubikoresha.",
+      "use": "Koresha iyi mibare",
+      "retry": "Ongera ugerageze",
+      "type": "Ndayandika ubwanjye",
+      "readingPhoto": "Turimo gusoma ifoto yawe… Bifata amasegonda make."
+    }
+  }
+}

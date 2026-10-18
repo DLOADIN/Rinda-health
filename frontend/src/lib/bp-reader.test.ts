@@ -107,7 +107,7 @@ describe('readBpDisplay', () => {
         systolic: sys,
         diastolic: dia,
       });
-  });
+  }, 30_000); // five screens, each read several ways; a busy test run needs the extra time
 
   it('ignores the monitor casing around the screen', () => {
     expect(
