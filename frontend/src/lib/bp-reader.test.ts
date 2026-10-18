@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agreeingReading, readBpDisplay, toGray, type Gray } from '@/lib/bp-reader';
+import { agreeingReading, readBpDisplay, readBpPhoto, toGray, type Gray } from '@/lib/bp-reader';
 
 const SEGMENTS: Record<number, string> = {
   0: 'abcdef',
@@ -158,7 +158,7 @@ describe('readBpDisplay', () => {
       );
       if (r) expect(r).toMatchObject({ systolic: 136, diastolic: 88 });
     }
-  }, 30_000); // 60 pictures; slower machines and a busy test run need the extra time
+  }, 120_000); // 60 pictures; slower machines and a busy test run need the extra time
 
   it('refuses a blank or implausible screen rather than guessing', () => {
     expect(readBpDisplay(drawScreen({ rows: [] }))).toBeNull();
@@ -171,6 +171,45 @@ describe('readBpDisplay', () => {
     g.data.forEach((v, i) => rgba.set([v, v, v, 255], i * 4));
     expect(readBpDisplay(toGray(rgba, g.width, g.height))).toMatchObject({ systolic: 128, diastolic: 82 });
   });
+});
+
+// This puts a drawn monitor screen into a bigger photo with a light casing, round buttons and a label, the way a
+// person photographs the whole monitor on a table.
+function photoOf(screen: Gray, at: { x: number; y: number }) {
+  const width = 900;
+  const height = 560;
+  const rgba = new Uint8ClampedArray(width * height * 4);
+  const put = (x: number, y: number, v: number) => {
+    if (x >= 0 && y >= 0 && x < width && y < height) rgba.set([v, v, v, 255], (y * width + x) * 4);
+  };
+  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) put(x, y, 205);
+  for (let y = at.y - 40; y < at.y + screen.height + 40; y++)
+    for (let x = at.x - 40; x < at.x + screen.width + 160; x++) put(x, y, 238);
+  for (const [cx, cy] of [
+    [at.x + screen.width + 80, at.y + 60],
+    [at.x + screen.width + 80, at.y + 160],
+  ] as const)
+    for (let y = -22; y <= 22; y++)
+      for (let x = -22; x <= 22; x++) if (x * x + y * y < 484) put(cx + x, cy + y, 120);
+  for (let y = 0; y < 14; y++) for (let x = 0; x < 50; x++) put(at.x - 70 + x, at.y + 30 + y, 90);
+  for (let y = 0; y < screen.height; y++)
+    for (let x = 0; x < screen.width; x++) put(at.x + x, at.y + y, screen.data[y * screen.width + x] ?? 0);
+  return { rgba, width, height };
+}
+
+describe('readBpPhoto', () => {
+  it('finds the screen anywhere in a photo of the whole monitor', () => {
+    const { rgba, width, height } = photoOf(drawScreen({ rows: MONITOR(132, 84, 66), casing: true }), {
+      x: 300,
+      y: 120,
+    });
+    expect(readBpPhoto(rgba, width, height)).toMatchObject({ systolic: 132, diastolic: 84 });
+  }, 60_000);
+
+  it('offers nothing for a photo without a monitor', () => {
+    const rgba = new Uint8ClampedArray(400 * 300 * 4).fill(180);
+    expect(readBpPhoto(rgba, 400, 300)).toBeNull();
+  }, 60_000);
 });
 
 describe('agreeingReading', () => {

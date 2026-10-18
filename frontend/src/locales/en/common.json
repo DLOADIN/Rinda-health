@@ -297,7 +297,8 @@
       "check": "Check these match the monitor before you use them.",
       "use": "Use these numbers",
       "retry": "Try again",
-      "type": "Type them myself"
+      "type": "Type them myself",
+      "readingPhoto": "Reading your photo… This takes a few seconds."
     }
   },
   "results": {

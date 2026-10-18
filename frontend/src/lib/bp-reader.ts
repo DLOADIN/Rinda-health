@@ -77,42 +77,130 @@ function smooth(img: Gray): Gray {
   return { data: out, width, height };
 }
 
-/** Marks pixels clearly darker and clearly lighter than their surroundings; either can be the digits. */
-function binarize(img: Gray): { dark: Uint8Array; light: Uint8Array } {
-  const { data, width, height } = img;
-  // Local threshold against a blurred background copes with uneven light and reflections on the screen.
-  const r = Math.max(4, Math.round(Math.min(width, height) / 8));
-  const integral = new Float64Array((width + 1) * (height + 1));
+/**
+ * Sliding-window minimum or maximum of one line (van Herk / Gil-Werman), so the cost does not grow with the
+ * window: each value is the best of the window from x - r to x + r.
+ */
+function slide(line: Float64Array, r: number, max: boolean): Float64Array {
+  const n = line.length;
+  const k = 2 * r + 1;
+  const edge = max ? -Infinity : Infinity;
+  const padded = new Float64Array(n + 2 * r).fill(edge);
+  padded.set(line, r);
+  const len = padded.length;
+  const forward = new Float64Array(len);
+  const backward = new Float64Array(len);
+  const pick = max ? Math.max : Math.min;
+  for (let i = 0; i < len; i++)
+    forward[i] = i % k === 0 ? (padded[i] ?? edge) : pick(forward[i - 1] ?? edge, padded[i] ?? edge);
+  for (let i = len - 1; i >= 0; i--)
+    backward[i] =
+      i === len - 1 || (i + 1) % k === 0
+        ? (padded[i] ?? edge)
+        : pick(backward[i + 1] ?? edge, padded[i] ?? edge);
+  const out = new Float64Array(n);
+  for (let x = 0; x < n; x++) out[x] = pick(backward[x] ?? edge, forward[x + 2 * r] ?? edge);
+  return out;
+}
+
+/** Square grey-scale dilation (max) or erosion (min): rows first, then columns. */
+function morph(data: Uint8Array, width: number, height: number, r: number, max: boolean): Uint8Array {
+  const tmp = new Uint8Array(data.length);
+  const out = new Uint8Array(data.length);
+  const row = new Float64Array(width);
   for (let y = 0; y < height; y++) {
-    let row = 0;
-    for (let x = 0; x < width; x++) {
-      row += data[y * width + x] ?? 0;
-      integral[(y + 1) * (width + 1) + x + 1] = (integral[y * (width + 1) + x + 1] ?? 0) + row;
+    for (let x = 0; x < width; x++) row[x] = data[y * width + x] ?? 0;
+    const done = slide(row, r, max);
+    for (let x = 0; x < width; x++) tmp[y * width + x] = done[x] ?? 0;
+  }
+  const col = new Float64Array(height);
+  for (let x = 0; x < width; x++) {
+    for (let y = 0; y < height; y++) col[y] = tmp[y * width + x] ?? 0;
+    const done = slide(col, r, max);
+    for (let y = 0; y < height; y++) out[y * width + x] = done[y] ?? 0;
+  }
+  return out;
+}
+
+/** Otsu's threshold for a set of values from 0 to 255. */
+function otsu(values: Uint8Array): number {
+  const hist = new Array<number>(256).fill(0);
+  for (const v of values) hist[v] = (hist[v] ?? 0) + 1;
+  const total = values.length;
+  let sum = 0;
+  for (let i = 0; i < 256; i++) sum += i * (hist[i] ?? 0);
+  let sumB = 0;
+  let wB = 0;
+  let best = 0;
+  let threshold = 0;
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t] ?? 0;
+    if (!wB) continue;
+    const wF = total - wB;
+    if (!wF) break;
+    sumB += t * (hist[t] ?? 0);
+    const between = wB * wF * (sumB / wB - (sum - sumB) / wF) ** 2;
+    if (between > best) {
+      best = between;
+      threshold = t;
     }
   }
-  const dark = new Uint8Array(width * height);
-  const light = new Uint8Array(width * height);
+  return threshold;
+}
+
+/**
+ * Marks thin strokes darker (and lighter) than their surroundings. A top-hat filter takes away anything wider than a
+ * digit stroke first, so shadows across the screen and the dark border around it are not mistaken for digits.
+ */
+function binarize(img: Gray, stroke: number): { dark: Uint8Array; light: Uint8Array } {
+  const { data, width, height } = img;
+  const r = Math.max(3, Math.round(Math.min(width, height) * stroke));
+  const closed = morph(morph(data, width, height, r, true), width, height, r, false);
+  const opened = morph(morph(data, width, height, r, false), width, height, r, true);
+  const darkHat = new Uint8Array(data.length);
+  const lightHat = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    darkHat[i] = (closed[i] ?? 0) - (data[i] ?? 0);
+    lightHat[i] = (data[i] ?? 0) - (opened[i] ?? 0);
+  }
+  const mark = (hat: Uint8Array) => {
+    const t = Math.max(20, otsu(hat));
+    return hat.map((v) => (v > t ? 1 : 0));
+  };
+  return { dark: mark(darkHat), light: mark(lightHat) };
+}
+
+/**
+ * Removes long straight lines, such as the edges of the screen, which can touch the digits and join them together.
+ * A digit's own strokes are far shorter than these.
+ */
+function dropLines(ink: Uint8Array, width: number, height: number): Uint8Array {
+  const out = Uint8Array.from(ink);
+  const longRow = Math.max(8, Math.round(width * 0.2));
+  const longCol = Math.max(8, Math.round(height * 0.35));
   for (let y = 0; y < height; y++) {
-    const ya = Math.max(0, y - r);
-    const yb = Math.min(height, y + r + 1);
-    for (let x = 0; x < width; x++) {
-      const xa = Math.max(0, x - r);
-      const xb = Math.min(width, x + r + 1);
-      const sum =
-        (integral[yb * (width + 1) + xb] ?? 0) -
-        (integral[ya * (width + 1) + xb] ?? 0) -
-        (integral[yb * (width + 1) + xa] ?? 0) +
-        (integral[ya * (width + 1) + xa] ?? 0);
-      const mean = sum / ((yb - ya) * (xb - xa));
-      const v = data[y * width + x] ?? 0;
-      if (v < mean - 12) {
-        dark[y * width + x] = 1;
-      } else if (v > mean + 12) {
-        light[y * width + x] = 1;
+    let start = -1;
+    for (let x = 0; x <= width; x++) {
+      const on = x < width && ink[y * width + x];
+      if (on && start < 0) start = x;
+      if (!on && start >= 0) {
+        if (x - start >= longRow) for (let i = start; i < x; i++) out[y * width + i] = 0;
+        start = -1;
       }
     }
   }
-  return { dark, light };
+  for (let x = 0; x < width; x++) {
+    let start = -1;
+    for (let y = 0; y <= height; y++) {
+      const on = y < height && ink[y * width + x];
+      if (on && start < 0) start = y;
+      if (!on && start >= 0) {
+        if (y - start >= longCol) for (let i = start; i < y; i++) out[i * width + x] = 0;
+        start = -1;
+      }
+    }
+  }
+  return out;
 }
 
 /** Drops lone specks: an ink pixel needs at least two ink neighbours to count. */
@@ -306,21 +394,112 @@ function readRow(ink: Uint8Array, width: number, row: Box): number | null {
   return value;
 }
 
+// The filter size has to suit how thick the digit strokes look, which depends on how close the picture was taken.
+const STROKES = [0.03, 0.05, 0.08];
+
 /**
  * Reads systolic, diastolic and (if shown) pulse from a grey image of the monitor's screen. Returns null when it
  * is not sure, so the person is never shown a guess that does not look like a real reading.
  */
 export function readBpDisplay(img: Gray): BpReading | null {
   const { width, height } = img;
-  const { dark, light } = binarize(smooth(img));
-  // Screens can be dark-on-light or backlit. Both are tried, and a reading is offered only if they do not disagree.
-  const found = [dark, light]
-    .map((ink) => readInk(keepDigitShapes(despeckle(ink, width, height), width, height), width, height))
-    .filter((r): r is BpReading => r !== null);
-  const [first, second] = found;
+  const smoothed = smooth(img);
+  // Screens can be dark-on-light or backlit, and digits can look thin or thick. Every combination is tried, and a
+  // reading is offered only if none of them disagrees.
+  const found: BpReading[] = [];
+  for (const stroke of STROKES) {
+    const { dark, light } = binarize(smoothed, stroke);
+    for (const ink of [dark, light]) {
+      const r = readInk(
+        dropLines(keepDigitShapes(despeckle(ink, width, height), width, height), width, height),
+        width,
+        height,
+      );
+      if (r) found.push(r);
+    }
+  }
+  const [first] = found;
   if (!first) return null;
-  if (second && (second.systolic !== first.systolic || second.diastolic !== first.diastolic)) return null;
-  return first;
+  if (found.some((r) => r.systolic !== first.systolic || r.diastolic !== first.diastolic)) return null;
+  return found.find((r) => r.pulse !== null) ?? first;
+}
+
+const MAX_PHOTO_WINDOWS = 120;
+
+export type PhotoWindow = readonly [x: number, y: number, w: number, h: number];
+
+/**
+ * The windows a photo is searched with: the whole picture, then smaller squares and portrait boxes sized against
+ * its shorter side, nearest the middle first because people usually centre the monitor.
+ */
+export function photoWindows(width: number, height: number): PhotoWindow[] {
+  const out: Array<PhotoWindow & { d: number }> = [];
+  const short = Math.min(width, height);
+  for (const size of [0.75, 0.55, 0.45, 0.36, 0.28]) {
+    for (const aspect of [1, 1.3]) {
+      const w = Math.round(short * size);
+      const h = Math.min(height, Math.round(w * aspect));
+      if (w < 40 || h < 40 || w > width) continue;
+      const step = Math.max(4, Math.round(w / 4));
+      for (let y = 0; y + h <= height; y += step)
+        for (let x = 0; x + w <= width; x += step) {
+          const d = Math.hypot(x + w / 2 - width / 2, y + h / 2 - height / 2) / short;
+          out.push(Object.assign([x, y, w, h] as const, { d }));
+        }
+    }
+  }
+  out.sort((a, b) => a.d - b.d);
+  // Capped, so a photo with no readable screen gives up in a few seconds instead of keeping the person waiting.
+  return [
+    [0, 0, width, height],
+    ...out.slice(0, MAX_PHOTO_WINDOWS - 1).map(([x, y, w, h]) => [x, y, w, h] as const),
+  ];
+}
+
+/** Reads one window of a photo. */
+export function readPhotoWindow(rgba: Uint8ClampedArray, width: number, win: PhotoWindow): BpReading | null {
+  const [x0, y0, w, h] = win;
+  const crop = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++)
+    crop.set(rgba.subarray(((y0 + y) * width + x0) * 4, ((y0 + y) * width + x0 + w) * 4), y * w * 4);
+  return readBpDisplay(toGray(crop, w, h, 200));
+}
+
+/** Keeps a tally of what the windows read, and says when one reading clearly wins. */
+export function createPhotoVote() {
+  const votes = new Map<string, { n: number; r: BpReading }>();
+  const ranked = () => [...votes.values()].sort((a, b) => b.n - a.n);
+  return {
+    add(r: BpReading) {
+      const key = `${r.systolic}/${r.diastolic}`;
+      const v = votes.get(key);
+      votes.set(key, { n: (v?.n ?? 0) + 1, r: v?.r.pulse != null ? v.r : r });
+    },
+    /** Sure enough to stop searching early. */
+    settled() {
+      const [best, next] = ranked();
+      return Boolean(best && best.n >= 3 && best.n >= 3 * (next?.n ?? 0));
+    },
+    /** The reading to offer: at least two windows, and at least twice as many as any other reading. */
+    result(): BpReading | null {
+      const [best, next] = ranked();
+      return best && best.n >= 2 && best.n >= 2 * (next?.n ?? 0) ? best.r : null;
+    },
+  };
+}
+
+/**
+ * Reads a whole photo, where the monitor's screen may be anywhere and any size. A reading is offered only when
+ * several windows agree on it and it clearly beats anything else read.
+ */
+export function readBpPhoto(rgba: Uint8ClampedArray, width: number, height: number): BpReading | null {
+  const vote = createPhotoVote();
+  for (const win of photoWindows(width, height)) {
+    const r = readPhotoWindow(rgba, width, win);
+    if (r) vote.add(r);
+    if (vote.settled()) break;
+  }
+  return vote.result();
 }
 
 function readInk(ink: Uint8Array, width: number, height: number): BpReading | null {
@@ -357,7 +536,7 @@ function readInk(ink: Uint8Array, width: number, height: number): BpReading | nu
   if (!first || !second) return null;
   const h1 = first[1] - first[0] + 1;
   const h2 = second[1] - second[0] + 1;
-  if (Math.min(h1, h2) < Math.max(h1, h2) * 0.7) return null;
+  if (Math.min(h1, h2) < Math.max(h1, h2) * 0.8) return null;
   if (systolic < 60 || systolic > 260 || diastolic < 30 || diastolic > 160 || diastolic >= systolic)
     return null;
   return { systolic, diastolic, pulse: pulse != null && pulse >= 30 && pulse <= 220 ? pulse : null };

@@ -14,7 +14,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
-import { agreeingReading, readBpDisplay, toGray, type BpReading } from '@/lib/bp-reader';
+import {
+  agreeingReading,
+  createPhotoVote,
+  photoWindows,
+  readBpDisplay,
+  readPhotoWindow,
+  toGray,
+  type BpReading,
+} from '@/lib/bp-reader';
 
 interface Props {
   open: boolean;
@@ -22,7 +30,7 @@ interface Props {
   onUse: (reading: { systolic: number; diastolic: number }) => void;
 }
 
-type Stage = 'starting' | 'scanning' | 'no-camera' | 'not-read' | 'found';
+type Stage = 'starting' | 'scanning' | 'reading' | 'no-camera' | 'not-read' | 'found';
 
 // The frame on screen covers the middle of the picture; only that part is read.
 const FRAME = { x: 0.12, y: 0.15, w: 0.76, h: 0.7 };
@@ -138,24 +146,37 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
     e.target.value = '';
     if (!picked) return;
     stop();
-    setStage('starting');
+    setStage('reading');
     const bitmap = await createImageBitmap(picked).catch(() => null);
     if (!bitmap) {
       setStage('not-read');
       return;
     }
+    // The photo may show the whole monitor, the cuff and the table, so it is searched window by window for the
+    // screen. Pausing between windows keeps the screen responsive while it works.
+    const scale = Math.min(1, 900 / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
     canvas.current ??= document.createElement('canvas');
-    // A photo may show the whole monitor, so the middle is tried at a few sizes.
-    let r: BpReading | null = null;
-    for (const crop of [
-      { x: 0, y: 0, w: 1, h: 1 },
-      { x: 0.15, y: 0.15, w: 0.7, h: 0.7 },
-      { x: 0.25, y: 0.25, w: 0.5, h: 0.5 },
-    ]) {
-      r = readCanvas(canvas.current, bitmap, bitmap.width, bitmap.height, crop);
-      if (r) break;
-    }
+    canvas.current.width = w;
+    canvas.current.height = h;
+    const ctx = canvas.current.getContext('2d', { willReadFrequently: true });
+    ctx?.drawImage(bitmap, 0, 0, w, h);
     bitmap.close();
+    const pixels = ctx?.getImageData(0, 0, w, h).data;
+    ctx?.clearRect(0, 0, w, h);
+    if (!pixels) {
+      setStage('not-read');
+      return;
+    }
+    const vote = createPhotoVote();
+    for (const win of photoWindows(w, h)) {
+      const r = readPhotoWindow(pixels, w, win);
+      if (r) vote.add(r);
+      if (vote.settled()) break;
+      await new Promise((resolve) => window.setTimeout(resolve, 0));
+    }
+    const r = vote.result();
     if (r) {
       setFound(r);
       setStage('found');
@@ -200,6 +221,13 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
           <p className="text-sm text-muted-foreground" aria-live="polite">
             {t('checkup.camera.hold')}
           </p>
+        ) : null}
+
+        {stage === 'reading' ? (
+          <div className="flex items-center gap-3 rounded-2xl border bg-card p-4" aria-live="polite">
+            <Spinner />
+            <p className="text-sm">{t('checkup.camera.readingPhoto')}</p>
+          </div>
         ) : null}
 
         {stage === 'no-camera' || stage === 'not-read' ? (
