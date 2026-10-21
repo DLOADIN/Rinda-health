@@ -384,6 +384,17 @@ function readRow(ink: Uint8Array, width: number, row: Box): number | null {
   }
   const tallest = Math.max(0, ...boxes.map((b) => b.y1 - b.y0 + 1));
   const digits = boxes.filter((b) => b.y1 - b.y0 + 1 >= tallest * 0.75);
+  // Many monitors show a thin level or memory bar just after the last digit. A real 1 at the end sits further
+  // away (it is drawn on the right of its own digit space), so a thin shape tucked close to the last digit is dropped.
+  while (digits.length > 1) {
+    const last = digits[digits.length - 1];
+    const before = digits[digits.length - 2];
+    if (!last || !before) break;
+    const thin = last.x1 - last.x0 + 1 < tallest * 0.3;
+    const close = last.x0 - before.x1 - 1 < tallest * 0.3;
+    if (thin && close) digits.pop();
+    else break;
+  }
   if (digits.length === 0 || digits.length > 3) return null;
   let value = 0;
   for (const box of digits) {
@@ -456,14 +467,115 @@ export function photoWindows(width: number, height: number): PhotoWindow[] {
   ];
 }
 
-/** Reads one window of a photo. */
-export function readPhotoWindow(rgba: Uint8ClampedArray, width: number, win: PhotoWindow): BpReading | null {
-  const [x0, y0, w, h] = win;
-  const crop = new Uint8ClampedArray(w * h * 4);
-  for (let y = 0; y < h; y++)
-    crop.set(rgba.subarray(((y0 + y) * width + x0) * 4, ((y0 + y) * width + x0 + w) * 4), y * w * 4);
-  return readBpDisplay(toGray(crop, w, h, 200));
+/**
+ * The windows to try around a spot the person tapped on the monitor's screen: a few sizes, each nudged a little
+ * in every direction, all kept inside the photo.
+ */
+export function windowsAround(width: number, height: number, cx: number, cy: number): PhotoWindow[] {
+  const short = Math.min(width, height);
+  const out: PhotoWindow[] = [];
+  for (const size of [0.22, 0.28, 0.35, 0.44]) {
+    for (const aspect of [1, 1.25]) {
+      const w = Math.min(width, Math.round(short * size));
+      const h = Math.min(height, Math.round(w * aspect));
+      for (const [dx, dy] of [
+        [0, 0],
+        [-0.12, 0],
+        [0.12, 0],
+        [0, -0.12],
+        [0, 0.12],
+      ] as const) {
+        const x = Math.round(Math.min(width - w, Math.max(0, cx - w / 2 + dx * w)));
+        const y = Math.round(Math.min(height - h, Math.max(0, cy - h / 2 + dy * h)));
+        out.push([x, y, w, h]);
+      }
+    }
+  }
+  return out;
 }
+
+/** Reads the screen around a tapped spot; several windows must agree, as with a whole photo. */
+export function readBpAround(
+  rgba: Uint8ClampedArray,
+  width: number,
+  height: number,
+  cx: number,
+  cy: number,
+): BpReading | null {
+  const vote = createPhotoVote();
+  const { straight, turned } = tapAttempts(width, height, cx, cy);
+  for (const win of straight) {
+    const r = readPhotoWindow(rgba, width, win);
+    if (r) vote.add(r);
+    if (vote.settled()) break;
+  }
+  if (vote.result()) return vote.result();
+  for (const [win, angle] of turned) {
+    const r = readPhotoWindow(rgba, width, win, angle);
+    if (r) vote.add(r);
+    if (vote.settled()) break;
+  }
+  return vote.result();
+}
+
+/**
+ * What is tried around a tapped spot: windows read straight first, then, only if nothing clear came of those,
+ * the same windows slightly rotated in case the monitor was photographed at an angle.
+ */
+export function tapAttempts(width: number, height: number, cx: number, cy: number) {
+  const straight = windowsAround(width, height, cx, cy);
+  const turned = TILTS.flatMap((angle) =>
+    straight.filter((_, i) => i < 30).map((win) => [win, angle] as const),
+  );
+  return { straight, turned };
+}
+
+const TILTS = [-16, 16, -8, 8];
+
+/** Reads one window of a photo. */
+export function readPhotoWindow(
+  rgba: Uint8ClampedArray,
+  width: number,
+  win: PhotoWindow,
+  angle = 0,
+): BpReading | null {
+  const [x0, y0, w, h] = win;
+  const height = Math.floor(rgba.length / 4 / width);
+  // Small screens in a photo have digits only a few pixels thick, so every window is resized (smoothly, up or
+  // down) to a working size before it is read. A monitor photographed at an angle is turned upright first.
+  const scale = WORK_SIZE / Math.max(w, h);
+  const W = Math.max(1, Math.round(w * scale));
+  const H = Math.max(1, Math.round(h * scale));
+  const data = new Uint8Array(W * H);
+  const lum = (x: number, y: number) => {
+    const i = (Math.min(height - 1, Math.max(0, y)) * width + Math.min(width - 1, Math.max(0, x))) * 4;
+    return ((rgba[i] ?? 0) * 299 + (rgba[i + 1] ?? 0) * 587 + (rgba[i + 2] ?? 0) * 114) / 1000;
+  };
+  const cos = Math.cos((angle * Math.PI) / 180);
+  const sin = Math.sin((angle * Math.PI) / 180);
+  const cx = x0 + w / 2;
+  const cy = y0 + h / 2;
+  for (let y = 0; y < H; y++) {
+    const ry = (y + 0.5) / scale - h / 2;
+    for (let x = 0; x < W; x++) {
+      const rx = (x + 0.5) / scale - w / 2;
+      const sx = cx + rx * cos - ry * sin - 0.5;
+      const sy = cy + rx * sin + ry * cos - 0.5;
+      const xa = Math.floor(sx);
+      const ya = Math.floor(sy);
+      const fx = sx - xa;
+      const fy = sy - ya;
+      data[y * W + x] =
+        lum(xa, ya) * (1 - fx) * (1 - fy) +
+        lum(xa + 1, ya) * fx * (1 - fy) +
+        lum(xa, ya + 1) * (1 - fx) * fy +
+        lum(xa + 1, ya + 1) * fx * fy;
+    }
+  }
+  return readBpDisplay({ data, width: W, height: H });
+}
+
+const WORK_SIZE = 220;
 
 /** Keeps a tally of what the windows read, and says when one reading clearly wins. */
 export function createPhotoVote() {

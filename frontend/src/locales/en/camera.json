@@ -14,7 +14,8 @@
       "use": "Use these numbers",
       "retry": "Try again",
       "type": "Type them myself",
-      "readingPhoto": "Reading your photo… This takes a few seconds."
+      "readingPhoto": "Reading the numbers… This can take a few seconds.",
+      "tapScreen": "Tap the numbers on the monitor's screen in your photo."
     }
   }
 }

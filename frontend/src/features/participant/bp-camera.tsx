@@ -2,7 +2,7 @@
 // nothing is saved or sent, and the person always checks the numbers before they are used.
 import '@/features/participant/camera-strings';
 import { Camera, CircleAlert, ImageUp, RotateCcw } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -18,11 +18,12 @@ import { Spinner } from '@/components/ui/spinner';
 import {
   agreeingReading,
   createPhotoVote,
-  photoWindows,
+  tapAttempts,
   readBpDisplay,
   readPhotoWindow,
   toGray,
   type BpReading,
+  type PhotoWindow,
 } from '@/lib/bp-reader';
 
 interface Props {
@@ -31,7 +32,7 @@ interface Props {
   onUse: (reading: { systolic: number; diastolic: number }) => void;
 }
 
-type Stage = 'starting' | 'scanning' | 'reading' | 'no-camera' | 'not-read' | 'found';
+type Stage = 'starting' | 'scanning' | 'tap' | 'reading' | 'no-camera' | 'not-read' | 'found';
 
 // The frame on screen covers the middle of the picture; only that part is read.
 const FRAME = { x: 0.12, y: 0.15, w: 0.76, h: 0.7 };
@@ -66,6 +67,12 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
   const recent = useRef<BpReading[]>([]);
   const [stage, setStage] = useState<Stage>('starting');
   const [found, setFound] = useState<BpReading | null>(null);
+  const [photo, setPhoto] = useState<{
+    pixels: Uint8ClampedArray;
+    w: number;
+    h: number;
+    preview: string;
+  } | null>(null);
 
   const stop = useCallback(() => {
     stream.current?.getTracks().forEach((track) => track.stop());
@@ -153,8 +160,7 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
       setStage('not-read');
       return;
     }
-    // The photo may show the whole monitor, the cuff and the table, so it is searched window by window for the
-    // screen. Pausing between windows keeps the screen responsive while it works.
+    // The photo is kept only in memory while this dialog is open. The person then taps the monitor's screen in it.
     const scale = Math.min(1, 900 / Math.max(bitmap.width, bitmap.height));
     const w = Math.max(1, Math.round(bitmap.width * scale));
     const h = Math.max(1, Math.round(bitmap.height * scale));
@@ -165,14 +171,29 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
     ctx?.drawImage(bitmap, 0, 0, w, h);
     bitmap.close();
     const pixels = ctx?.getImageData(0, 0, w, h).data;
+    const preview = canvas.current.toDataURL('image/jpeg', 0.85);
     ctx?.clearRect(0, 0, w, h);
     if (!pixels) {
       setStage('not-read');
       return;
     }
+    setPhoto({ pixels, w, h, preview });
+    setStage('tap');
+  };
+
+  // Reads around the spot the person tapped, pausing between attempts so the screen stays responsive.
+  const readAtTap = async (e: MouseEvent<HTMLButtonElement>) => {
+    if (!photo) return;
+    const box = e.currentTarget.getBoundingClientRect();
+    const cx = ((e.clientX - box.left) / box.width) * photo.w;
+    const cy = ((e.clientY - box.top) / box.height) * photo.h;
+    setStage('reading');
     const vote = createPhotoVote();
-    for (const win of photoWindows(w, h)) {
-      const r = readPhotoWindow(pixels, w, win);
+    const { straight, turned } = tapAttempts(photo.w, photo.h, cx, cy);
+    const attempts: Array<readonly [PhotoWindow, number]> = straight.map((win) => [win, 0] as const);
+    for (const [index, [win, angle]] of [...attempts, ...turned].entries()) {
+      if (index === attempts.length && vote.result()) break;
+      const r = readPhotoWindow(photo.pixels, photo.w, win, angle);
       if (r) vote.add(r);
       if (vote.settled()) break;
       await new Promise((resolve) => window.setTimeout(resolve, 0));
@@ -222,6 +243,22 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
           <p className="text-sm text-muted-foreground" aria-live="polite">
             {t('checkup.camera.hold')}
           </p>
+        ) : null}
+
+        {stage === 'tap' && photo ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium" aria-live="polite">
+              {t('checkup.camera.tapScreen')}
+            </p>
+            <button
+              type="button"
+              onClick={(e) => void readAtTap(e)}
+              aria-label={t('checkup.camera.tapScreen')}
+              className="overflow-hidden rounded-2xl border outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <img src={photo.preview} alt="" className="block w-full cursor-crosshair" />
+            </button>
+          </div>
         ) : null}
 
         {stage === 'reading' ? (
