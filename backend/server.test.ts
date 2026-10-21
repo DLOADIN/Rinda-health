@@ -9,6 +9,8 @@ import { createCollector, sealHandover, toFrames } from '../frontend/src/lib/han
 import {
   createApp,
   createLogger,
+  explainWithGemini,
+  geminiModels,
   handoverKey,
   handoverToken,
   handoverTokenValid,
@@ -37,6 +39,45 @@ function sinkLogger() {
 }
 
 describe('without a database', () => {
+  it('moves to the next free Gemini model when one has used up its allowance, and skips it for the day', async () => {
+    const config = loadConfig({
+      APP_ENV: 'test',
+      GEMINI_API_KEY: 'test-key',
+      GEMINI_MODEL: 'model-one',
+      GEMINI_FALLBACK_MODELS: 'model-two, model-three,model-one',
+    });
+    expect(geminiModels(config)).toEqual(['model-one', 'model-two', 'model-three']);
+    const asked: string[] = [];
+    const fakeFetch = (async (url: string) => {
+      const model = /models\/([^:]+):/.exec(url)?.[1] ?? '';
+      asked.push(model);
+      if (model === 'model-one') return new Response('{}', { status: 429 });
+      return new Response(JSON.stringify({ candidates: [] }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const first = await explainWithGemini(config, fakeFetch, {}, {}, []);
+    expect(first.model).toBe('model-two');
+    expect(asked).toEqual(['model-one', 'model-two']);
+    asked.length = 0;
+    await explainWithGemini(config, fakeFetch, {}, {}, []);
+    expect(asked).toEqual(['model-two']);
+
+    // A busy model (503) is passed over for that request only, not for the day.
+    const busyConfig = loadConfig({
+      APP_ENV: 'test',
+      GEMINI_API_KEY: 'k',
+      GEMINI_MODEL: 'busy-one',
+      GEMINI_FALLBACK_MODELS: 'calm-two',
+    });
+    let busy = true;
+    const busyFetch = (async (url: string) =>
+      url.includes('busy-one') && busy
+        ? new Response('{}', { status: 503 })
+        : new Response(JSON.stringify({ candidates: [] }), { status: 200 })) as unknown as typeof fetch;
+    expect((await explainWithGemini(busyConfig, busyFetch, {}, {}, [])).model).toBe('calm-two');
+    busy = false;
+    expect((await explainWithGemini(busyConfig, busyFetch, {}, {}, [])).model).toBe('busy-one');
+  });
+
   it('offline hand-over: the phone seals, the frames reassemble, and only the server key opens it', async () => {
     const secret = randomBytes(48).toString('base64url');
     const server = handoverKey(secret);

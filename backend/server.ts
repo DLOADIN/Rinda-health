@@ -128,6 +128,10 @@ const EnvSchema = z
     GOOGLE_CLIENT_SECRET: optionalText,
     GEMINI_API_KEY: optionalText,
     GEMINI_MODEL: z.string().default('gemini-3.5-flash'),
+    // Tried in order when the first model has used up its free allowance for the day.
+    GEMINI_FALLBACK_MODELS: z
+      .string()
+      .default('gemini-3.5-flash-lite,gemini-flash-latest,gemini-flash-lite-latest,gemini-3.1-flash-lite'),
     ETHICS_AMENDMENT_REF: optionalText,
     GEMINI_PAID_TIER: z.preprocess(emptyAsUndefined, z.enum(['true', 'false']).default('false')),
     BREVO_API_KEY: optionalText,
@@ -694,19 +698,52 @@ interface GeminiResult {
   outcome: GuideOutcome | 'error' | 'refused';
   inputTokens: number | null;
   outputTokens: number | null;
+  model: string | null;
 }
 
-async function explainWithGemini(
+// This is where the guide moves on to the next free model when one has used up its free allowance for the day.
+// A model that answers "quota used up" (429) or "not available" (404) is skipped until the next UTC day; one
+// that is only busy (503) is skipped for that request.
+const spentModels = new Map<string, string>();
+
+export function geminiModels(config: Pick<AppConfig, 'GEMINI_MODEL' | 'GEMINI_FALLBACK_MODELS'>): string[] {
+  const list = [config.GEMINI_MODEL, ...config.GEMINI_FALLBACK_MODELS.split(',')].map((m) => m.trim());
+  return [...new Set(list.filter((m) => /^[a-z0-9.-]{3,60}$/i.test(m)))];
+}
+
+export async function explainWithGemini(
   config: AppConfig,
   fetchFn: typeof fetch,
   facts: Record<string, unknown>,
   library: Record<string, string>,
   allowed: readonly number[],
 ): Promise<GeminiResult> {
+  const today = new Date().toISOString().slice(0, 10);
+  for (const model of geminiModels(config)) {
+    if (spentModels.get(model) === today) continue;
+    const result = await askGemini(config, fetchFn, model, facts, library, allowed);
+    if (result === 'spent') {
+      spentModels.set(model, today);
+      continue;
+    }
+    if (result === 'busy') continue;
+    return { ...result, model };
+  }
+  return { answer: null, outcome: 'error', inputTokens: null, outputTokens: null, model: null };
+}
+
+async function askGemini(
+  config: AppConfig,
+  fetchFn: typeof fetch,
+  model: string,
+  facts: Record<string, unknown>,
+  library: Record<string, string>,
+  allowed: readonly number[],
+): Promise<Omit<GeminiResult, 'model'> | 'spent' | 'busy'> {
   const libraryText = Object.entries(library)
     .map(([id, text]) => `${id}: ${text}`)
     .join('\n');
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.GEMINI_MODEL)}:generateContent`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   const res = await fetchFn(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': config.GEMINI_API_KEY ?? '' },
@@ -724,6 +761,9 @@ async function explainWithGemini(
       },
     }),
   });
+  if (res.status === 429 || res.status === 404) return 'spent';
+  // Overloaded or failing for a moment: try the next model for this request only.
+  if (res.status === 503 || res.status === 500) return 'busy';
   const body = z
     .object({
       candidates: z
@@ -3219,6 +3259,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     let answer: GuideAnswer = draft as GuideAnswer;
     let source: 'generated' | 'template' = 'template';
     let outcome: string = templatesOnly ? 'templates_only' : 'error';
+    let usedModel: string | null = null;
     let tokens: { inputTokens: number | null; outputTokens: number | null } = {
       inputTokens: null,
       outputTokens: null,
@@ -3262,6 +3303,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       generatedToday.set(userId, { day: today, count: used + 1 });
       try {
         const result = await explainWithGemini(config, fetchFn, facts, library, allowed);
+        usedModel = result.model;
         tokens = { inputTokens: result.inputTokens, outputTokens: result.outputTokens };
         outcome = result.outcome;
         if (result.answer) {
@@ -3276,7 +3318,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
               body.language,
               JSON.stringify(answer.paragraphs),
               JSON.stringify(answer.followUpChipIds),
-              config.GEMINI_MODEL,
+              usedModel ?? config.GEMINI_MODEL,
             ],
           );
         }
@@ -3293,7 +3335,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         chipId,
         source,
         outcome,
-        templatesOnly || saved ? null : config.GEMINI_MODEL,
+        templatesOnly || saved ? null : usedModel,
         Date.now() - started,
         tokens.inputTokens,
         tokens.outputTokens,
