@@ -256,6 +256,7 @@
     "discard": "Kuraho",
     "discardConfirm": "Kuraho iki gipaki kuri iyi mudasobwa? Telefoni igumana kopi yayo kandi izacyohereza ibonye interineti.",
     "switchCamera": "Hindura kamera",
-    "zoom": "Egereza kamera"
+    "zoom": "Egereza kamera",
+    "uploadedToast": "Byarangiye: ibyakiriwe byoherejwe ({{saved}} bishya). Ubu biragaragara ku kibaho."
   }
 }

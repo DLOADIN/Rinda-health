@@ -256,6 +256,7 @@
     "discard": "Discard",
     "discardConfirm": "Remove this package from this laptop? The phone keeps its own copy and sends it when it is online.",
     "switchCamera": "Switch camera",
-    "zoom": "Zoom the camera"
+    "zoom": "Zoom the camera",
+    "uploadedToast": "Done: the hand-over is uploaded ({{saved}} new). It now shows on the dashboard."
   }
 }

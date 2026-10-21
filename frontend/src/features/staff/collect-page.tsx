@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDispatch } from 'react-redux';
+import { toast } from 'sonner';
 import { ConfirmAction } from '@/components/confirm-action';
 import { useOnline } from '@/components/offline-badge';
 import { PageHeader } from '@/components/page-header';
@@ -23,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
+import { api } from '@/lib/api';
 import { formatDate } from '@/lib/format';
 import { createCollector, readInbox, saveInbox, type CollectProgress, type InboxItem } from '@/lib/handover';
 
@@ -65,6 +68,7 @@ interface Summary {
 
 export function CollectPage({ meId }: { meId: string }) {
   const { t } = useTranslation();
+  const dispatch = useDispatch();
   const online = useOnline();
   const video = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);
@@ -128,7 +132,20 @@ export function CollectPage({ meId }: { meId: string }) {
     setInbox(left);
     setSummary(total);
     setUploading(false);
-  }, [meId]);
+    // Done without any extra tap: say so, and refresh the dashboard and lists so everyone allowed sees it now.
+    if (total.saved + total.already > 0) {
+      dispatch(api.util.invalidateTags(['Dashboard', 'Sessions', 'Participants', 'Safety']));
+      toast.success(t('collect.uploadedToast', { saved: total.saved }));
+    }
+  }, [meId, dispatch, t]);
+
+  // A package scanned while offline uploads by itself as soon as the internet comes back.
+  useEffect(() => {
+    const retry = () => void upload();
+    window.addEventListener('online', retry);
+    if (navigator.onLine) void readInbox(meId).then((items) => (items.length ? upload() : undefined));
+    return () => window.removeEventListener('online', retry);
+  }, [meId, upload]);
 
   const discard = async (id: string) => {
     const left = (await readInbox(meId)).filter((i) => i.id !== id);
@@ -136,6 +153,7 @@ export function CollectPage({ meId }: { meId: string }) {
     setInbox(left);
   };
 
+  const handled = useRef(new Set<string>());
   const received = useCallback(
     async (text: string) => {
       let parsed: unknown = null;
@@ -147,17 +165,21 @@ export function CollectPage({ meId }: { meId: string }) {
       const envelope = HandoverEnvelope.safeParse(parsed);
       if (!envelope.success) return;
       const items = await readInbox(meId);
-      if (items.some((i) => i.envelope === text)) {
+      // This is where a package already taken in stays ignored while the phone keeps looping the same codes.
+      if (handled.current.has(text) || items.some((i) => i.envelope === text)) {
+        collect.current = createCollector();
+        setProgress(null);
         setNotice('duplicate');
-      } else {
-        const next = [
-          ...items,
-          { id: crypto.randomUUID(), ownerId: meId, envelope: text, scannedAt: new Date().toISOString() },
-        ];
-        await saveInbox(meId, next);
-        setInbox(next);
-        setNotice('received');
+        return;
       }
+      handled.current.add(text);
+      const next = [
+        ...items,
+        { id: crypto.randomUUID(), ownerId: meId, envelope: text, scannedAt: new Date().toISOString() },
+      ];
+      await saveInbox(meId, next);
+      setInbox(next);
+      setNotice('received');
       collect.current = createCollector();
       setProgress(null);
       if (navigator.onLine) void upload();
