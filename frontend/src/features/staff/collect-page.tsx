@@ -10,6 +10,8 @@ import {
   CircleCheck,
   CloudUpload,
   LockKeyhole,
+  SwitchCamera,
+  ZoomIn,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +22,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Slider } from '@/components/ui/slider';
 import { formatDate } from '@/lib/format';
 import { createCollector, readInbox, saveInbox, type CollectProgress, type InboxItem } from '@/lib/handover';
 
@@ -162,16 +165,46 @@ export function CollectPage({ meId }: { meId: string }) {
     [meId, upload],
   );
 
-  const start = async () => {
+  // On a phone the back camera is used first; "Switch camera" flips to the other one.
+  const [facing, setFacing] = useState<'environment' | 'user'>('environment');
+  const [zoom, setZoom] = useState(1);
+  const zoomRef = useRef(1);
+  const hardwareZoom = useRef(false);
+  const [realZoom, setRealZoom] = useState(false);
+
+  const applyZoom = (value: number) => {
+    setZoom(value);
+    zoomRef.current = value;
+    const track = stream.current?.getVideoTracks()[0];
+    const caps = track?.getCapabilities?.() as
+      (MediaTrackCapabilities & { zoom?: { min: number; max: number } }) | undefined;
+    if (track && caps?.zoom) {
+      // Real camera zoom where the phone offers it; otherwise the picture is enlarged on screen and in the scan.
+      const z = Math.min(caps.zoom.max, Math.max(caps.zoom.min, value));
+      void track
+        .applyConstraints({ advanced: [{ zoom: z } as MediaTrackConstraintSet] })
+        .catch(() => undefined);
+      hardwareZoom.current = true;
+      setRealZoom(true);
+    } else {
+      hardwareZoom.current = false;
+      setRealZoom(false);
+    }
+  };
+
+  const start = async (side: 'environment' | 'user' = facing) => {
     setNotice(null);
     setSummary(null);
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('no camera');
+      stream.current?.getTracks().forEach((track) => track.stop());
       const media = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1280 } },
+        video: { facingMode: { ideal: side }, width: { ideal: 1280 } },
         audio: false,
       });
       stream.current = media;
+      setFacing(side);
+      applyZoom(1);
       if (video.current) {
         video.current.srcObject = media;
         await video.current.play().catch(() => undefined);
@@ -196,10 +229,26 @@ export function CollectPage({ meId }: { meId: string }) {
       const v = video.current;
       if (!detect || busy || !v || v.readyState < 2 || !v.videoWidth) return;
       busy = true;
-      const scale = Math.min(1, 960 / v.videoWidth);
-      canvas.width = Math.round(v.videoWidth * scale);
-      canvas.height = Math.round(v.videoHeight * scale);
-      canvas.getContext('2d', { willReadFrequently: true })?.drawImage(v, 0, 0, canvas.width, canvas.height);
+      // With on-screen zoom, only the enlarged middle of the picture is scanned, at full detail.
+      const z = hardwareZoom.current ? 1 : zoomRef.current;
+      const sw = v.videoWidth / z;
+      const sh = v.videoHeight / z;
+      const scale = Math.min(1, 960 / sw);
+      canvas.width = Math.round(sw * scale);
+      canvas.height = Math.round(sh * scale);
+      canvas
+        .getContext('2d', { willReadFrequently: true })
+        ?.drawImage(
+          v,
+          (v.videoWidth - sw) / 2,
+          (v.videoHeight - sh) / 2,
+          sw,
+          sh,
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        );
       void detect(canvas)
         .catch(() => null)
         .then((text) => {
@@ -230,8 +279,41 @@ export function CollectPage({ meId }: { meId: string }) {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className={scanning ? 'overflow-hidden rounded-2xl bg-muted' : 'hidden'}>
-            <video ref={video} playsInline muted className="aspect-video w-full object-cover" />
+            <video
+              ref={video}
+              playsInline
+              muted
+              className="aspect-[3/4] w-full object-cover transition-transform sm:aspect-video"
+              style={{
+                transform: `scale(${realZoom ? 1 : zoom})${facing === 'user' ? ' scaleX(-1)' : ''}`,
+              }}
+            />
           </div>
+          {scanning ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button
+                variant="outline"
+                className="self-start"
+                onClick={() => void start(facing === 'environment' ? 'user' : 'environment')}
+              >
+                <SwitchCamera aria-hidden="true" data-icon="inline-start" />
+                {t('collect.switchCamera')}
+              </Button>
+              <div className="flex flex-1 items-center gap-3">
+                <ZoomIn aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
+                <Slider
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  value={[zoom]}
+                  onValueChange={([v]) => applyZoom(v ?? 1)}
+                  thumbLabel={t('collect.zoom')}
+                  className="min-h-11 flex-1"
+                />
+                <span className="w-10 text-right text-sm tabular-nums">{zoom.toFixed(1)}×</span>
+              </div>
+            </div>
+          ) : null}
           {scanning ? (
             <div className="flex flex-col gap-2" aria-live="polite">
               <p className="text-sm">

@@ -254,6 +254,8 @@
     "result": "Byoherejwe: {{saved}} bishya, {{already}} byari byarakiriwe, {{invalid}} ntibyakoreshejwe.",
     "undelivered": "Byasomwe {{date}}: seriveri ntiyashoboye kwakira iki gipaki. Telefoni iracyafite kopi yayo kandi izacyohereza ibonye interineti.",
     "discard": "Kuraho",
-    "discardConfirm": "Kuraho iki gipaki kuri iyi mudasobwa? Telefoni igumana kopi yayo kandi izacyohereza ibonye interineti."
+    "discardConfirm": "Kuraho iki gipaki kuri iyi mudasobwa? Telefoni igumana kopi yayo kandi izacyohereza ibonye interineti.",
+    "switchCamera": "Hindura kamera",
+    "zoom": "Egereza kamera"
   }
 }
