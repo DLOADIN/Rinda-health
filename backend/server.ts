@@ -212,7 +212,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
 const googleConfigured = (c: AppConfig) => Boolean(c.GOOGLE_CLIENT_ID && c.GOOGLE_CLIENT_SECRET);
 // The AI guide only switches on with an ethics reference and a model to ask. In the pilot only a paid Gemini tier
 // is used, because free tiers may keep what is sent to them.
-const generativeGuideAllowed = (c: AppConfig) =>
+export const generativeGuideAllowed = (c: AppConfig) =>
   Boolean(c.ETHICS_AMENDMENT_REF) &&
   (c.APP_ENV === 'pilot'
     ? Boolean(c.GEMINI_API_KEY) && c.GEMINI_PAID_TIER === 'true'

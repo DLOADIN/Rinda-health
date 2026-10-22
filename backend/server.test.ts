@@ -11,6 +11,7 @@ import {
   createLogger,
   explainWithModels,
   geminiModels,
+  generativeGuideAllowed,
   guideChain,
   handoverKey,
   handoverToken,
@@ -149,6 +150,19 @@ describe('without a database', () => {
       'gemini',
       'openrouter',
     ]);
+  });
+
+  it('keeps the AI guide off in the pilot unless Gemini is on a paid tier, whatever other keys are set', () => {
+    const base = loadConfig({ APP_ENV: 'test', ETHICS_AMENDMENT_REF: 'REF-1' });
+    const pilot = (extra: Partial<typeof base>) => ({ ...base, APP_ENV: 'pilot' as const, ...extra });
+    expect(generativeGuideAllowed(pilot({ GROQ_API_KEY: 'k', OPENROUTER_API_KEY: 'k' }))).toBe(false);
+    expect(generativeGuideAllowed(pilot({ GEMINI_API_KEY: 'k', GEMINI_PAID_TIER: 'false' }))).toBe(false);
+    expect(generativeGuideAllowed(pilot({ GEMINI_API_KEY: 'k', GEMINI_PAID_TIER: 'true' }))).toBe(true);
+    // Outside the pilot any provider with a key will do, but never without the ethics reference.
+    expect(generativeGuideAllowed({ ...base, GROQ_API_KEY: 'k' })).toBe(true);
+    expect(generativeGuideAllowed({ ...base, GROQ_API_KEY: 'k', ETHICS_AMENDMENT_REF: undefined })).toBe(
+      false,
+    );
   });
 
   it('offline hand-over: the phone seals, the frames reassemble, and only the server key opens it', async () => {

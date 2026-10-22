@@ -15,7 +15,7 @@ So the guide is built in two layers:
 | Layer | Contents | Pilot |
 | --- | --- | --- |
 | Deterministic guide | Planner, measurement coach, template composer | **On**: rule-based, approved content only, no AI |
-| Generative explainer | Gemini rewrites the template answer in warmer, more personal language | **Off**. The API refuses to enable it unless `ETHICS_AMENDMENT_REF` holds the approved amendment reference |
+| Generative explainer | An AI model (Gemini, then Groq or OpenRouter outside the pilot) rewrites the template answer in warmer, more personal language | **Off**. The API refuses to enable it unless `ETHICS_AMENDMENT_REF` holds the approved amendment reference |
 
 Build and test the generative layer with synthetic data only. Never enable it for real participants without the amendment.
 
@@ -29,7 +29,7 @@ measurement input ──► Measurement coach               checklists, unit fix
 question chip     ──► Template composer               approved text + planner output   ← always available, offline
                          │
                          ▼ (only if guideGenerative is on and no urgent result or safety event in this session)
-                      Explainer (Gemini, server)      rewrites the composed answer for this person
+                      Explainer (model chain, server) rewrites the composed answer for this person
                          │
                          ▼
                       Validator ── pass ──► show "Written by Rinda's guide from your results"
@@ -60,13 +60,26 @@ Mental-wellness domains have no chips. Their pages show approved support content
 
 `composeTemplateAnswer(chipId, result, plan, content)` lives in `packages/rules` next to the planner, so it runs offline in the browser. Each chip maps to an approved template with slots filled from the planner (for example `{targetText}`) and the result (for example `{value}`, `{target}`). Output shape is identical to the explainer's, with `source: "template"`.
 
-## Explainer (Gemini)
+## Explainer (model chain)
 
-**Where.** `backend/server.ts` section 5b (`explainWithGemini`), behind `POST /api/v1/guide/explain` (see [API.md](API.md)). The API key never reaches the browser.
+**Where.** `backend/server.ts` section 5b (`explainWithModels`, which walks `guideChain`), behind `POST /api/v1/guide/explain` (see [API.md](API.md)). The API key never reaches the browser.
 
-**Answer once.** A passing answer is saved in `guide_answers` per check-up, question and language and served again without calling Gemini; withdrawing the AI opt-in deletes the saved answers. Numbers that already appear in the approved answer, as digits or words, are allowed.
+**Answer once.** A passing answer is saved in `guide_answers` per check-up, question and language and served again without calling any model; withdrawing the AI opt-in deletes the saved answers. Numbers that already appear in the approved answer, as digits or words, are allowed.
 
-**Model.** `gemini-3.5-flash` by default, overridable with `GEMINI_MODEL`. The answer is requested as structured JSON (`responseMimeType: application/json` with a response schema). A blocked, empty or malformed reply shows the template.
+**Models.** The chain (ADR-031, ADR-033) is the Gemini models (`GEMINI_MODEL`, default `gemini-3.5-flash`, then `GEMINI_FALLBACK_MODELS`), then Groq (`GROQ_MODELS`), then OpenRouter free models (`OPENROUTER_MODELS`), in the order of `GUIDE_PROVIDERS`; a provider without a key is left out, and in the pilot only Gemini is used. Gemini is asked for structured JSON (`responseMimeType: application/json` with a response schema); Groq and OpenRouter are asked for a JSON object (`response_format: json_object`) with the expected shape described in the prompt, and get no schema, so the validator enforces the shape for them. A blocked, empty or malformed reply shows the template.
+
+**Settings.**
+
+| Setting | Meaning |
+| --- | --- |
+| `ETHICS_AMENDMENT_REF` | Required before any model is asked; must be the real reference in the pilot |
+| `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODELS` | Gemini key and the models tried in order |
+| `GEMINI_PAID_TIER` | Must be `true` in the pilot: the operator's statement that the key is on a paid tier whose terms exclude training on prompts (nothing checks the billing tier) |
+| `GUIDE_PROVIDERS` | Order of providers outside the pilot, default `gemini,groq,openrouter` |
+| `GROQ_API_KEY`, `GROQ_MODELS` | Groq key and models (outside the pilot only) |
+| `OPENROUTER_API_KEY`, `OPENROUTER_MODELS` | OpenRouter key and free models (outside the pilot only) |
+
+`npm run models:check` lists each provider's models and tests every model in the chain with a harmless prompt, without printing keys.
 
 **What is sent** (and nothing else):
 
@@ -75,10 +88,10 @@ Mental-wellness domains have no chips. Their pages show approved support content
   "language": "en",
   "chip": "first_step",
   "results": [
-    { "domain": "activity", "band": "below", "bandLabel": "Below recommended", "value": 60, "unit": "minutes a week", "target": 150 },
-    { "domain": "diet", "band": "below", "bandLabel": "Below recommended", "value": 3, "unit": "servings a day", "target": 5 }
+    { "domain": "activity", "band": "below", "bandLabel": "Below recommended", "value": 60 },
+    { "domain": "diet", "band": "below", "bandLabel": "Below recommended", "value": 3 }
   ],
-  "plan": [ { "domain": "activity", "targetText": "about 20 more minutes on 3 days", "reason": "activity_below" } ],
+  "plan": [ { "domains": ["activity"], "target": { "…": "the planner's target object" }, "reasons": ["activity_below"] } ],
   "templateAnswer": "…the composer's answer for this chip…",
   "allowedNumbers": [3, 5, 20, 60, 150]
 }
@@ -103,6 +116,7 @@ These limits keep people safe, so follow them exactly:
 - No medicines, doses, treatments, phone numbers, links or emergency instructions. The app
   shows those from approved text.
 - No weight-loss targets and no comments about body shape. Talk about everyday habits.
+- Do not mention mood, stress, anxiety or mental health.
 - Be warm and practical, with no blame, fear or shame. Use short sentences and everyday words.
 - Write in the requested language, in at most 4 short paragraphs and under 150 words.
 - For each paragraph, list the IDs of the approved texts it draws on.
@@ -137,7 +151,7 @@ export const GuideAnswer = z.strictObject({
 });
 ```
 
-**Call.** One `POST` to `https://generativelanguage.googleapis.com/v1beta/models/<model>:generateContent` with the key in the `x-goog-api-key` header, the system instruction, the facts above as the user turn, a response schema, a 20-second timeout and no retries. Token counts come from `usageMetadata` and are logged without any text. Any network error, non-200 status or validator failure shows the template.
+**Calls.** Each model in the chain gets one `POST`: Gemini at `https://generativelanguage.googleapis.com/v1beta/models/<model>:generateContent` with the key in the `x-goog-api-key` header and a response schema; Groq and OpenRouter at `<base>/chat/completions` with the key as a Bearer token. Every call carries the same system prompt, library and facts above, and a timeout of at most 20 seconds. A model that reports its allowance used up, its key refused or itself gone (401, 402, 403, 404, 429) is skipped until the next UTC day; a busy, failing, slow or unreachable one is skipped for this question; the chain stops after 25 seconds overall and never starts again from the top. Token counts are logged without any text. When no model passes the validator, the template is shown.
 
 ## Validator
 
@@ -159,9 +173,9 @@ export const GuideAnswer = z.strictObject({
 
 ## Logging and limits
 
-- `GuideRequestLog`: chip ID, source (`generated` or `template`), validator outcome code, model, latency, token counts. No prompt, no answer, no participant ID.
+- `GuideRequestLog`: chip ID, source (`generated` or `template`), validator outcome code, model (the Gemini model name, or `provider:model` for Groq and OpenRouter), latency, token counts. No prompt, no answer, no participant ID.
 - Rate limit: 20 generated answers per participant per day; beyond that, templates.
-- Rough cost at current Opus 5.5 prices ($4 input and $20 output per million tokens): about 3,000 input tokens (mostly cached) and up to 1,500 output tokens including thinking, so roughly 3 to 4 US cents per answer. Measure real usage before quoting it.
+- Cost: the free allowances of each provider outside the pilot; in the pilot, the paid Gemini tier at about 3,000 input and up to 1,000 output tokens per answer. Measure real usage from the logged token counts before quoting a figure.
 
 ## Evaluation before any amendment
 
