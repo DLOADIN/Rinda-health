@@ -1,8 +1,8 @@
 // This is the camera helper for the blood pressure step. The picture is read on this device and then thrown away;
 // nothing is saved or sent, and the person always checks the numbers before they are used.
 import '@/features/participant/camera-strings';
-import { Camera, CircleAlert, ImageUp, RotateCcw } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type MouseEvent } from 'react';
+import { Camera, CircleAlert, ImageUp, RotateCcw, SquareDashedMousePointer } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -15,16 +15,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
-import {
-  agreeingReading,
-  createPhotoVote,
-  tapAttempts,
-  readBpDisplay,
-  readPhotoWindow,
-  toGray,
-  type BpReading,
-  type PhotoWindow,
-} from '@/lib/bp-reader';
+import { readRowOcr, warmUpOcr } from '@/lib/bp-ocr';
+import { boxToGray, readBpInBox } from '@/lib/bp-photo';
+import { agreeingReading, readBpDisplay, toGray, type BpReading } from '@/lib/bp-reader';
 
 interface Props {
   open: boolean;
@@ -32,7 +25,17 @@ interface Props {
   onUse: (reading: { systolic: number; diastolic: number }) => void;
 }
 
-type Stage = 'starting' | 'scanning' | 'tap' | 'reading' | 'no-camera' | 'not-read' | 'found';
+type Stage = 'starting' | 'scanning' | 'box' | 'reading' | 'no-camera' | 'not-read' | 'no-numbers' | 'found';
+
+/** A box on the photo, with corners as fractions of its width and height. */
+interface PhotoBox {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+const clamp = (v: number) => Math.min(1, Math.max(0, v));
 
 // The frame on screen covers the middle of the picture; only that part is read.
 const FRAME = { x: 0.12, y: 0.15, w: 0.76, h: 0.7 };
@@ -73,6 +76,8 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
     h: number;
     preview: string;
   } | null>(null);
+  const [drag, setDrag] = useState<PhotoBox | null>(null);
+  const dragging = useRef(false);
 
   const stop = useCallback(() => {
     stream.current?.getTracks().forEach((track) => track.stop());
@@ -102,7 +107,8 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
     if (!open) return;
     let active = true;
     void openCamera().then((ok) => {
-      if (active) setStage(ok ? 'scanning' : 'no-camera');
+      // A photo picked while the camera was still starting keeps the screen; only a waiting screen changes.
+      if (active) setStage((s) => (s === 'starting' ? (ok ? 'scanning' : 'no-camera') : s));
     });
     return () => {
       active = false;
@@ -134,7 +140,7 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
     recent.current = [];
     setFound(null);
     setStage('starting');
-    void openCamera().then((ok) => setStage(ok ? 'scanning' : 'no-camera'));
+    void openCamera().then((ok) => setStage((s) => (s === 'starting' ? (ok ? 'scanning' : 'no-camera') : s)));
   };
 
   const readNow = () => {
@@ -155,13 +161,14 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
     if (!picked) return;
     stop();
     setStage('reading');
+    warmUpOcr();
     const bitmap = await createImageBitmap(picked).catch(() => null);
     if (!bitmap) {
       setStage('not-read');
       return;
     }
-    // The photo is kept only in memory while this dialog is open. The person then taps the monitor's screen in it.
-    const scale = Math.min(1, 900 / Math.max(bitmap.width, bitmap.height));
+    // The photo is kept only in memory while this dialog is open. The person then boxes the numbers in it.
+    const scale = Math.min(1, 1400 / Math.max(bitmap.width, bitmap.height));
     const w = Math.max(1, Math.round(bitmap.width * scale));
     const h = Math.max(1, Math.round(bitmap.height * scale));
     canvas.current ??= document.createElement('canvas');
@@ -178,31 +185,39 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
       return;
     }
     setPhoto({ pixels, w, h, preview });
-    setStage('tap');
+    setDrag(null);
+    setStage('box');
   };
 
-  // Reads around the spot the person tapped, pausing between attempts so the screen stays responsive.
-  const readAtTap = async (e: MouseEvent<HTMLButtonElement>) => {
+  const point = (e: PointerEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return { x: clamp((e.clientX - r.left) / r.width), y: clamp((e.clientY - r.top) / r.height) };
+  };
+
+  // The person drags a box around the numbers; a plain tap makes a box around the spot tapped.
+  const readBox = async (box: PhotoBox) => {
     if (!photo) return;
-    const box = e.currentTarget.getBoundingClientRect();
-    const cx = ((e.clientX - box.left) / box.width) * photo.w;
-    const cy = ((e.clientY - box.top) / box.height) * photo.h;
+    const tapped = Math.abs(box.x1 - box.x0) < 0.04 && Math.abs(box.y1 - box.y0) < 0.04;
+    const used = tapped
+      ? {
+          x0: clamp(box.x0 - 0.18),
+          y0: clamp(box.y0 - 0.16),
+          x1: clamp(box.x0 + 0.18),
+          y1: clamp(box.y0 + 0.16),
+        }
+      : box;
+    setDrag(used);
     setStage('reading');
-    const vote = createPhotoVote();
-    const { straight, turned } = tapAttempts(photo.w, photo.h, cx, cy);
-    const attempts: Array<readonly [PhotoWindow, number]> = straight.map((win) => [win, 0] as const);
-    for (const [index, [win, angle]] of [...attempts, ...turned].entries()) {
-      if (index === attempts.length && vote.result()) break;
-      const r = readPhotoWindow(photo.pixels, photo.w, win, angle);
-      if (r) vote.add(r);
-      if (vote.settled()) break;
-      await new Promise((resolve) => window.setTimeout(resolve, 0));
-    }
-    const r = vote.result();
+    // Lets the spinner show before the reading starts.
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+    const r = await readBpInBox(boxToGray(photo.pixels, photo.w, photo.h, used), {
+      ocr: readRowOcr,
+      deadline: 8000,
+    }).catch(() => null);
     if (r) {
       setFound(r);
       setStage('found');
-    } else setStage('not-read');
+    } else setStage('no-numbers');
   };
 
   const close = (next: boolean) => {
@@ -245,19 +260,52 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
           </p>
         ) : null}
 
-        {stage === 'tap' && photo ? (
+        {(stage === 'box' || stage === 'reading' || stage === 'no-numbers') && photo ? (
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium" aria-live="polite">
-              {t('checkup.camera.tapScreen')}
+              {t('checkup.camera.boxScreen')}
             </p>
-            <button
-              type="button"
-              onClick={(e) => void readAtTap(e)}
-              aria-label={t('checkup.camera.tapScreen')}
-              className="overflow-hidden rounded-2xl border outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            <div
+              role="img"
+              aria-label={t('checkup.camera.boxScreen')}
+              className={
+                stage === 'box'
+                  ? 'relative cursor-crosshair touch-none overflow-hidden rounded-2xl border select-none'
+                  : 'relative overflow-hidden rounded-2xl border select-none'
+              }
+              onPointerDown={(e) => {
+                if (stage !== 'box') return;
+                e.currentTarget.setPointerCapture(e.pointerId);
+                dragging.current = true;
+                const p = point(e);
+                setDrag({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
+              }}
+              onPointerMove={(e) => {
+                if (!dragging.current) return;
+                const p = point(e);
+                setDrag((d) => (d ? { ...d, x1: p.x, y1: p.y } : d));
+              }}
+              onPointerUp={(e) => {
+                if (!dragging.current || !drag) return;
+                dragging.current = false;
+                const p = point(e);
+                void readBox({ ...drag, x1: p.x, y1: p.y });
+              }}
             >
-              <img src={photo.preview} alt="" className="block w-full cursor-crosshair" />
-            </button>
+              <img src={photo.preview} alt="" draggable={false} className="block w-full" />
+              {drag ? (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute rounded-md border-4 border-primary"
+                  style={{
+                    left: `${Math.min(drag.x0, drag.x1) * 100}%`,
+                    top: `${Math.min(drag.y0, drag.y1) * 100}%`,
+                    width: `${Math.abs(drag.x1 - drag.x0) * 100}%`,
+                    height: `${Math.abs(drag.y1 - drag.y0) * 100}%`,
+                  }}
+                />
+              ) : null}
+            </div>
           </div>
         ) : null}
 
@@ -268,11 +316,15 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
           </div>
         ) : null}
 
-        {stage === 'no-camera' || stage === 'not-read' ? (
+        {stage === 'no-camera' || stage === 'not-read' || stage === 'no-numbers' ? (
           <Alert>
             <CircleAlert aria-hidden="true" />
             <AlertDescription>
-              {stage === 'no-camera' ? t('checkup.camera.noCamera') : t('checkup.camera.notRead')}
+              {stage === 'no-camera'
+                ? t('checkup.camera.noCamera')
+                : stage === 'no-numbers'
+                  ? t('checkup.camera.noNumbers')
+                  : t('checkup.camera.notRead')}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -318,6 +370,17 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
               }}
             >
               {t('checkup.camera.use')}
+            </Button>
+          ) : null}
+          {stage === 'no-numbers' ? (
+            <Button
+              onClick={() => {
+                setDrag(null);
+                setStage('box');
+              }}
+            >
+              <SquareDashedMousePointer aria-hidden="true" data-icon="inline-start" />
+              {t('checkup.camera.drawAgain')}
             </Button>
           ) : null}
           {stage === 'scanning' ? (

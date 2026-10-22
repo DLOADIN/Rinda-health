@@ -15,7 +15,9 @@
       "retry": "Try again",
       "type": "Type them myself",
       "readingPhoto": "Reading the numbers… This can take a few seconds.",
-      "tapScreen": "Tap the numbers on the monitor's screen in your photo."
+      "boxScreen": "Drag a box around the numbers on the monitor's screen in your photo.",
+      "noNumbers": "There are no numeric values retrieved from this picture.",
+      "drawAgain": "Draw the box again"
     }
   }
 }

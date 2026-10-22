@@ -37,6 +37,8 @@ export default defineConfig({
           '**/assets/guide-panel-*.js',
           '**/assets/clinic-card-*.js',
           '**/assets/jsQR-*.js',
+          '**/assets/tesseract*.js',
+          '**/ocr/**',
         ],
       },
       devOptions: { enabled: false },

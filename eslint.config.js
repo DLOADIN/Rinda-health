@@ -15,6 +15,7 @@ export default tseslint.config(
       'playwright-report/**',
       'test-results/**',
       'backend/db/**',
+      'frontend/public/ocr/**',
       '.*/**',
       'Badget-main/**',
     ],

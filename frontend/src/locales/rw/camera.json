@@ -15,7 +15,9 @@
       "retry": "Ongera ugerageze",
       "type": "Ndayandika ubwanjye",
       "readingPhoto": "Turimo gusoma imibare… Bishobora gufata amasegonda make.",
-      "tapScreen": "Kanda ku mibare iri kuri ecran y'icyuma mu ifoto yawe."
+      "boxScreen": "Kurura ukore akazu gakikije imibare iri kuri ecran y'icyuma mu ifoto yawe.",
+      "noNumbers": "Nta mibare yabonetse muri iyi foto.",
+      "drawAgain": "Ongera ushushanye akazu"
     }
   }
 }

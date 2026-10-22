@@ -13,7 +13,7 @@ export interface BpReading {
   pulse: number | null;
 }
 
-interface Box {
+export interface Box {
   x0: number;
   x1: number;
   y0: number;
@@ -81,7 +81,7 @@ function smooth(img: Gray): Gray {
  * Sliding-window minimum or maximum of one line (van Herk / Gil-Werman), so the cost does not grow with the
  * window: each value is the best of the window from x - r to x + r.
  */
-function slide(line: Float64Array, r: number, max: boolean): Float64Array {
+export function slide(line: Float64Array, r: number, max: boolean): Float64Array {
   const n = line.length;
   const k = 2 * r + 1;
   const edge = max ? -Infinity : Infinity;
@@ -104,7 +104,7 @@ function slide(line: Float64Array, r: number, max: boolean): Float64Array {
 }
 
 /** Square grey-scale dilation (max) or erosion (min): rows first, then columns. */
-function morph(data: Uint8Array, width: number, height: number, r: number, max: boolean): Uint8Array {
+export function morph(data: Uint8Array, width: number, height: number, r: number, max: boolean): Uint8Array {
   const tmp = new Uint8Array(data.length);
   const out = new Uint8Array(data.length);
   const row = new Float64Array(width);
@@ -123,7 +123,7 @@ function morph(data: Uint8Array, width: number, height: number, r: number, max: 
 }
 
 /** Otsu's threshold for a set of values from 0 to 255. */
-function otsu(values: Uint8Array): number {
+export function otsu(values: Uint8Array): number {
   const hist = new Array<number>(256).fill(0);
   for (const v of values) hist[v] = (hist[v] ?? 0) + 1;
   const total = values.length;
@@ -204,7 +204,7 @@ function dropLines(ink: Uint8Array, width: number, height: number): Uint8Array {
 }
 
 /** Drops lone specks: an ink pixel needs at least two ink neighbours to count. */
-function despeckle(ink: Uint8Array, width: number, height: number): Uint8Array {
+export function despeckle(ink: Uint8Array, width: number, height: number): Uint8Array {
   const out = new Uint8Array(ink.length);
   for (let y = 0; y < height; y++)
     for (let x = 0; x < width; x++) {
@@ -344,7 +344,7 @@ function readDigit(get: (x: number, y: number) => number, box: Box, rowHeight: n
   return unique.length === 1 ? (unique[0] ?? 0) : null;
 }
 
-function readRow(ink: Uint8Array, width: number, row: Box): number | null {
+export function readRow(ink: Uint8Array, width: number, row: Box): number | null {
   const shear = bestShear(ink, width, row);
   const mid = (row.y0 + row.y1) / 2;
   const height = row.y1 - row.y0 + 1;

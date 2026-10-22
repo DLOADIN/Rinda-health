@@ -37,6 +37,13 @@ registerRoute(
   new CacheFirst({ cacheName: 'rinda-assets' }),
 );
 
+// The blood pressure photo reader's OCR files are large, so they are fetched only when first used, then kept.
+registerRoute(
+  ({ url }) =>
+    url.pathname.startsWith('/ocr/') || /\/assets\/(tesseract|bp-camera)[^/]*\.js$/.test(url.pathname),
+  new CacheFirst({ cacheName: 'rinda-ocr' }),
+);
+
 self.addEventListener('message', (event) => {
   if ((event.data as { type?: string } | null)?.type === 'SKIP_WAITING') void self.skipWaiting();
 });
