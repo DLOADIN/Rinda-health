@@ -10,7 +10,8 @@
     "db:migrate": "tsx server.ts migrate",
     "db:seed": "tsx server.ts seed",
     "db:check": "tsx server.ts db-check",
-    "build": "vite build --config vite.vercel.config.ts"
+    "build": "vite build --config vite.vercel.config.ts",
+    "models:check": "tsx server.ts models-check"
   },
   "dependencies": {
     "@rinda/content": "*",

@@ -9,8 +9,9 @@ import { createCollector, sealHandover, toFrames } from '../frontend/src/lib/han
 import {
   createApp,
   createLogger,
-  explainWithGemini,
+  explainWithModels,
   geminiModels,
+  guideChain,
   handoverKey,
   handoverToken,
   handoverTokenValid,
@@ -54,11 +55,11 @@ describe('without a database', () => {
       if (model === 'model-one') return new Response('{}', { status: 429 });
       return new Response(JSON.stringify({ candidates: [] }), { status: 200 });
     }) as unknown as typeof fetch;
-    const first = await explainWithGemini(config, fakeFetch, {}, {}, []);
+    const first = await explainWithModels(config, fakeFetch, {}, {}, []);
     expect(first.model).toBe('model-two');
     expect(asked).toEqual(['model-one', 'model-two']);
     asked.length = 0;
-    await explainWithGemini(config, fakeFetch, {}, {}, []);
+    await explainWithModels(config, fakeFetch, {}, {}, []);
     expect(asked).toEqual(['model-two']);
 
     // A busy model (503) is passed over for that request only, not for the day.
@@ -73,9 +74,81 @@ describe('without a database', () => {
       url.includes('busy-one') && busy
         ? new Response('{}', { status: 503 })
         : new Response(JSON.stringify({ candidates: [] }), { status: 200 })) as unknown as typeof fetch;
-    expect((await explainWithGemini(busyConfig, busyFetch, {}, {}, [])).model).toBe('calm-two');
+    expect((await explainWithModels(busyConfig, busyFetch, {}, {}, [])).model).toBe('calm-two');
     busy = false;
-    expect((await explainWithGemini(busyConfig, busyFetch, {}, {}, [])).model).toBe('busy-one');
+    expect((await explainWithModels(busyConfig, busyFetch, {}, {}, [])).model).toBe('busy-one');
+  });
+
+  it('carries on to Groq and then OpenRouter when Gemini cannot answer, and never loops back', async () => {
+    const config = loadConfig({
+      APP_ENV: 'test',
+      GEMINI_API_KEY: 'g-key',
+      GEMINI_MODEL: 'chain-gemini',
+      GEMINI_FALLBACK_MODELS: '',
+      GROQ_API_KEY: 'groq-key',
+      GROQ_MODELS: 'chain-groq',
+      OPENROUTER_API_KEY: 'or-key',
+      OPENROUTER_MODELS: 'chain/free:free',
+    });
+    expect(guideChain(config).map((s) => `${s.provider}:${s.model}`)).toEqual([
+      'gemini:chain-gemini',
+      'groq:chain-groq',
+      'openrouter:chain/free:free',
+    ]);
+    const asked: string[] = [];
+    let groq: 'slow' | 'busy' | 'ok' = 'slow';
+    const reply = JSON.stringify({
+      paragraphs: [{ text: 'Small steps help.', sourceIds: ['guide.tip'] }],
+      followUpChipIds: [],
+    });
+    const fakeFetch = (async (url: string, init: RequestInit) => {
+      const body = String(init.body);
+      // The provider keys travel only in headers, never in what is sent about the person.
+      expect(body).not.toMatch(/g-key|groq-key|or-key/);
+      if (url.includes('generativelanguage')) {
+        asked.push('gemini');
+        return new Response('{}', { status: 429 });
+      }
+      if (url.includes('groq.com')) {
+        asked.push('groq');
+        if (groq === 'slow') throw new DOMException('timed out', 'TimeoutError');
+        if (groq === 'busy') return new Response('{}', { status: 503 });
+      } else asked.push('openrouter');
+      return new Response(
+        JSON.stringify({
+          choices: [{ finish_reason: 'stop', message: { content: '```json\n' + reply + '\n```' } }],
+          usage: { prompt_tokens: 10, completion_tokens: 5 },
+        }),
+        { status: 200 },
+      );
+    }) as unknown as typeof fetch;
+
+    // Gemini has used up its allowance and Groq does not answer in time, so OpenRouter answers.
+    const library = { 'guide.tip': 'Small steps help.' };
+    const first = await explainWithModels(config, fakeFetch, {}, library, []);
+    expect(first).toMatchObject({ outcome: 'pass', model: 'openrouter:chain/free:free' });
+    expect(first.answer?.paragraphs[0]?.text).toBe('Small steps help.');
+    expect(asked).toEqual(['gemini', 'groq', 'openrouter']);
+
+    // Next time Gemini is skipped for the day, and a Groq that answers is used.
+    asked.length = 0;
+    groq = 'ok';
+    expect((await explainWithModels(config, fakeFetch, {}, library, [])).model).toBe('groq:chain-groq');
+    expect(asked).toEqual(['groq']);
+
+    // When nothing answers, the result says so once; the chain does not start again from the top.
+    const down = (async () => new Response('{}', { status: 503 })) as unknown as typeof fetch;
+    const none = await explainWithModels(config, down, {}, {}, []);
+    expect(none).toMatchObject({ answer: null, outcome: 'error', model: null });
+
+    // In the pilot only Gemini is asked, because free tiers may keep what is sent to them.
+    const pilot = { ...config, APP_ENV: 'pilot' as const };
+    expect(guideChain(pilot).map((s) => s.provider)).toEqual(['gemini']);
+    // A provider without a key is left out.
+    expect(guideChain({ ...config, GROQ_API_KEY: undefined }).map((s) => s.provider)).toEqual([
+      'gemini',
+      'openrouter',
+    ]);
   });
 
   it('offline hand-over: the phone seals, the frames reassemble, and only the server key opens it', async () => {

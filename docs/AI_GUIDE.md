@@ -4,6 +4,8 @@ Feature 2 in [FEATURES.md](FEATURES.md); requirements FR-33, FR-34 and FR-36, NF
 
 > **Provider update (9 October 2026, ADR-019).** The explainer now calls **Google Gemini** (free tier, `GEMINI_API_KEY`, `GEMINI_MODEL`) through plain `fetch` in `backend/server.ts` section 5b. The flow, payload limits, validator, fallbacks, logging and ethics gate below are unchanged. The template composer lives in `packages/rules/src/guide.ts`.
 
+> **Provider update (22 October 2026, ADR-033).** Outside the pilot the explainer tries a chain of models: the Gemini models, then Groq, then OpenRouter free models (`GUIDE_PROVIDERS`, `GROQ_API_KEY`, `GROQ_MODELS`, `OPENROUTER_API_KEY`, `OPENROUTER_MODELS`). Every answer passes the same validator; a model out of allowance is skipped for the day, a busy one for the question; the chain stops after 25 seconds and the template is shown. In the pilot only Gemini on a paid tier is used. `npm run models:check` tests the chain without printing keys.
+
 ## Read this first: ethics status
 
 The approved ethics application says the prototype uses **no machine learning or generative AI** (Part A7 and B18 = NO), and SRS constraint C-03 keeps the MVP deterministic. Proposal Section 1.10.7 allows a later generative model only to reword explanations from redacted result codes, never to change results or write safety or referral text, and only after new ethics and supervisor approval.

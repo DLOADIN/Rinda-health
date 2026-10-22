@@ -75,6 +75,7 @@ frame-ancestors 'none'; base-uri 'none'; form-action 'self'
 - Development and demos: any host (for example Render) with **synthetic data only** (C-08). Seed scripts generate obviously fake study codes such as `DEMO-XXXX`.
 - Pilot: Neon PostgreSQL, approved by the supervisor on 5 October 2026 on condition that any personal identifiers collected are deleted within about 72 hours (C-07, NFR-14, ADR-014). The app collects no participant identifiers (C-06). Keep the written approval with the ethics documents.
 - No participant data before ethics approval (C-08).
+- AI guide providers (ADR-019, ADR-033): Google Gemini, and outside the pilot also Groq and OpenRouter (whose free models are served by other companies). They receive only result bands, values and plan targets for a person who opted in, never identifiers, dates or mental-wellness data. Free tiers may keep or learn from what is sent, so in the pilot only Gemini on a paid tier is used.
 
 ## Retention and rights
 

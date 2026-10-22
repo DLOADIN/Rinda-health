@@ -404,7 +404,10 @@
     "no": "No",
     "thanks": "Thank you for telling us.",
     "sources": "Sources",
-    "offline": "You are offline, so Rinda answered from approved guidance on this phone."
+    "offline": "You are offline, so Rinda answered from approved guidance on this phone.",
+    "unavailable": "Rinda’s guide cannot answer right now. The answer here comes from our approved guide, or you can go back.",
+    "backToDashboard": "Back to my dashboard",
+    "tryAgain": "Try again"
   },
   "offline": {
     "savedOnPhone": "Saved on this phone, not sent yet",

@@ -404,7 +404,10 @@
     "no": "Oya",
     "thanks": "Murakoze kutubwira.",
     "sources": "Inkomoko",
-    "offline": "Nta interineti ufite, bityo Rinda yasubije ikoresheje inyigisho zemejwe ziri kuri iyi telefoni."
+    "offline": "Nta interineti ufite, bityo Rinda yasubije ikoresheje inyigisho zemejwe ziri kuri iyi telefoni.",
+    "unavailable": "Umujyanama wa Rinda ntashobora gusubiza ubu. Igisubizo kiri hano kiva mu mabwiriza yemejwe, cyangwa ushobora gusubira inyuma.",
+    "backToDashboard": "Subira ku rupapuro rwanjye",
+    "tryAgain": "Ongera ugerageze"
   },
   "offline": {
     "savedOnPhone": "Byabitswe kuri iyi telefoni, ntibiroherezwa",

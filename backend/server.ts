@@ -1,5 +1,5 @@
 // This is the whole Rinda API in one file: settings, logging, the database, sign-in, every route, and the
-// migrate, seed and db-check commands at the bottom.
+// migrate, seed, db-check and models-check commands at the bottom.
 import {
   createDecipheriv,
   createECDH,
@@ -132,6 +132,14 @@ const EnvSchema = z
     GEMINI_FALLBACK_MODELS: z
       .string()
       .default('gemini-3.5-flash-lite,gemini-flash-latest,gemini-flash-lite-latest,gemini-3.1-flash-lite'),
+    // Other providers with free allowances, tried after Gemini in this order; one without a key is skipped.
+    GUIDE_PROVIDERS: z.string().default('gemini,groq,openrouter'),
+    GROQ_API_KEY: optionalText,
+    GROQ_MODELS: z.string().default('openai/gpt-oss-20b,qwen/qwen3-32b'),
+    OPENROUTER_API_KEY: optionalText,
+    OPENROUTER_MODELS: z
+      .string()
+      .default('deepseek/deepseek-chat-v3.1:free,meta-llama/llama-3.3-70b-instruct:free'),
     ETHICS_AMENDMENT_REF: optionalText,
     GEMINI_PAID_TIER: z.preprocess(emptyAsUndefined, z.enum(['true', 'false']).default('false')),
     BREVO_API_KEY: optionalText,
@@ -202,10 +210,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
 }
 
 const googleConfigured = (c: AppConfig) => Boolean(c.GOOGLE_CLIENT_ID && c.GOOGLE_CLIENT_SECRET);
-// The AI guide only switches on with an ethics reference and a key, and in the pilot also needs a paid Gemini tier.
+// The AI guide only switches on with an ethics reference and a model to ask. In the pilot only a paid Gemini tier
+// is used, because free tiers may keep what is sent to them.
 const generativeGuideAllowed = (c: AppConfig) =>
-  Boolean(c.ETHICS_AMENDMENT_REF && c.GEMINI_API_KEY) &&
-  (c.APP_ENV !== 'pilot' || c.GEMINI_PAID_TIER === 'true');
+  Boolean(c.ETHICS_AMENDMENT_REF) &&
+  (c.APP_ENV === 'pilot'
+    ? Boolean(c.GEMINI_API_KEY) && c.GEMINI_PAID_TIER === 'true'
+    : guideChain(c).length > 0);
 const emailConfigured = (c: AppConfig) => Boolean(c.BREVO_API_KEY && c.EMAIL_FROM);
 const whatsappConfigured = (c: AppConfig) => Boolean(c.WHATSAPP_TOKEN && c.WHATSAPP_PHONE_NUMBER_ID);
 
@@ -701,35 +712,157 @@ interface GeminiResult {
   model: string | null;
 }
 
-// This is where the guide moves on to the next free model when one has used up its free allowance for the day.
-// A model that answers "quota used up" (429) or "not available" (404) is skipped until the next UTC day; one
-// that is only busy (503) is skipped for that request.
+// This is where the guide moves on to the next model when one cannot answer: first the Gemini models, then Groq,
+// then OpenRouter's free models. A model that says its allowance is used up, the key is refused or the model is gone
+// (401, 402, 403, 404, 429) is skipped until the next UTC day; one that is busy, failing or too slow is skipped for
+// this question only. The chain never starts again from the top, and gives up after GUIDE_CHAIN_MS.
 const spentModels = new Map<string, string>();
+const GUIDE_CHAIN_MS = 25_000;
+const SPENT = new Set([401, 402, 403, 404, 429]);
 
-export function geminiModels(config: Pick<AppConfig, 'GEMINI_MODEL' | 'GEMINI_FALLBACK_MODELS'>): string[] {
-  const list = [config.GEMINI_MODEL, ...config.GEMINI_FALLBACK_MODELS.split(',')].map((m) => m.trim());
-  return [...new Set(list.filter((m) => /^[a-z0-9.-]{3,60}$/i.test(m)))];
+type Provider = 'gemini' | 'groq' | 'openrouter';
+export interface ChainStep {
+  provider: Provider;
+  model: string;
 }
 
-export async function explainWithGemini(
+const OPENAI_STYLE: Record<
+  Exclude<Provider, 'gemini'>,
+  { base: string; key: (c: AppConfig) => string | undefined }
+> = {
+  groq: { base: 'https://api.groq.com/openai/v1', key: (c) => c.GROQ_API_KEY },
+  openrouter: { base: 'https://openrouter.ai/api/v1', key: (c) => c.OPENROUTER_API_KEY },
+};
+
+const modelList = (...lists: string[]) => [
+  ...new Set(
+    lists
+      .flatMap((l) => l.split(','))
+      .map((m) => m.trim())
+      .filter((m) => /^[a-z0-9._:/-]{3,80}$/i.test(m)),
+  ),
+];
+
+export function geminiModels(config: Pick<AppConfig, 'GEMINI_MODEL' | 'GEMINI_FALLBACK_MODELS'>): string[] {
+  return modelList(config.GEMINI_MODEL, config.GEMINI_FALLBACK_MODELS);
+}
+
+/** Every model the guide may ask, in order. Providers without a key are left out; the pilot uses Gemini only. */
+export function guideChain(config: AppConfig): ChainStep[] {
+  const order =
+    config.APP_ENV === 'pilot' ? ['gemini'] : config.GUIDE_PROVIDERS.split(',').map((p) => p.trim());
+  return order.flatMap((p): ChainStep[] => {
+    if (p === 'gemini' && config.GEMINI_API_KEY)
+      return geminiModels(config).map((model) => ({ provider: 'gemini', model }));
+    if (p === 'groq' && config.GROQ_API_KEY)
+      return modelList(config.GROQ_MODELS).map((model) => ({ provider: 'groq', model }));
+    if (p === 'openrouter' && config.OPENROUTER_API_KEY)
+      return modelList(config.OPENROUTER_MODELS).map((model) => ({ provider: 'openrouter', model }));
+    return [];
+  });
+}
+
+const stepName = (step: ChainStep) =>
+  step.provider === 'gemini' ? step.model : `${step.provider}:${step.model}`;
+
+export async function explainWithModels(
   config: AppConfig,
   fetchFn: typeof fetch,
   facts: Record<string, unknown>,
   library: Record<string, string>,
   allowed: readonly number[],
+  now: () => number = Date.now,
 ): Promise<GeminiResult> {
   const today = new Date().toISOString().slice(0, 10);
-  for (const model of geminiModels(config)) {
-    if (spentModels.get(model) === today) continue;
-    const result = await askGemini(config, fetchFn, model, facts, library, allowed);
+  const end = now() + GUIDE_CHAIN_MS;
+  for (const step of guideChain(config)) {
+    const name = stepName(step);
+    if (spentModels.get(name) === today) continue;
+    const left = end - now();
+    if (left < 1_000) break;
+    const signal = AbortSignal.timeout(Math.min(20_000, left));
+    let result: Omit<GeminiResult, 'model'> | 'spent' | 'busy';
+    try {
+      result =
+        step.provider === 'gemini'
+          ? await askGemini(config, fetchFn, step.model, facts, library, allowed, signal)
+          : await askOpenAiStyle(config, fetchFn, step, facts, library, allowed, signal);
+    } catch {
+      // No answer in time, or the connection failed: try the next model.
+      result = 'busy';
+    }
     if (result === 'spent') {
-      spentModels.set(model, today);
+      spentModels.set(name, today);
       continue;
     }
     if (result === 'busy') continue;
-    return { ...result, model };
+    return { ...result, model: name };
   }
   return { answer: null, outcome: 'error', inputTokens: null, outputTokens: null, model: null };
+}
+
+const libraryLines = (library: Record<string, string>) =>
+  Object.entries(library)
+    .map(([id, text]) => `${id}: ${text}`)
+    .join('\n');
+
+const JSON_REPLY = `Reply with one JSON object only, shaped like {"paragraphs":[{"text":"...","sourceIds":["..."]}],"followUpChipIds":["..."]}.`;
+
+async function askOpenAiStyle(
+  config: AppConfig,
+  fetchFn: typeof fetch,
+  step: ChainStep,
+  facts: Record<string, unknown>,
+  library: Record<string, string>,
+  allowed: readonly number[],
+  signal: AbortSignal,
+): Promise<Omit<GeminiResult, 'model'> | 'spent' | 'busy'> {
+  const provider = OPENAI_STYLE[step.provider as Exclude<Provider, 'gemini'>];
+  const res = await fetchFn(`${provider.base}/chat/completions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${provider.key(config) ?? ''}` },
+    signal,
+    body: JSON.stringify({
+      model: step.model,
+      temperature: 0.4,
+      max_tokens: 1024,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: `${GUIDE_SYSTEM_PROMPT}\n\n${JSON_REPLY}\n\nLibrary of approved text:\n${libraryLines(library)}`,
+        },
+        { role: 'user', content: JSON.stringify(facts) },
+      ],
+    }),
+  });
+  if (SPENT.has(res.status)) return 'spent';
+  if (res.status >= 500) return 'busy';
+  const body = z
+    .object({
+      choices: z
+        .array(
+          z.object({
+            finish_reason: z.string().nullish(),
+            message: z.object({ content: z.string().nullish() }),
+          }),
+        )
+        .optional(),
+      usage: z
+        .object({ prompt_tokens: z.number().optional(), completion_tokens: z.number().optional() })
+        .optional(),
+    })
+    .safeParse(await res.json());
+  const usage = {
+    inputTokens: body.success ? (body.data.usage?.prompt_tokens ?? null) : null,
+    outputTokens: body.success ? (body.data.usage?.completion_tokens ?? null) : null,
+  };
+  if (!res.ok || !body.success) return { answer: null, outcome: 'error', ...usage };
+  const choice = body.data.choices?.[0];
+  const raw = (choice?.message.content ?? '').replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, '');
+  if (!raw || (choice?.finish_reason && choice.finish_reason !== 'stop'))
+    return { answer: null, outcome: 'refused', ...usage };
+  return readAnswer(raw, usage, library, allowed);
 }
 
 async function askGemini(
@@ -739,15 +872,14 @@ async function askGemini(
   facts: Record<string, unknown>,
   library: Record<string, string>,
   allowed: readonly number[],
+  signal: AbortSignal,
 ): Promise<Omit<GeminiResult, 'model'> | 'spent' | 'busy'> {
-  const libraryText = Object.entries(library)
-    .map(([id, text]) => `${id}: ${text}`)
-    .join('\n');
+  const libraryText = libraryLines(library);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   const res = await fetchFn(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': config.GEMINI_API_KEY ?? '' },
-    signal: AbortSignal.timeout(20_000),
+    signal,
     body: JSON.stringify({
       systemInstruction: {
         parts: [{ text: `${GUIDE_SYSTEM_PROMPT}\n\nLibrary of approved text:\n${libraryText}` }],
@@ -761,9 +893,9 @@ async function askGemini(
       },
     }),
   });
-  if (res.status === 429 || res.status === 404) return 'spent';
+  if (SPENT.has(res.status)) return 'spent';
   // Overloaded or failing for a moment: try the next model for this request only.
-  if (res.status === 503 || res.status === 500) return 'busy';
+  if (res.status >= 500) return 'busy';
   const body = z
     .object({
       candidates: z
@@ -788,6 +920,16 @@ async function askGemini(
   const raw = candidate?.content?.parts.map((p) => p.text ?? '').join('') ?? '';
   if (!raw || (candidate?.finishReason && candidate.finishReason !== 'STOP'))
     return { answer: null, outcome: 'refused', ...usage };
+  return readAnswer(raw, usage, library, allowed);
+}
+
+// Every provider's answer goes through the same checks before anyone sees it.
+function readAnswer(
+  raw: string,
+  usage: { inputTokens: number | null; outputTokens: number | null },
+  library: Record<string, string>,
+  allowed: readonly number[],
+): Omit<GeminiResult, 'model'> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
@@ -3302,7 +3444,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       };
       generatedToday.set(userId, { day: today, count: used + 1 });
       try {
-        const result = await explainWithGemini(config, fetchFn, facts, library, allowed);
+        const result = await explainWithModels(config, fetchFn, facts, library, allowed);
         usedModel = result.model;
         tokens = { inputTokens: result.inputTokens, outputTokens: result.outputTokens };
         outcome = result.outcome;
@@ -3601,7 +3743,89 @@ export async function seed(
   };
 }
 
-// This is where the command line starts: serve, migrate, seed or db-check.
+// This is where the guide's model providers are checked with the keys in .env: which models each one offers, and
+// whether every model in the chain answers a harmless test. Keys are never printed and no personal data is sent.
+async function checkModels(config: AppConfig) {
+  const list = async (
+    name: string,
+    url: string,
+    headers: Record<string, string>,
+    pick: (ids: string[]) => string[],
+  ) => {
+    try {
+      const res = await fetch(url, { headers, signal: AbortSignal.timeout(15_000) });
+      if (!res.ok) return console.log(`${name}: could not list models (HTTP ${res.status})`);
+      const body = (await res.json()) as { data?: Array<{ id: string }>; models?: Array<{ name: string }> };
+      const ids = pick([...(body.data ?? []).map((m) => m.id), ...(body.models ?? []).map((m) => m.name)]);
+      console.log(`${name}: ${ids.length} models\n  ${ids.slice(0, 40).join('\n  ')}`);
+    } catch (error) {
+      console.log(`${name}: could not list models (${(error as Error).name})`);
+    }
+  };
+  if (config.GEMINI_API_KEY)
+    await list(
+      'gemini',
+      'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',
+      { 'x-goog-api-key': config.GEMINI_API_KEY },
+      (ids) => ids.map((id) => id.replace(/^models\//, '')).filter((id) => /flash|pro|gemma/.test(id)),
+    );
+  if (config.GROQ_API_KEY)
+    await list(
+      'groq',
+      'https://api.groq.com/openai/v1/models',
+      { authorization: `Bearer ${config.GROQ_API_KEY}` },
+      (ids) => ids,
+    );
+  if (config.OPENROUTER_API_KEY)
+    await list(
+      'openrouter (free only)',
+      'https://openrouter.ai/api/v1/models',
+      { authorization: `Bearer ${config.OPENROUTER_API_KEY}` },
+      (ids) => ids.filter((id) => id.endsWith(':free')),
+    );
+  console.log('\nChain, in order:');
+  for (const step of guideChain(config)) {
+    const started = Date.now();
+    let status: string;
+    try {
+      const res =
+        step.provider === 'gemini'
+          ? await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(step.model)}:generateContent`,
+              {
+                method: 'POST',
+                headers: {
+                  'content-type': 'application/json',
+                  'x-goog-api-key': config.GEMINI_API_KEY ?? '',
+                },
+                signal: AbortSignal.timeout(20_000),
+                body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Reply with OK.' }] }] }),
+              },
+            )
+          : await fetch(`${OPENAI_STYLE[step.provider].base}/chat/completions`, {
+              method: 'POST',
+              headers: {
+                'content-type': 'application/json',
+                authorization: `Bearer ${OPENAI_STYLE[step.provider].key(config) ?? ''}`,
+              },
+              signal: AbortSignal.timeout(20_000),
+              body: JSON.stringify({
+                model: step.model,
+                max_tokens: 5,
+                messages: [{ role: 'user', content: 'Reply with OK.' }],
+              }),
+            });
+      status = res.ok ? 'answers' : `HTTP ${res.status}`;
+    } catch (error) {
+      status = (error as Error).name;
+    }
+    console.log(
+      `  ${step.provider.padEnd(10)} ${step.model.padEnd(48)} ${status} (${Date.now() - started} ms)`,
+    );
+  }
+}
+
+// This is where the command line starts: serve, migrate, seed, db-check or models-check.
 async function main() {
   let config: AppConfig;
   try {
@@ -3612,6 +3836,11 @@ async function main() {
   }
   const command = process.argv[2] ?? 'serve';
   const logger = createLogger(config.LOG_LEVEL);
+
+  if (command === 'models-check') {
+    await checkModels(config);
+    return;
+  }
 
   if (command !== 'serve') {
     const url = directUrlOf(config);
@@ -3643,7 +3872,7 @@ async function main() {
         const host = new URL(url).host;
         console.log(`ok   ${host} / ${row?.db} (PostgreSQL ${row?.version})`);
       } else {
-        console.error(`Unknown command "${command}". Use serve, migrate, seed or db-check.`);
+        console.error(`Unknown command "${command}". Use serve, migrate, seed, db-check or models-check.`);
         process.exitCode = 1;
       }
     } catch (error) {

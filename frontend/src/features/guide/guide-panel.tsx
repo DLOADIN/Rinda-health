@@ -1,9 +1,11 @@
 import { GUIDE_ANSWERS } from '@rinda/content/guide-answers';
 import { composeGuideAnswer } from '@rinda/rules';
-import { Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { CircleAlert, House, Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import { useOnline } from '@/components/offline-badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,6 +38,8 @@ export default function GuidePanel({ assessment, open, onOpenChange, initialChip
   const [chip, setChip] = useState<string | null>(initialChip ?? null);
   const [served, setServed] = useState<{ chip: string; answer: GuideResponse } | null>(null);
   const [votedFor, setVotedFor] = useState<string | null>(null);
+  const [failedFor, setFailedFor] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [explain, { isLoading }] = useExplainMutation();
   const [feedback] = useGuideFeedbackMutation();
 
@@ -57,7 +61,10 @@ export default function GuidePanel({ assessment, open, onOpenChange, initialChip
     if (!assessment || !chip || !online || assessment.provisional) return;
     let current = true;
     void explain({ assessmentId: assessment.id, chipId: chip, language: lang }).then((r) => {
-      if (current && 'data' in r && r.data) setServed({ chip, answer: r.data });
+      if (!current) return;
+      if ('data' in r && r.data) setServed({ chip, answer: r.data });
+      // No answer from the server at all: say so and offer the way back, while the approved answer stays shown.
+      else setFailedFor(chip);
     });
     return () => {
       current = false;
@@ -115,6 +122,25 @@ export default function GuidePanel({ assessment, open, onOpenChange, initialChip
                   </Button>
                 ) : null}
               </div>
+            ) : null}
+
+            {failedFor !== null && failedFor === chip ? (
+              <Alert>
+                <CircleAlert aria-hidden="true" />
+                <AlertDescription className="flex flex-col gap-3">
+                  <span>{t('guidePanel.unavailable')}</span>
+                  <Button
+                    className="self-start"
+                    onClick={() => {
+                      onOpenChange(false);
+                      void navigate('/app');
+                    }}
+                  >
+                    <House aria-hidden="true" data-icon="inline-start" />
+                    {t('guidePanel.backToDashboard')}
+                  </Button>
+                </AlertDescription>
+              </Alert>
             ) : null}
 
             {answer ? (
