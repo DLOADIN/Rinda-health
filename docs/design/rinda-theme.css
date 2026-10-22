@@ -17,123 +17,121 @@
 :root {
   --radius: 0.75rem;
 
-  /* Brand palette: exact values from the reference screenshot */
-  --brand-ember: #E43D12;
-  --brand-rose: #D6536D;
-  --brand-blush: #FFA2B6;
-  --brand-amber: #EFB11D;
-  --brand-bone: #EBE9E1;
+  /* Black and white only (ADR-034): the old brand names stay so components keep working, but every value is grey. */
+  --brand-ember: #111111;
+  --brand-rose: #404040;
+  --brand-blush: #d4d4d4;
+  --brand-amber: #a3a3a3;
+  --brand-bone: #f5f5f5;
 
-  /* Accessible companions (text and strokes) */
-  --brand-ember-strong: #C2330E; /* ember text/links on light surfaces (>= 4.5:1) */
-  --brand-rose-strong: #C24A63;  /* rose fill under white text (4.72:1) */
-  --brand-amber-strong: #A87C14; /* amber strokes/icons on light surfaces (>= 3:1, graphics only) */
-  --brand-blush-strong: #B26F7E; /* blush strokes on light surfaces (>= 3:1, graphics only) */
-  --brand-blush-soft: #FFE3E9;   /* calm support surfaces (mental wellness, Tier 1) */
-  --brand-amber-soft: #FBEECD;   /* hover and highlight surfaces */
+  --brand-ember-strong: #111111;
+  --brand-rose-strong: #404040;
+  --brand-amber-strong: #6b6b6b;
+  --brand-blush-strong: #8a8a8a;
+  --brand-blush-soft: #f0f0f0;
+  --brand-amber-soft: #f5f5f5;
 
-  /* shadcn/ui semantic tokens */
-  --background: #EBE9E1;          /* Bone */
-  --foreground: #2B1D16;          /* Ink, 13.39:1 on Bone */
-  --card: #F7F6F3;
-  --card-foreground: #2B1D16;
-  --popover: #F7F6F3;
-  --popover-foreground: #2B1D16;
-  --primary: #D4380F;             /* Ember 600, white text 4.80:1 */
-  --primary-foreground: #FFFFFF;
-  --secondary: #FFA2B6;           /* Blush, ink text 8.60:1 */
-  --secondary-foreground: #2B1D16;
-  --muted: #E0DDD3;
-  --muted-foreground: #665C54;    /* 4.79:1 on muted, 5.36:1 on Bone */
-  --accent: #FBEECD;              /* Amber soft */
-  --accent-foreground: #2B1D16;
-  --destructive: #A83C53;         /* Rose 700, white text 6.11:1 */
-  --destructive-foreground: #FFFFFF;
-  --border: #D3CEC3;              /* decorative separators only */
-  --input: #857F77;               /* form-field borders, >= 3:1 on card and Bone */
-  --ring: #E43D12;                /* focus ring, Ember, >= 3:1 on Bone and card */
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #111111;
+  --primary-foreground: #ffffff;
+  --secondary: #ebebeb;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f2f2f2;
+  --muted-foreground: #525252;
+  --accent: #ebebeb;
+  --accent-foreground: #0a0a0a;
+  --destructive: #262626;
+  --destructive-foreground: #ffffff;
+  --border: #d4d4d4;
+  --input: #737373;
+  --ring: #111111;
 
-  --chart-1: #E43D12;
-  --chart-2: #D6536D;
-  --chart-3: #EFB11D;
-  --chart-4: #FFA2B6;
-  --chart-5: #6E5E53;
+  --chart-1: #111111;
+  --chart-2: #525252;
+  --chart-3: #8a8a8a;
+  --chart-4: #bdbdbd;
+  --chart-5: #737373;
 
-  --sidebar: #F7F6F3;
-  --sidebar-foreground: #2B1D16;
-  --sidebar-primary: #D4380F;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #FBEECD;
-  --sidebar-accent-foreground: #2B1D16;
-  --sidebar-border: #D3CEC3;
-  --sidebar-ring: #E43D12;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #111111;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ebebeb;
+  --sidebar-accent-foreground: #0a0a0a;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #111111;
 
-  /* Result bands: always shown with a word and an icon, never colour alone */
-  --band-ok: #E2DDD0;
-  --band-ok-foreground: #2B1D16;
-  --band-attention: #EFB11D;
-  --band-attention-foreground: #2B1D16;
-  --band-confirm: #C24A63;
-  --band-confirm-foreground: #FFFFFF;
-  --band-urgent: #D4380F;
-  --band-urgent-foreground: #FFFFFF;
-  --band-wellness: #FFE3E9;
-  --band-wellness-foreground: #2B1D16;
+  /* Bands differ by how heavy their fill is, and always show their word and icon. Wellness is never black. */
+  --band-ok: #f5f5f5;
+  --band-ok-foreground: #0a0a0a;
+  --band-attention: #d4d4d4;
+  --band-attention-foreground: #0a0a0a;
+  --band-confirm: #595959;
+  --band-confirm-foreground: #ffffff;
+  --band-urgent: #111111;
+  --band-urgent-foreground: #ffffff;
+  --band-wellness: #ededed;
+  --band-wellness-foreground: #0a0a0a;
 }
 
 .dark {
-  --brand-ember-strong: #EE6A45;
-  --brand-rose-strong: #E58A9C;
-  --brand-amber-strong: #EFB11D;
-  --brand-blush-strong: #FFA2B6;
-  --brand-blush-soft: #4A2C33;
-  --brand-amber-soft: #503B14;
+  --brand-ember-strong: #f5f5f5;
+  --brand-rose-strong: #d4d4d4;
+  --brand-amber-strong: #a3a3a3;
+  --brand-blush-strong: #8a8a8a;
+  --brand-blush-soft: #262626;
+  --brand-amber-soft: #1f1f1f;
 
-  --background: #1B1411;
-  --foreground: #EBE9E1;
-  --card: #241B17;
-  --card-foreground: #EBE9E1;
-  --popover: #241B17;
-  --popover-foreground: #EBE9E1;
-  --primary: #EA5A33;
-  --primary-foreground: #1B1411;
-  --secondary: #FFA2B6;
-  --secondary-foreground: #1B1411;
-  --muted: #30251F;
-  --muted-foreground: #B4A99F;
-  --accent: #503B14;
-  --accent-foreground: #EBE9E1;
-  --destructive: #E0738A;
-  --destructive-foreground: #1B1411;
-  --border: #3A2E27;
-  --input: #7D7168;
-  --ring: #EE6A45;
+  --background: #0a0a0a;
+  --foreground: #f5f5f5;
+  --card: #141414;
+  --card-foreground: #f5f5f5;
+  --popover: #141414;
+  --popover-foreground: #f5f5f5;
+  --primary: #f5f5f5;
+  --primary-foreground: #0a0a0a;
+  --secondary: #262626;
+  --secondary-foreground: #f5f5f5;
+  --muted: #1f1f1f;
+  --muted-foreground: #a3a3a3;
+  --accent: #262626;
+  --accent-foreground: #f5f5f5;
+  --destructive: #e5e5e5;
+  --destructive-foreground: #0a0a0a;
+  --border: #2e2e2e;
+  --input: #8a8a8a;
+  --ring: #f5f5f5;
 
-  --chart-1: #E43D12;
-  --chart-2: #D6536D;
-  --chart-3: #EFB11D;
-  --chart-4: #FFA2B6;
-  --chart-5: #B4A99F;
+  --chart-1: #f5f5f5;
+  --chart-2: #bdbdbd;
+  --chart-3: #8a8a8a;
+  --chart-4: #595959;
+  --chart-5: #a3a3a3;
 
-  --sidebar: #241B17;
-  --sidebar-foreground: #EBE9E1;
-  --sidebar-primary: #EA5A33;
-  --sidebar-primary-foreground: #1B1411;
-  --sidebar-accent: #503B14;
-  --sidebar-accent-foreground: #EBE9E1;
-  --sidebar-border: #3A2E27;
-  --sidebar-ring: #EE6A45;
+  --sidebar: #141414;
+  --sidebar-foreground: #f5f5f5;
+  --sidebar-primary: #f5f5f5;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-border: #2e2e2e;
+  --sidebar-ring: #f5f5f5;
 
-  --band-ok: #3A2F29;
-  --band-ok-foreground: #EBE9E1;
-  --band-attention: #EFB11D;
-  --band-attention-foreground: #1B1411;
-  --band-confirm: #E58A9C;
-  --band-confirm-foreground: #1B1411;
-  --band-urgent: #EA5A33;
-  --band-urgent-foreground: #1B1411;
-  --band-wellness: #4A2C33;
-  --band-wellness-foreground: #EBE9E1;
+  --band-ok: #1f1f1f;
+  --band-ok-foreground: #f5f5f5;
+  --band-attention: #404040;
+  --band-attention-foreground: #f5f5f5;
+  --band-confirm: #a3a3a3;
+  --band-confirm-foreground: #0a0a0a;
+  --band-urgent: #f5f5f5;
+  --band-urgent-foreground: #0a0a0a;
+  --band-wellness: #262626;
+  --band-wellness-foreground: #f5f5f5;
 }
 
 @theme inline {

@@ -12,11 +12,14 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 const STYLE: Record<Severity, { icon: LucideIcon; className: string }> = {
-  ok: { icon: CircleCheck, className: 'bg-band-ok text-band-ok-foreground' },
+  ok: { icon: CircleCheck, className: 'border-border bg-band-ok text-band-ok-foreground' },
   attention: { icon: CircleAlert, className: 'bg-band-attention text-band-attention-foreground' },
   confirm: { icon: Stethoscope, className: 'bg-band-confirm text-band-confirm-foreground' },
   urgent: { icon: Hospital, className: 'bg-band-urgent text-band-urgent-foreground' },
-  wellness: { icon: HeartHandshake, className: 'bg-band-wellness text-band-wellness-foreground' },
+  wellness: {
+    icon: HeartHandshake,
+    className: 'border-border bg-band-wellness text-band-wellness-foreground',
+  },
   unknown: { icon: CircleHelp, className: 'border-dashed border-input bg-transparent text-foreground' },
 };
 

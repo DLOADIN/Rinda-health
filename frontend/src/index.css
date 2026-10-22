@@ -7,119 +7,121 @@
 :root {
   --radius: 0.75rem;
 
-  --brand-ember: #e43d12;
-  --brand-rose: #d6536d;
-  --brand-blush: #ffa2b6;
-  --brand-amber: #efb11d;
-  --brand-bone: #ebe9e1;
+  /* Black and white only (ADR-034): the old brand names stay so components keep working, but every value is grey. */
+  --brand-ember: #111111;
+  --brand-rose: #404040;
+  --brand-blush: #d4d4d4;
+  --brand-amber: #a3a3a3;
+  --brand-bone: #f5f5f5;
 
-  --brand-ember-strong: #c2330e;
-  --brand-rose-strong: #c24a63;
-  --brand-amber-strong: #a87c14;
-  --brand-blush-strong: #b26f7e;
-  --brand-blush-soft: #ffe3e9;
-  --brand-amber-soft: #fbeecd;
+  --brand-ember-strong: #111111;
+  --brand-rose-strong: #404040;
+  --brand-amber-strong: #6b6b6b;
+  --brand-blush-strong: #8a8a8a;
+  --brand-blush-soft: #f0f0f0;
+  --brand-amber-soft: #f5f5f5;
 
-  --background: #ebe9e1;
-  --foreground: #2b1d16;
-  --card: #f7f6f3;
-  --card-foreground: #2b1d16;
-  --popover: #f7f6f3;
-  --popover-foreground: #2b1d16;
-  --primary: #d4380f;
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #111111;
   --primary-foreground: #ffffff;
-  --secondary: #ffa2b6;
-  --secondary-foreground: #2b1d16;
-  --muted: #e0ddd3;
-  --muted-foreground: #665c54;
-  --accent: #fbeecd;
-  --accent-foreground: #2b1d16;
-  --destructive: #a83c53;
+  --secondary: #ebebeb;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f2f2f2;
+  --muted-foreground: #525252;
+  --accent: #ebebeb;
+  --accent-foreground: #0a0a0a;
+  --destructive: #262626;
   --destructive-foreground: #ffffff;
-  --border: #d3cec3;
-  --input: #857f77;
-  --ring: #e43d12;
+  --border: #d4d4d4;
+  --input: #737373;
+  --ring: #111111;
 
-  --chart-1: #e43d12;
-  --chart-2: #d6536d;
-  --chart-3: #efb11d;
-  --chart-4: #ffa2b6;
-  --chart-5: #6e5e53;
+  --chart-1: #111111;
+  --chart-2: #525252;
+  --chart-3: #8a8a8a;
+  --chart-4: #bdbdbd;
+  --chart-5: #737373;
 
-  --sidebar: #f7f6f3;
-  --sidebar-foreground: #2b1d16;
-  --sidebar-primary: #d4380f;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #111111;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #fbeecd;
-  --sidebar-accent-foreground: #2b1d16;
-  --sidebar-border: #d3cec3;
-  --sidebar-ring: #e43d12;
+  --sidebar-accent: #ebebeb;
+  --sidebar-accent-foreground: #0a0a0a;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #111111;
 
-  --band-ok: #e2ddd0;
-  --band-ok-foreground: #2b1d16;
-  --band-attention: #efb11d;
-  --band-attention-foreground: #2b1d16;
-  --band-confirm: #c24a63;
+  /* Bands differ by how heavy their fill is, and always show their word and icon. Wellness is never black. */
+  --band-ok: #f5f5f5;
+  --band-ok-foreground: #0a0a0a;
+  --band-attention: #d4d4d4;
+  --band-attention-foreground: #0a0a0a;
+  --band-confirm: #595959;
   --band-confirm-foreground: #ffffff;
-  --band-urgent: #d4380f;
+  --band-urgent: #111111;
   --band-urgent-foreground: #ffffff;
-  --band-wellness: #ffe3e9;
-  --band-wellness-foreground: #2b1d16;
+  --band-wellness: #ededed;
+  --band-wellness-foreground: #0a0a0a;
 }
 
 .dark {
-  --brand-ember-strong: #ee6a45;
-  --brand-rose-strong: #e58a9c;
-  --brand-amber-strong: #efb11d;
-  --brand-blush-strong: #ffa2b6;
-  --brand-blush-soft: #4a2c33;
-  --brand-amber-soft: #503b14;
+  --brand-ember-strong: #f5f5f5;
+  --brand-rose-strong: #d4d4d4;
+  --brand-amber-strong: #a3a3a3;
+  --brand-blush-strong: #8a8a8a;
+  --brand-blush-soft: #262626;
+  --brand-amber-soft: #1f1f1f;
 
-  --background: #1b1411;
-  --foreground: #ebe9e1;
-  --card: #241b17;
-  --card-foreground: #ebe9e1;
-  --popover: #241b17;
-  --popover-foreground: #ebe9e1;
-  --primary: #ea5a33;
-  --primary-foreground: #1b1411;
-  --secondary: #ffa2b6;
-  --secondary-foreground: #1b1411;
-  --muted: #30251f;
-  --muted-foreground: #b4a99f;
-  --accent: #503b14;
-  --accent-foreground: #ebe9e1;
-  --destructive: #e0738a;
-  --destructive-foreground: #1b1411;
-  --border: #3a2e27;
-  --input: #7d7168;
-  --ring: #ee6a45;
+  --background: #0a0a0a;
+  --foreground: #f5f5f5;
+  --card: #141414;
+  --card-foreground: #f5f5f5;
+  --popover: #141414;
+  --popover-foreground: #f5f5f5;
+  --primary: #f5f5f5;
+  --primary-foreground: #0a0a0a;
+  --secondary: #262626;
+  --secondary-foreground: #f5f5f5;
+  --muted: #1f1f1f;
+  --muted-foreground: #a3a3a3;
+  --accent: #262626;
+  --accent-foreground: #f5f5f5;
+  --destructive: #e5e5e5;
+  --destructive-foreground: #0a0a0a;
+  --border: #2e2e2e;
+  --input: #8a8a8a;
+  --ring: #f5f5f5;
 
-  --chart-1: #e43d12;
-  --chart-2: #d6536d;
-  --chart-3: #efb11d;
-  --chart-4: #ffa2b6;
-  --chart-5: #b4a99f;
+  --chart-1: #f5f5f5;
+  --chart-2: #bdbdbd;
+  --chart-3: #8a8a8a;
+  --chart-4: #595959;
+  --chart-5: #a3a3a3;
 
-  --sidebar: #241b17;
-  --sidebar-foreground: #ebe9e1;
-  --sidebar-primary: #ea5a33;
-  --sidebar-primary-foreground: #1b1411;
-  --sidebar-accent: #503b14;
-  --sidebar-accent-foreground: #ebe9e1;
-  --sidebar-border: #3a2e27;
-  --sidebar-ring: #ee6a45;
+  --sidebar: #141414;
+  --sidebar-foreground: #f5f5f5;
+  --sidebar-primary: #f5f5f5;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-border: #2e2e2e;
+  --sidebar-ring: #f5f5f5;
 
-  --band-ok: #3a2f29;
-  --band-ok-foreground: #ebe9e1;
-  --band-attention: #efb11d;
-  --band-attention-foreground: #1b1411;
-  --band-confirm: #e58a9c;
-  --band-confirm-foreground: #1b1411;
-  --band-urgent: #ea5a33;
-  --band-urgent-foreground: #1b1411;
-  --band-wellness: #4a2c33;
-  --band-wellness-foreground: #ebe9e1;
+  --band-ok: #1f1f1f;
+  --band-ok-foreground: #f5f5f5;
+  --band-attention: #404040;
+  --band-attention-foreground: #f5f5f5;
+  --band-confirm: #a3a3a3;
+  --band-confirm-foreground: #0a0a0a;
+  --band-urgent: #f5f5f5;
+  --band-urgent-foreground: #0a0a0a;
+  --band-wellness: #262626;
+  --band-wellness-foreground: #f5f5f5;
 }
 
 @theme inline {
@@ -252,31 +254,10 @@
 
 @utility bg-mesh {
   background-color: var(--background);
-  background-image:
-    radial-gradient(
-      40rem 28rem at 8% -10%,
-      color-mix(in oklab, var(--brand-blush) 28%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      36rem 26rem at 100% 0%,
-      color-mix(in oklab, var(--brand-amber) 18%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      44rem 30rem at 60% 110%,
-      color-mix(in oklab, var(--brand-ember) 10%, transparent),
-      transparent 70%
-    );
-  background-attachment: fixed;
 }
 
 @utility hero-orb {
-  background-image: radial-gradient(
-    circle at 35% 30%,
-    color-mix(in oklab, var(--brand-blush) 70%, var(--card)),
-    color-mix(in oklab, var(--brand-ember) 85%, var(--card)) 70%
-  );
+  background-color: var(--primary);
 }
 
 @theme {

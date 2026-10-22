@@ -2,6 +2,8 @@
 
 The Rinda look is **vibrant but calm**: warm Bone backgrounds, Ember for action, Rose, Blush and Amber for meaning, and plenty of space. Every screen is built from **shadcn/ui components only** (ADR-005, NFR-15) and themed by one file, [design/rinda-theme.css](design/rinda-theme.css).
 
+> **Black-and-white update (23 October 2026, ADR-034).** The interface now uses only black, white and greys; the colour names below (Ember, Rose, Blush, Amber, Bone) remain as token names but every value is grey, set in `frontend/src/index.css` and [design/rinda-theme.css](design/rinda-theme.css). Light mode: white page, near-black text and primary buttons. Dark mode: the reverse. Result bands are told apart by fill weight, from an outlined light grey (meets recommendation) to solid black (seek care), and always keep their word and icon; mental-wellness results use a soft grey and are never black. The background glow is gone and the orb is a solid circle. The typeface is the device's system font (San Francisco on Apple devices) and there are no shadows (ADR-031). `npm run check:contrast` checks every pair in the contrast table below against the new values; the hex values in that table and in the palette section are from the earlier colour theme.
+
 ## Principles
 
 1. **Calm before clever.** Trauma-informed first: predictable layouts, gentle language, no alarm red for mood results, no countdowns, no surprise content.
