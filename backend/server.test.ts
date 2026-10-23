@@ -804,6 +804,10 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       history: [{ role: 'user', text: 'my email is someone@example.com' }],
     });
     expect(hidden.body.error.code).toBe('CHAT_PERSONAL');
+    expect((await ask({ question: 'I feel so stressed lately' })).body).toMatchObject({
+      status: 'off_topic',
+      turnsLeft: 5,
+    });
     await ask({ question: 'Hi', chipId: 'tips' }).expect(400);
     expect(outbound).toHaveLength(0);
     expect((await agent.get('/api/v1/chat')).body.turnsLeft).toBe(5);

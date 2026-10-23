@@ -3537,7 +3537,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       const check = checkChatQuestion(text);
       if (check === 'crisis')
         throw new AppError(422, 'CHAT_SAFETY', 'This question is not sent. Please use Get help now.');
-      if (check !== 'ok')
+      if (check === 'personal' || check === 'empty')
         throw new AppError(
           422,
           'CHAT_PERSONAL',
@@ -3546,6 +3546,12 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     }
     const unavailable = async () =>
       res.json({ status: 'unavailable', paragraphs: [], turnsLeft: await chatTurnsLeft(database, user.id) });
+    if (body.question && checkChatQuestion(body.question) === 'wellness')
+      return res.json({
+        status: 'off_topic',
+        paragraphs: [],
+        turnsLeft: await chatTurnsLeft(database, user.id),
+      });
     if (body.language === 'rw' || !(await chatAvailable(database, user.id, user.role))) return unavailable();
 
     const row =
@@ -3558,7 +3564,16 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
               : 'SELECT results, plan, safety FROM assessments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
             body.assessmentId ? [body.assessmentId, user.id] : [user.id],
           );
-    if (row && (row.plan.urgent !== null || row.safety.tier !== null)) return unavailable();
+    const latest =
+      user.role !== 'participant'
+        ? null
+        : await one<{ plan: Plan; safety: SafetyAssessment }>(
+            database,
+            'SELECT plan, safety FROM assessments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+            [user.id],
+          );
+    if ([row, latest].some((r) => r && (r.plan.urgent !== null || r.safety.tier !== null)))
+      return unavailable();
 
     const counted = await one<{ turns: number }>(
       database,

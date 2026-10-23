@@ -2,9 +2,10 @@ import '@/features/guide/chat-strings';
 import { CHAT_MAX_CHARS, CHAT_TURNS_PER_DAY, checkChatQuestion } from '@rinda/rules/chat-guard';
 import type { ChatResponse, ChatTurn } from '@rinda/schemas';
 import { Bot, CircleAlert, House, SendHorizontal } from 'lucide-react';
-import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
+import { GetHelp } from '@/components/get-help';
 import { useOnline } from '@/components/offline-badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -12,10 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-
-const SafetyScreen = lazy(() =>
-  import('@/features/participant/safety-screen').then((m) => ({ default: m.SafetyScreen })),
-);
+import { SafetyScreen } from '@/features/participant/safety-screen';
 
 type Notice = 'crisis' | 'personal' | 'limit' | 'unavailable' | 'off' | null;
 
@@ -67,17 +65,30 @@ export default function ChatPanel({
   }, []);
 
   useEffect(() => {
-    end.current?.scrollIntoView({ block: 'end' });
+    end.current?.scrollIntoView?.({ block: 'end' });
   }, [messages, sending]);
 
   const send = async (payload: { question?: string; chipId?: string }, shown: string) => {
-    if (sending || turnsLeft <= 0) return;
     if (payload.question) {
       const check = checkChatQuestion(payload.question);
-      if (check === 'crisis') return setNotice('crisis');
+      if (check === 'crisis') {
+        setInput('');
+        return setNotice('crisis');
+      }
       if (check === 'personal') return setNotice('personal');
       if (check === 'empty') return;
+      if (check === 'wellness') {
+        setInput('');
+        setNotice(null);
+        setMessages((m) => [
+          ...m,
+          { role: 'user', text: shown },
+          { role: 'assistant', text: t('chat.offTopic') },
+        ]);
+        return;
+      }
     }
+    if (sending || turnsLeft <= 0) return;
     setNotice(null);
     const history: ChatTurn[] = messages.slice(-8).map((m) => ({ role: m.role, text: m.text.slice(0, 600) }));
     setMessages((m) => [...m, { role: 'user', text: shown }]);
@@ -121,12 +132,7 @@ export default function ChatPanel({
     if (q) void send({ question: q }, q);
   };
 
-  if (notice === 'crisis')
-    return (
-      <Suspense fallback={null}>
-        <SafetyScreen onStop={onClose} onContinue={() => setNotice(null)} />
-      </Suspense>
-    );
+  if (notice === 'crisis') return <SafetyScreen onStop={onClose} onContinue={() => setNotice(null)} />;
 
   const blocked = !online || !available || turnsLeft <= 0 || language === 'rw';
 
@@ -239,6 +245,7 @@ export default function ChatPanel({
           </div>
           <p className="text-xs text-muted-foreground">{t('chat.chars', { count: input.length })}</p>
         </form>
+        <GetHelp />
       </CardContent>
     </Card>
   );

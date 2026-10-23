@@ -114,7 +114,9 @@ for (const ruleset of parsedRulesets) {
 }
 
 if (release && todos > 0)
-  errors.push(`${todos} ${TODO_MARKER} placeholder(s) remain; a pilot release needs approved wording`);
+  errors.push(
+    `${todos} placeholder(s) (${TODO_MARKER} or "${REVISE_MARKER}") remain; a pilot release needs approved wording`,
+  );
 
 if (errors.length > 0) {
   console.error(`Content validation failed:\n${errors.map((e) => `  - ${e}`).join('\n')}`);
@@ -122,5 +124,7 @@ if (errors.length > 0) {
 }
 console.log(
   `Content valid: ${rulesets.length} ruleset(s), ${english.length} file(s) in ${LANGUAGES.length} languages.` +
-    (todos > 0 ? ` ${todos} ${TODO_MARKER} placeholder(s) still need reviewers (fails with --release).` : ''),
+    (todos > 0
+      ? ` ${todos} placeholder(s) (${TODO_MARKER} or "${REVISE_MARKER}") still need reviewers (fails with --release).`
+      : ''),
 );
