@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "Rinda",
+    "fullName": "Rinda Health",
     "skipToContent": "Skip to main content",
     "tagline": "A private, educational check of your everyday health habits"
   },

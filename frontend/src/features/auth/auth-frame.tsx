@@ -1,5 +1,5 @@
-// This is the split sign-in and sign-up layout: the form on one side, and a large photo panel with a short message
-// on the other. The photos change slowly on their own (never for people who prefer reduced motion).
+// This is the sign-in and sign-up layout: one framed panel with the photos on one side and the form on the other,
+// and on phones a small photo above the form. The photos change slowly on their own (never for people who prefer reduced motion).
 import '@/features/landing/landing-strings';
 import { ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -24,7 +24,7 @@ function PhotoPanel({ start }: { start: number }) {
   const slide = SLIDES[index] ?? SLIDES[0];
   const go = (step: number) => setIndex((i) => (i + step + SLIDES.length) % SLIDES.length);
   return (
-    <div className="relative hidden min-h-[36rem] overflow-hidden rounded-[2rem] bg-foreground lg:block">
+    <div className="relative hidden min-h-[38rem] overflow-hidden bg-foreground lg:block">
       {SLIDES.map((s, i) => (
         <img
           key={s.key}
@@ -85,34 +85,35 @@ function PhotoPanel({ start }: { start: number }) {
 
 export function AuthFrame({
   heading,
+  subtitle,
   children,
   slide = 0,
 }: {
   heading: string;
+  subtitle: string;
   children: ReactNode;
   slide?: number;
 }) {
   const { t } = useTranslation();
   return (
     <section className="relative isolate px-4 pt-6 pb-24 lg:pt-10">
-      <div aria-hidden="true" className="bg-mesh absolute inset-0 -z-10" />
-      <div className="mx-auto grid max-w-6xl items-stretch gap-8 lg:grid-cols-2 lg:gap-12">
-        <div className="flex flex-col justify-center gap-6 py-4">
+      <div className="mx-auto grid max-w-5xl overflow-hidden rounded-lg border bg-card lg:grid-cols-2">
+        <PhotoPanel start={slide} />
+        <div className="flex flex-col items-center justify-center gap-6 px-6 py-10 sm:px-12">
           <img
             src={SLIDES[slide]?.image}
             alt=""
             decoding="async"
-            className="h-36 w-full rounded-3xl object-cover lg:hidden"
+            className="h-32 w-full rounded-lg object-cover lg:hidden"
           />
-          {/* The menu bar already shows the logo on phones, so this copy appears on large screens only. */}
-          <RindaLogo className="hidden self-start rounded-full lg:block" />
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{heading}</h1>
-            <p className="text-muted-foreground">{t('landing.educational')}</p>
+          <RindaLogo className="hidden lg:block" />
+          <div className="flex flex-col gap-1 text-center">
+            <h1 className="text-3xl font-semibold tracking-tight">{heading}</h1>
+            <p className="text-sm text-muted-foreground">{subtitle}</p>
           </div>
-          {children}
+          <div className="flex w-full max-w-sm flex-col gap-4">{children}</div>
+          <p className="text-center text-xs text-muted-foreground">{t('landing.educational')}</p>
         </div>
-        <PhotoPanel start={slide} />
       </div>
     </section>
   );

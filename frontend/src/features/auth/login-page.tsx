@@ -8,7 +8,6 @@ import type { z } from 'zod';
 import { ApiError } from '@/components/api-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/password-input';
@@ -45,69 +44,61 @@ export function LoginPage() {
   };
 
   return (
-    <AuthFrame heading={t('auth.loginHeading')}>
-      <Card className="glass-strong w-full max-w-lg">
-        <CardHeader>
-          <CardTitle className="text-lg md:text-xl">{t('auth.loginTitle')}</CardTitle>
-          <CardDescription>{t('auth.loginSubtitle')}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {callbackError && (CALLBACK_ERRORS as readonly string[]).includes(callbackError) ? (
-            <Alert role="alert">
-              <AlertDescription>{t(`auth.callbackErrors.${callbackError}`)}</AlertDescription>
-            </Alert>
-          ) : null}
-          <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-            <FieldGroup>
-              <Controller
-                name="identifier"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="identifier">{t('auth.identifier')}</FieldLabel>
-                    <Input
-                      {...field}
-                      id="identifier"
-                      autoComplete="username"
-                      inputMode="email"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    <FieldDescription>{t('auth.identifierHint')}</FieldDescription>
-                    {fieldState.invalid ? <FieldError>{t('auth.identifierInvalid')}</FieldError> : null}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="password"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="password">{t('auth.password')}</FieldLabel>
-                    <PasswordInput
-                      {...field}
-                      id="password"
-                      autoComplete="current-password"
-                      aria-invalid={fieldState.invalid}
-                    />
-                  </Field>
-                )}
-              />
-              <ApiError error={error} />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? <Spinner data-icon="inline-start" /> : null}
-                {t('auth.submitLogin')}
-              </Button>
-            </FieldGroup>
-          </form>
-          <GoogleButton intent="login" />
-          <p className="text-center text-sm">
-            {t('auth.noAccount')}{' '}
-            <Link to="/signup" className="font-medium text-brand-ember-strong underline underline-offset-4">
-              {t('landing.signup')}
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+    <AuthFrame heading={t('auth.loginTitle')} subtitle={t('auth.loginSubtitle')}>
+      {callbackError && (CALLBACK_ERRORS as readonly string[]).includes(callbackError) ? (
+        <Alert role="alert">
+          <AlertDescription>{t(`auth.callbackErrors.${callbackError}`)}</AlertDescription>
+        </Alert>
+      ) : null}
+      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+        <FieldGroup>
+          <Controller
+            name="identifier"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="identifier">{t('auth.identifier')}</FieldLabel>
+                <Input
+                  {...field}
+                  id="identifier"
+                  autoComplete="username"
+                  inputMode="email"
+                  aria-invalid={fieldState.invalid}
+                />
+                <FieldDescription>{t('auth.identifierHint')}</FieldDescription>
+                {fieldState.invalid ? <FieldError>{t('auth.identifierInvalid')}</FieldError> : null}
+              </Field>
+            )}
+          />
+          <Controller
+            name="password"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="password">{t('auth.password')}</FieldLabel>
+                <PasswordInput
+                  {...field}
+                  id="password"
+                  autoComplete="current-password"
+                  aria-invalid={fieldState.invalid}
+                />
+              </Field>
+            )}
+          />
+          <ApiError error={error} />
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? <Spinner data-icon="inline-start" /> : null}
+            {t('auth.submitLogin')}
+          </Button>
+        </FieldGroup>
+      </form>
+      <GoogleButton intent="login" />
+      <p className="text-center text-sm">
+        {t('auth.noAccount')}{' '}
+        <Link to="/signup" className="font-medium text-brand-ember-strong underline underline-offset-4">
+          {t('landing.signup')}
+        </Link>
+      </p>
     </AuthFrame>
   );
 }

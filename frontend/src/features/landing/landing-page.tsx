@@ -144,10 +144,6 @@ function Hero() {
           </p>
         </Reveal>
         <Reveal delay={150} className="relative mx-auto py-6">
-          <div
-            aria-hidden="true"
-            className="hero-orb absolute inset-x-0 top-10 -z-10 mx-auto size-72 rounded-full blur-3xl"
-          />
           <div className="motion-safe:animate-float">
             <PhoneMockup />
           </div>
@@ -380,7 +376,7 @@ function About() {
   }));
   return (
     <Section id="about">
-      <div className="relative isolate overflow-hidden rounded-[2rem]">
+      <div className="relative isolate overflow-hidden rounded-lg">
         <img
           src="/images/landing/rwanda-sunrise.webp"
           alt=""
@@ -487,7 +483,7 @@ function ClosingCta() {
   const { t } = useTranslation();
   return (
     <section aria-labelledby="cta-title" className="px-4 pb-16">
-      <Reveal className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-primary px-6 py-14 text-center text-primary-foreground md:py-20">
+      <Reveal className="relative mx-auto max-w-6xl overflow-hidden rounded-lg bg-primary px-6 py-14 text-center text-primary-foreground md:py-20">
         <DotPattern className="fill-primary-foreground/20" />
         <h2
           id="cta-title"

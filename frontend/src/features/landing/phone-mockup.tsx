@@ -39,6 +39,7 @@ export function PhoneMockup() {
   return (
     <div
       aria-hidden="true"
+      data-keep-round
       className="relative mx-auto w-[17.5rem] rounded-[2.75rem] border-[10px] border-foreground bg-foreground shadow-2xl shadow-foreground/30 sm:w-[19rem]"
     >
       <div className="absolute top-2 left-1/2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-foreground" />

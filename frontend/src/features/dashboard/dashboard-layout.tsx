@@ -110,7 +110,14 @@ function NavItems({ items }: { items: NavItem[] }) {
           item.to === '/app' ? pathname === '/app' || pathname === '/app/' : pathname.startsWith(item.to);
         return (
           <SidebarMenuItem key={item.to}>
-            <SidebarMenuButton asChild isActive={active} tooltip={t(item.labelKey)} className="h-11">
+            {/* On hover the item eases to the right, its icon grows a little and a bar grows on its left edge (the
+                bar stays on the current page). People who ask for less motion get the colour change only. */}
+            <SidebarMenuButton
+              asChild
+              isActive={active}
+              tooltip={t(item.labelKey)}
+              className="relative h-11 transition-[background-color,color,padding] duration-200 ease-out before:absolute before:top-1/2 before:left-0 before:h-0 before:w-0.5 before:-translate-y-1/2 before:bg-sidebar-primary before:transition-[height] before:duration-200 before:content-[''] hover:pl-3.5 hover:before:h-6 data-[active=true]:before:h-6 [&>svg]:transition-transform [&>svg]:duration-200 hover:[&>svg]:scale-110"
+            >
               <NavLink to={item.to} end={item.to === '/app'} onClick={close}>
                 <Icon aria-hidden="true" />
                 <span>{t(item.labelKey)}</span>
@@ -207,7 +214,7 @@ function AppSidebar({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
                   {t('app.name').charAt(0)}
                 </span>
                 <span className="grid flex-1 text-left leading-tight">
-                  <span className="text-base font-semibold text-brand-ember-strong">{t('app.name')}</span>
+                  <span className="text-base font-semibold text-brand-ember-strong">{t('app.fullName')}</span>
                   <span className="truncate text-xs text-muted-foreground">{t(`auth.roles.${me.role}`)}</span>
                 </span>
               </NavLink>
