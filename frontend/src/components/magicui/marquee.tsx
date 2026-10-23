@@ -1,4 +1,3 @@
-// Adapted from Magic UI (MIT): an endless, CSS-only scrolling row that pauses on hover.
 import type { ComponentPropsWithoutRef } from 'react';
 import { cn } from '@/lib/utils';
 

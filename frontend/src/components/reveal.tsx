@@ -1,4 +1,3 @@
-// Fades a section up the first time it scrolls into view. Anyone who prefers reduced motion just sees it straight away.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 

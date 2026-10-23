@@ -276,7 +276,6 @@ function PasswordCard({ me }: { me: Me }) {
   );
 }
 
-// WhatsApp notices: off until switched on, and the message never includes results.
 function WhatsAppCard() {
   const { t } = useTranslation();
   const { data } = useWhatsappQuery();

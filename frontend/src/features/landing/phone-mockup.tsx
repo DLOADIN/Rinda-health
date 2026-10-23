@@ -11,7 +11,6 @@ const SAMPLE: Array<{ domain: string; band: string; severity: Severity }> = [
   { domain: 'tobacco', band: 'no_reported_risk', severity: 'ok' },
 ];
 
-/** A ring that fills part way, like the activity ring in the app. */
 function Ring({ value, max }: { value: number; max: number }) {
   const r = 34;
   const c = 2 * Math.PI * r;
@@ -32,7 +31,6 @@ function Ring({ value, max }: { value: number; max: number }) {
   );
 }
 
-/** This is the phone on the landing page: a small, live copy of the participant home screen with sample results. */
 export function PhoneMockup() {
   const { t } = useTranslation();
   const { text } = useContent();

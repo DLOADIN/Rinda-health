@@ -1,4 +1,3 @@
-// This is the first screen a participant sees: what Rinda is, the age check and four un-ticked consent choices.
 import { STUDY_CONSENTS, type StudyConsent } from '@rinda/schemas';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

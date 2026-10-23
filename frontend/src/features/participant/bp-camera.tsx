@@ -1,5 +1,3 @@
-// This is the camera helper for the blood pressure step. The picture is read on this device and then thrown away;
-// nothing is saved or sent, and the person always checks the numbers before they are used.
 import '@/features/participant/camera-strings';
 import { Camera, CircleAlert, ImageUp, RotateCcw, SquareDashedMousePointer } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type PointerEvent } from 'react';
@@ -27,7 +25,6 @@ interface Props {
 
 type Stage = 'starting' | 'scanning' | 'box' | 'reading' | 'no-camera' | 'not-read' | 'no-numbers' | 'found';
 
-/** A box on the photo, with corners as fractions of its width and height. */
 interface PhotoBox {
   x0: number;
   y0: number;
@@ -37,7 +34,6 @@ interface PhotoBox {
 
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
 
-// The frame on screen covers the middle of the picture; only that part is read.
 const FRAME = { x: 0.12, y: 0.15, w: 0.76, h: 0.7 };
 
 function readCanvas(
@@ -107,7 +103,6 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
     if (!open) return;
     let active = true;
     void openCamera().then((ok) => {
-      // A photo picked while the camera was still starting keeps the screen; only a waiting screen changes.
       if (active) setStage((s) => (s === 'starting' ? (ok ? 'scanning' : 'no-camera') : s));
     });
     return () => {
@@ -116,7 +111,6 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
     };
   }, [open, openCamera, stop]);
 
-  // While scanning, a few frames a second are read; three that agree make a reading to check.
   useEffect(() => {
     if (stage !== 'scanning') return;
     const timer = window.setInterval(() => {
@@ -167,7 +161,6 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
       setStage('not-read');
       return;
     }
-    // The photo is kept only in memory while this dialog is open. The person then boxes the numbers in it.
     const scale = Math.min(1, 1400 / Math.max(bitmap.width, bitmap.height));
     const w = Math.max(1, Math.round(bitmap.width * scale));
     const h = Math.max(1, Math.round(bitmap.height * scale));
@@ -194,7 +187,6 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
     return { x: clamp((e.clientX - r.left) / r.width), y: clamp((e.clientY - r.top) / r.height) };
   };
 
-  // The person drags a box around the numbers; a plain tap makes a box around the spot tapped.
   const readBox = async (box: PhotoBox) => {
     if (!photo) return;
     const tapped = Math.abs(box.x1 - box.x0) < 0.04 && Math.abs(box.y1 - box.y0) < 0.04;
@@ -208,7 +200,6 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
       : box;
     setDrag(used);
     setStage('reading');
-    // Lets the spinner show before the reading starts.
     await new Promise((resolve) => window.setTimeout(resolve, 0));
     const r = await readBpInBox(boxToGray(photo.pixels, photo.w, photo.h, used), {
       ocr: readRowOcr,
@@ -236,7 +227,6 @@ export default function BpCamera({ open, onOpenChange, onUse }: Props) {
         </DialogHeader>
 
         <div className={live ? 'relative overflow-hidden rounded-2xl bg-muted' : 'hidden'}>
-          {/* A live preview with no sound, so it has no captions to show. */}
           <video ref={video} playsInline muted className="aspect-[4/3] w-full object-cover" />
           <div
             aria-hidden="true"

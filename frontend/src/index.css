@@ -26,10 +26,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* One small corner size everywhere (ADR-036). */
   --radius: 0.5rem;
 
-  /* Black and white only (ADR-034): the old brand names stay so components keep working, but every value is grey. */
   --brand-ember: #111111;
   --brand-rose: #404040;
   --brand-blush: #d4d4d4;
@@ -78,7 +76,6 @@
   --sidebar-border: #e5e5e5;
   --sidebar-ring: #111111;
 
-  /* Bands differ by how heavy their fill is, and always show their word and icon. Wellness is never black. */
   --band-ok: #f5f5f5;
   --band-ok-foreground: #0a0a0a;
   --band-attention: #d4d4d4;
@@ -149,8 +146,6 @@
 @theme inline {
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  /* A smaller type scale (ADR-035): body text is 14px. Heights of buttons and fields are set separately, so tap
-     targets stay at least 44px. */
   --text-xs: 0.6875rem;
   --text-sm: 0.8125rem;
   --text-base: 0.875rem;
@@ -163,7 +158,6 @@
   --text-6xl: 3rem;
   --text-7xl: 3.5rem;
 
-  /* No drop shadows anywhere; keyboard focus rings are separate and stay. */
   --shadow-2xs: 0 0 #0000;
   --shadow-xs: 0 0 #0000;
   --shadow-sm: 0 0 #0000;
@@ -371,9 +365,6 @@
   }
 }
 
-/* Corners are one small 8px size everywhere (ADR-036), including pill-shaped buttons and badges. Controls that are
-   circles by nature stay round, so a radio button still differs from a checkbox, and the landing page's phone keeps
-   the curves of a real phone. */
 .rounded-full:not(
   [data-slot='radio-group-item'],
   [data-slot='radio-group-indicator'],
@@ -392,7 +383,6 @@
   --radius: 0.75rem;
 }
 
-/* Phones zoom into text fields smaller than 16px, so fields keep that size there even with the smaller type. */
 @media (max-width: 767px) {
   input,
   textarea,

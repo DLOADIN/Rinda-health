@@ -1,5 +1,3 @@
-// This is where the app keeps working without internet: check-ups are scored on the phone, saved encrypted
-// and sent when the network comes back.
 import { RULESET_V1 } from '@rinda/content';
 import {
   assessSafety,
@@ -124,13 +122,11 @@ function flushSafetyEvents(userId: string): Promise<void> {
   });
 }
 
-/** The item 9 events still waiting on this phone for this person, for an offline hand-over. */
 export async function pendingSafetyFor(userId: string): Promise<SafetyEvent[]> {
   const waiting = (await readSecret<QueuedSafetyEvent[]>(SAFETY_OUTBOX)) ?? [];
   return waiting.filter((i) => i.userId === userId).map((i) => i.event);
 }
 
-// By the time this runs the safety screen is already showing. The event is saved encrypted and sent once.
 export async function queueSafetyEvent(userId: string, eventId: string): Promise<void> {
   const event: SafetyEvent = {
     id: eventId,

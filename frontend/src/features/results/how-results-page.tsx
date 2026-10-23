@@ -1,4 +1,3 @@
-// Every number on this page is read from the ruleset, so it always matches the rules in use.
 import { RULESET_V1 } from '@rinda/content';
 import { fillSlots, type Ruleset } from '@rinda/rules';
 import { useTranslation } from 'react-i18next';

@@ -1,6 +1,3 @@
-// This is where a facilitator's laptop collects check-ups from phones that have no internet. The camera reads the
-// phone's looping QR codes; each finished package stays locked on the laptop until it can be uploaded. The laptop
-// cannot open a package; only the server can.
 import { HandoverEnvelope } from '@rinda/schemas';
 import {
   Camera,
@@ -35,7 +32,6 @@ interface BarcodeDetectorLike {
   detect(source: CanvasImageSource): Promise<Array<{ rawValue: string }>>;
 }
 
-// Chrome and Edge have a built-in QR reader; other browsers use jsQR, loaded only here.
 async function makeDetector(): Promise<Detect> {
   const Native = (
     window as unknown as {
@@ -44,7 +40,6 @@ async function makeDetector(): Promise<Detect> {
       };
     }
   ).BarcodeDetector;
-  // Some browsers have the reader but cannot use it for QR codes, so the supported formats are checked first.
   const formats = (await Native?.getSupportedFormats?.().catch(() => [])) ?? [];
   if (Native && formats.includes('qr_code')) {
     const detector = new Native({ formats: ['qr_code'] });
@@ -90,7 +85,6 @@ export function CollectPage({ meId }: { meId: string }) {
     };
   }, [meId]);
 
-  // Loading the reader now means it is saved for later, so scanning still works if the internet drops.
   useEffect(() => {
     void makeDetector().catch(() => undefined);
   }, []);
@@ -123,7 +117,6 @@ export function CollectPage({ meId }: { meId: string }) {
         total.invalid += r.invalid;
         left = left.filter((i) => i.id !== item.id);
       } else if (res.status === 400 || res.status === 403) {
-        // Kept, not thrown away: the facilitator decides, and the phone still has its own copy.
         total.invalid++;
         left = left.map((i) => (i.id === item.id ? { ...i, undelivered: true } : i));
       } else break;
@@ -132,14 +125,12 @@ export function CollectPage({ meId }: { meId: string }) {
     setInbox(left);
     setSummary(total);
     setUploading(false);
-    // Done without any extra tap: say so, and refresh the dashboard and lists so everyone allowed sees it now.
     if (total.saved + total.already > 0) {
       dispatch(api.util.invalidateTags(['Dashboard', 'Sessions', 'Participants', 'Safety']));
       toast.success(t('collect.uploadedToast', { saved: total.saved }));
     }
   }, [meId, dispatch, t]);
 
-  // A package scanned while offline uploads by itself as soon as the internet comes back.
   useEffect(() => {
     const retry = () => void upload();
     window.addEventListener('online', retry);
@@ -165,7 +156,6 @@ export function CollectPage({ meId }: { meId: string }) {
       const envelope = HandoverEnvelope.safeParse(parsed);
       if (!envelope.success) return;
       const items = await readInbox(meId);
-      // This is where a package already taken in stays ignored while the phone keeps looping the same codes.
       if (handled.current.has(text) || items.some((i) => i.envelope === text)) {
         collect.current = createCollector();
         setProgress(null);
@@ -187,7 +177,6 @@ export function CollectPage({ meId }: { meId: string }) {
     [meId, upload],
   );
 
-  // On a phone the back camera is used first; "Switch camera" flips to the other one.
   const [facing, setFacing] = useState<'environment' | 'user'>('environment');
   const [zoom, setZoom] = useState(1);
   const zoomRef = useRef(1);
@@ -201,7 +190,6 @@ export function CollectPage({ meId }: { meId: string }) {
     const caps = track?.getCapabilities?.() as
       (MediaTrackCapabilities & { zoom?: { min: number; max: number } }) | undefined;
     if (track && caps?.zoom) {
-      // Real camera zoom where the phone offers it; otherwise the picture is enlarged on screen and in the scan.
       const z = Math.min(caps.zoom.max, Math.max(caps.zoom.min, value));
       void track
         .applyConstraints({ advanced: [{ zoom: z } as MediaTrackConstraintSet] })
@@ -237,7 +225,6 @@ export function CollectPage({ meId }: { meId: string }) {
     }
   };
 
-  // While the camera is on, frames are read several times a second and the parts are collected.
   useEffect(() => {
     if (!scanning) return;
     let active = true;
@@ -251,7 +238,6 @@ export function CollectPage({ meId }: { meId: string }) {
       const v = video.current;
       if (!detect || busy || !v || v.readyState < 2 || !v.videoWidth) return;
       busy = true;
-      // With on-screen zoom, only the enlarged middle of the picture is scanned, at full detail.
       const z = hardwareZoom.current ? 1 : zoomRef.current;
       const sw = v.videoWidth / z;
       const sh = v.videoHeight / z;

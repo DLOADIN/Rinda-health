@@ -1,9 +1,6 @@
-// This is the pure part of the offline hand-over: sealing a package to the server's key and splitting it into QR
-// frames, then putting frames back together. It has no storage, so the server's tests can use the very same code.
 import type { HandoverEnvelope, HandoverPayload } from '@rinda/schemas';
 
 const PREFIX = 'RH1';
-// A usual hand-over (one check-up, gzipped and sealed) fits in a single code; only bigger ones split into parts.
 const CHUNK = 1400;
 
 export const b64url = (bytes: ArrayBuffer | Uint8Array) => {
@@ -23,7 +20,6 @@ async function gzip(bytes: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuf
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-/** Seals the payload: a fresh ECDH P-256 key with the server's key, HKDF-SHA-256, then AES-256-GCM. */
 export async function sealHandover(
   payload: HandoverPayload,
   publicKey: string,
@@ -65,7 +61,6 @@ export async function sealHandover(
   };
 }
 
-/** Splits a sealed package into QR-sized frames: RH1:<id>:<index>:<count>:<part>. */
 export function toFrames(envelope: HandoverEnvelope): string[] {
   const text = JSON.stringify(envelope);
   const id = b64url(crypto.getRandomValues(new Uint8Array(4)));
@@ -83,7 +78,6 @@ export interface CollectProgress {
   complete: string | null;
 }
 
-/** Puts frames back together on the laptop, in any order and with repeats, until a package is complete. */
 export function createCollector() {
   const parts = new Map<string, { total: number; got: Map<number, string> }>();
   return (frame: string): CollectProgress | null => {
@@ -93,7 +87,6 @@ export function createCollector() {
     const total = Number(count);
     const i = Number(index);
     if (!total || total > 200 || i >= total) return null;
-    // Only the last few phones are remembered, so a long scanning session does not keep growing.
     if (!parts.has(id) && parts.size >= 4) parts.delete(parts.keys().next().value ?? '');
     const entry = parts.get(id) ?? { total, got: new Map<number, string>() };
     if (entry.total !== total) return null;

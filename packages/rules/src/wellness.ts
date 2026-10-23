@@ -1,4 +1,3 @@
-// This turns the mood and stress answers into scoring input. Declined or skipped never becomes 0.
 import type { Answer, Ruleset } from './types.ts';
 
 export type WellnessForm =

@@ -1,4 +1,3 @@
-// The sun/moon button that switches between light and dark mode.
 import { Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';

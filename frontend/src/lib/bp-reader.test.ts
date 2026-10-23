@@ -23,7 +23,7 @@ describe('readBpDisplay', () => {
         systolic: sys,
         diastolic: dia,
       });
-  }, 30_000); // five screens, each read several ways; a busy test run needs the extra time
+  }, 30_000);
 
   it('ignores the monitor casing around the screen', () => {
     expect(
@@ -74,7 +74,7 @@ describe('readBpDisplay', () => {
       );
       if (r) expect(r).toMatchObject({ systolic: 136, diastolic: 88 });
     }
-  }, 120_000); // 60 pictures; slower machines and a busy test run need the extra time
+  }, 120_000);
 
   it('refuses a blank or implausible screen rather than guessing', () => {
     expect(readBpDisplay(drawScreen({ rows: [] }))).toBeNull();
@@ -89,8 +89,6 @@ describe('readBpDisplay', () => {
   });
 });
 
-// This puts a drawn monitor screen into a bigger photo with a light casing, round buttons and a label, the way a
-// person photographs the whole monitor on a table.
 function photoOf(screen: Gray, at: { x: number; y: number }) {
   const width = 900;
   const height = 560;

@@ -1,4 +1,3 @@
-// This is the optional mood and stress part of the check-up, plus the safety screen. Calm colours only.
 import { RULESET_V1 } from '@rinda/content';
 import { checkItem9 } from '@rinda/rules';
 import { HeartHandshake } from 'lucide-react';
@@ -40,7 +39,6 @@ export function WellnessSection({
     const items = [...state[which]];
     items[index] = value;
     onChange({ ...state, [which]: items });
-    // Item 9 is checked right here, on the phone, before anything is sent.
     const isItem9 = which === 'phq9' && index === 8 && PHQ_VARIANT === 'PHQ-9';
     if (isItem9 && value !== null && checkItem9({ value }) === 'tier2') onItem9Risk();
   };

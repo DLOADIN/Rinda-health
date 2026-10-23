@@ -1,5 +1,3 @@
-// This is the whole Rinda API in one file: settings, logging, the database, sign-in, every route, and the
-// migrate, seed, db-check and models-check commands at the bottom.
 import {
   createDecipheriv,
   createECDH,
@@ -107,7 +105,6 @@ const HERE = import.meta.dirname;
 const emptyAsUndefined = (v: unknown) => (v === '' ? undefined : v);
 const optionalText = z.preprocess(emptyAsUndefined, z.string().optional());
 
-// This is where every setting from .env is checked when the server starts, so a typo stops us early.
 const EnvSchema = z
   .object({
     APP_ENV: z.enum(['development', 'staging', 'pilot', 'test']).default('development'),
@@ -131,11 +128,9 @@ const EnvSchema = z
     GOOGLE_CLIENT_SECRET: optionalText,
     GEMINI_API_KEY: optionalText,
     GEMINI_MODEL: z.string().default('gemini-3.5-flash'),
-    // Tried in order when the first model has used up its free allowance for the day.
     GEMINI_FALLBACK_MODELS: z
       .string()
       .default('gemini-3.5-flash-lite,gemini-flash-lite-latest,gemini-3.6-flash,gemini-flash-latest'),
-    // Other providers with free allowances, tried after Gemini in this order; one without a key is skipped.
     GUIDE_PROVIDERS: z.string().default('gemini,groq,openrouter,cerebras,mistral'),
     GROQ_API_KEY: optionalText,
     GROQ_MODELS: z.string().default('openai/gpt-oss-20b,openai/gpt-oss-120b,qwen/qwen3.8-27b'),
@@ -173,7 +168,6 @@ const EnvSchema = z
         message: `is required when APP_ENV=${env.APP_ENV}`,
       });
     }
-    // The offline hand-over key must be its own secret in the pilot, so the session secret can rotate on its own.
     if (env.APP_ENV === 'pilot' && !env.HANDOVER_SECRET) {
       ctx.addIssue({ code: 'custom', path: ['HANDOVER_SECRET'], message: 'is required when APP_ENV=pilot' });
     }
@@ -200,13 +194,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const appEnv = env['APP_ENV'] ?? 'development';
   const input: Record<string, string | undefined> = { ...env };
   let generatedSecret = false;
-  // On Vercel the site's own address is known, so Google sign-in, cookies and email links point there even when
-  // PUBLIC_URL was not set. On a PC it stays http://localhost:5173.
   const vercelHost = env['VERCEL_PROJECT_PRODUCTION_URL'] ?? env['VERCEL_URL'];
   const pointsAtPc =
     !input['PUBLIC_URL'] || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(input['PUBLIC_URL']);
   if (vercelHost && pointsAtPc) input['PUBLIC_URL'] = `https://${vercelHost}`;
-  // The provider keys are also accepted under the names their own sites suggest.
   input['GROQ_API_KEY'] ??= env['GROQ_CLIENT_API_KEY'];
   input['OPENROUTER_API_KEY'] ??= env['OPEN_ROUTER_API_KEY'];
   if ((appEnv === 'development' || appEnv === 'test') && !input['SESSION_SECRET']) {
@@ -222,8 +213,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
 }
 
 const googleConfigured = (c: AppConfig) => Boolean(c.GOOGLE_CLIENT_ID && c.GOOGLE_CLIENT_SECRET);
-// The AI guide only switches on with an ethics reference and a model to ask. In the pilot only a paid Gemini tier
-// is used, because free tiers may keep what is sent to them.
 export const generativeGuideAllowed = (c: AppConfig) =>
   Boolean(c.ETHICS_AMENDMENT_REF) &&
   (c.APP_ENV === 'pilot'
@@ -232,7 +221,6 @@ export const generativeGuideAllowed = (c: AppConfig) =>
 const emailConfigured = (c: AppConfig) => Boolean(c.BREVO_API_KEY && c.EMAIL_FROM);
 const whatsappConfigured = (c: AppConfig) => Boolean(c.WHATSAPP_TOKEN && c.WHATSAPP_PHONE_NUMBER_ID);
 
-// Anything on this list is blanked out of the logs, so answers, results and passwords never end up there.
 const SENSITIVE_KEYS = [
   'pin',
   'password',
@@ -289,8 +277,6 @@ export function createLogger(level: string, destination?: DestinationStream): Lo
   );
 }
 
-// This is the key that seals offline hand-overs, made from HANDOVER_SECRET (required in the pilot). Each key has a
-// short id, and the previous secret is kept during a rotation so packages already in the field can still be opened.
 export interface HandoverKey {
   ecdh: ECDH;
   publicKey: string;
@@ -307,7 +293,6 @@ export function handoverKey(secret: string): HandoverKey {
 const HANDOVER_TOKEN_DAYS = 30;
 export const CHECKUPS_PER_DAY = 5;
 
-/** A per-person proof sealed inside each hand-over, so nobody can send check-ups in someone else's name. It expires. */
 export function handoverToken(
   secret: string,
   userId: string,
@@ -333,7 +318,6 @@ export function handoverTokenValid(
   });
 }
 
-/** Opens a sealed hand-over: ECDH P-256, HKDF-SHA-256, then AES-256-GCM, optionally gzipped inside. */
 export function openHandover(ecdh: ECDH, env: HandoverEnvelope): unknown {
   const shared = ecdh.computeSecret(Buffer.from(env.epk, 'base64url'));
   const key = Buffer.from(hkdfSync('sha256', shared, Buffer.alloc(0), 'rinda-handover-v1', 32));
@@ -363,7 +347,6 @@ const forbidden = () => new AppError(403, 'FORBIDDEN', 'You do not have access t
 export type Db = pg.Pool;
 type Queryable = pg.Pool | pg.PoolClient;
 
-// This is where we connect to PostgreSQL on Neon. All SQL below is plain SQL with $1-style parameters.
 export function createPool(connectionString: string, schema?: string): Db {
   return new pg.Pool({
     connectionString,
@@ -414,7 +397,6 @@ export function directUrlOf(config: Pick<AppConfig, 'DIRECT_URL' | 'DATABASE_URL
 
 const MIGRATIONS_DIR = path.join(HERE, 'db', 'migrations');
 
-// This is where the numbered files in db/migrations are applied, once each, in order.
 export async function migrate(db: Db, schema?: string): Promise<string[]> {
   if (schema) await db.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
   await db.query(
@@ -527,7 +509,6 @@ const SESSION_COOKIE = 'rinda_session';
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_MINUTES = 15;
 
-// Sessions live in an HttpOnly cookie; the database only keeps a hash of the token.
 async function startSession(
   db: Db,
   config: AppConfig,
@@ -726,8 +707,6 @@ export function numbersIn(text: string): number[] {
   ];
 }
 
-// This is where we double-check Gemini's answer. If it changes a number or wanders off topic, we show the
-// approved template instead.
 export function validateGuideAnswer(
   answer: GuideAnswer,
   allowed: readonly number[],
@@ -750,10 +729,6 @@ interface GeminiResult {
   model: string | null;
 }
 
-// This is where the guide moves on to the next model when one cannot answer: first the Gemini models, then Groq,
-// then OpenRouter's free models. A model that says its allowance is used up, the key is refused or the model is gone
-// (401, 402, 403, 404, 429) is skipped until the next UTC day; one that is busy, failing or too slow is skipped for
-// this question only. The chain never starts again from the top, and gives up after GUIDE_CHAIN_MS.
 const spentModels = new Map<string, string>();
 const GUIDE_CHAIN_MS = 25_000;
 const SPENT = new Set([401, 402, 403, 404, 429]);
@@ -787,7 +762,6 @@ export function geminiModels(config: Pick<AppConfig, 'GEMINI_MODEL' | 'GEMINI_FA
   return modelList(config.GEMINI_MODEL, config.GEMINI_FALLBACK_MODELS);
 }
 
-/** Every model the guide may ask, in order. Providers without a key are left out; the pilot uses Gemini only. */
 export function guideChain(config: AppConfig): ChainStep[] {
   const order =
     config.APP_ENV === 'pilot' ? ['gemini'] : config.GUIDE_PROVIDERS.split(',').map((p) => p.trim());
@@ -834,7 +808,6 @@ export async function explainWithModels(
           ? await askGemini(config, fetchFn, step.model, facts, library, allowed, signal, system)
           : await askOpenAiStyle(config, fetchFn, step, facts, library, allowed, signal, system);
     } catch {
-      // No answer in time, or the connection failed: try the next model.
       result = 'busy';
     }
     if (result === 'spent') {
@@ -843,7 +816,6 @@ export async function explainWithModels(
     }
     if (result === 'busy') continue;
     if (result.answer || result.outcome === 'off_topic') return { ...result, model: name };
-    // An empty reply, or one that failed our checks, is not shown: the next model gets the same question.
     last = { ...result, model: name };
   }
   return last ?? { answer: null, outcome: 'error', inputTokens: null, outputTokens: null, model: null };
@@ -874,7 +846,6 @@ async function askOpenAiStyle(
     body: JSON.stringify({
       model: step.model,
       temperature: 0.4,
-      // Room for models that think before answering, and a request to keep that thinking short.
       max_tokens: 4096,
       ...(step.provider === 'groq' && step.model.startsWith('openai/gpt-oss')
         ? { reasoning_effort: 'low' }
@@ -949,7 +920,6 @@ async function askGemini(
     }),
   });
   if (SPENT.has(res.status)) return 'spent';
-  // Overloaded or failing for a moment: try the next model for this request only.
   if (res.status >= 500) return 'busy';
   const body = z
     .object({
@@ -978,7 +948,6 @@ async function askGemini(
   return readAnswer(raw, usage, library, allowed);
 }
 
-// Every provider's answer goes through the same checks before anyone sees it.
 function readAnswer(
   raw: string,
   usage: { inputTokens: number | null; outputTokens: number | null },
@@ -1027,14 +996,11 @@ const escapeHtml = (s: string) =>
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c,
   );
 
-// This is where the report email is put together, only from approved wording. Mood and stress results
-// are never emailed.
 export function composeReportEmail(
   language: 'en' | 'rw',
   results: AssessmentResult,
   plan: Plan,
   link: string,
-  // The guide's explanation of these results: Gemini's when it was allowed and prepared, otherwise approved text.
   explanation: { paragraphs: string[]; generated: boolean } | null = null,
 ): { subject: string; text: string; html: string } {
   const content = BUNDLED_CONTENT[language];
@@ -1129,8 +1095,6 @@ export function composeReportEmail(
   return { subject: lookup('email.report.subject'), text, html };
 }
 
-// This sends the WhatsApp "your summary is ready" notice. It is an approved Meta template with no
-// parameters, so no result can ever be put into the message.
 async function sendWhatsAppNotice(
   db: Db,
   config: AppConfig,
@@ -1196,7 +1160,6 @@ async function sendWhatsAppNotice(
   return record(res.ok ? 'sent' : 'failed', res.ok ? null : `http_${res.status}`);
 }
 
-// The latest complete SUS form per person (FR-17); a form with a skipped item has no score.
 async function susScores(db: Db): Promise<number[]> {
   const list = await rows<{ user_id: string; created_at: Date; item_code: string; value: number }>(
     db,
@@ -1223,7 +1186,6 @@ const median = (values: number[]): number | null => {
 
 type EmailOutcome = 'sent' | 'failed' | 'skipped';
 
-// Emails go out only when messaging is on, Brevo is set up and the person opted in.
 async function sendReportEmail(
   db: Db,
   config: AppConfig,
@@ -1231,8 +1193,6 @@ async function sendReportEmail(
   fetchFn: typeof fetch,
   userId: string,
   assessmentId: string,
-  // For the automatic email after a check-up: only the choice the person had made by the time of that check-up
-  // counts, so a later opt-in never sends a report for an earlier check-up.
   consentAsOf: Date = new Date(),
 ): Promise<EmailOutcome> {
   if (!emailConfigured(config) || !(await currentFlags(db, config)).messaging) return 'skipped';
@@ -1261,7 +1221,6 @@ async function sendReportEmail(
   };
   if (!user?.email) return record('skipped', 'no_email');
   if (!row) return record('skipped', 'no_checkup');
-  // Gemini's overview is only here if it was allowed and prepared for this person; otherwise approved text is used.
   const prepared = await one<{ paragraphs: Array<{ text: string }> }>(
     db,
     "SELECT paragraphs FROM guide_answers WHERE assessment_id = $1 AND chip_id = 'overview' AND language = $2",
@@ -1408,7 +1367,6 @@ const PILOT_FLAGS: Flags = {
   usabilityEvents: false,
   messaging: false,
 };
-// This is where each feature starts on or off. Email reports stay off in the pilot until the ethics committee agrees.
 export const FLAG_DEFAULTS: Record<AppConfig['APP_ENV'], Flags> = {
   development: DEVELOPMENT_FLAGS,
   staging: DEVELOPMENT_FLAGS,
@@ -1444,7 +1402,6 @@ const ruleset = RULESET_V1;
 const DELETION_DUE_HOURS = 72;
 const CONSENT_DOC_VERSION = 'consent-0.1.0';
 
-// This is where we look up each person's most recent consent choice for every scope.
 async function latestConsents(db: Db, userId: string): Promise<Record<string, boolean>> {
   const list = await rows<{ scope: string; granted: boolean }>(
     db,
@@ -1455,7 +1412,6 @@ async function latestConsents(db: Db, userId: string): Promise<Record<string, bo
   return Object.fromEntries(list.map((c) => [c.scope, c.granted]));
 }
 
-// Skipped answers stay "skipped" here and are never counted as 0.
 function toAssessmentInput(a: CheckupSubmission['answers'], sex: Sex): AssessmentInput {
   const ans = <T>(v: T | null | undefined): Answer<T> =>
     v === null || v === undefined ? { missing: 'SKIPPED' } : { value: v };
@@ -1540,7 +1496,6 @@ async function createUser(
   return user;
 }
 
-// This is where the Express app and all its routes are built.
 export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Express {
   const app = express();
   app.disable('x-powered-by');
@@ -1648,7 +1603,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1', system);
 
-  // This is how a study phone joins a session from the QR code, learns when to wipe itself, and confirms the wipe.
   const devices = Router();
   const deviceRow = async (req: Request) => {
     const token = req.get('x-device-token');
@@ -1680,7 +1634,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
 
   devices.get('/status', async (req, res) => {
     const row = await deviceRow(req);
-    // An unknown token (for example a deleted session) also means: clear this phone.
     res.json({ wipe: !row || Boolean(row.wipe_requested_at) });
   });
 
@@ -1774,9 +1727,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.status(204).end();
   });
 
-  // This is the site's own address for a sign-in. PUBLIC_URL wins, except when it still says localhost while the
-  // request clearly came through a real web address (such as rinda-health.vercel.app); then that address is used.
-  // Google only accepts return addresses registered in Google Cloud, so a made-up host cannot be used.
   const siteUrl = (req: Request) => {
     const local = (h: string) => /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(h);
     const host = (req.get('x-forwarded-host') ?? req.get('host') ?? '').split(',')[0]?.trim() ?? '';
@@ -2001,8 +1951,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     values: valuesOf(r.input),
   });
 
-  // This is where a check-up is checked, scored and stored, whether it comes straight from the phone or through an
-  // offline hand-over. The same idempotency key always gives the same stored check-up.
   const saveCheckup = async (
     database: Db,
     userId: string,
@@ -2030,7 +1978,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       }
       return { status: 200, row: existing };
     }
-    // Up to five new check-ups a day per person, which also keeps the guide's AI use in check.
     const today = await one<{ n: number }>(
       database,
       "SELECT count(*)::int AS n FROM assessments WHERE user_id = $1 AND created_at > now() - interval '24 hours'",
@@ -2040,7 +1987,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       throw new AppError(429, 'DAILY_LIMIT', 'You have reached the limit of check-ups for today.');
     }
     const consents = await latestConsents(database, userId);
-    // Nobody can send a check-up before agreeing to take part.
     if (!consents['core']) {
       throw new AppError(403, 'CONSENT_REQUIRED', 'Please agree to take part before a check-up.');
     }
@@ -2083,7 +2029,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         [userId, key.data],
       ));
     if (!row) throw new Error('assessment not stored');
-    // A mood or stress score of 10 or more is noted as a Tier 1 safety event, without any answers or scores.
     if (inserted && safety.tier === 1) {
       await database.query(
         `INSERT INTO safety_events (participant_id, tier, trigger_type, actions, occurred_at, recorded_by_role)
@@ -2095,8 +2040,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       void sendWhatsAppNotice(database, config, logger, fetchFn, userId).catch(() =>
         logger.warn({ reqId, event: 'whatsapp_notice_error' }, 'message'),
       );
-      // The guide's overview is prepared first (only if Gemini is allowed for this person), so it is ready in the
-      // app and can go into the report email.
       const language = body.language;
       void (async () => {
         await answerGuide(
@@ -2131,7 +2074,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.status(saved.status).json(toAssessment(saved.row));
   });
 
-  // The phone keeps this so it can seal a hand-over while offline: the server's public key and its own proof.
   participant.get('/handover-pass', (req, res) => {
     res.set('cache-control', 'no-store');
     res.json({
@@ -2248,8 +2190,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.json(body);
   });
 
-  // The phone sends item 9 safety events here. Each has its own ID, so a resend is only stored once.
-  // An item 9 event from the phone, sent directly or through a hand-over.
   const saveItem9Event = async (database: Db, userId: string, body: SafetyEvent) => {
     if (body.tier !== 2 || body.triggerType !== 'item9' || body.recordedByRole !== 'system') {
       throw new AppError(400, 'VALIDATION_FAILED', 'Only item 9 safety events can be sent from the app.');
@@ -2293,7 +2233,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     });
     res.status(201).json({ score: susScore(body.items) });
   });
-  // The participant's app says which study step it is on while a facilitated session is open. Step names only.
   participant.post('/session-progress', async (req, res) => {
     const database = needDb();
     const body = SessionProgressRequest.parse(req.body);
@@ -2453,8 +2392,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.json(toSession(await ownSession(req)));
   });
 
-  // This is the live session console: the step the participant is on, the timeline so far, and any safety
-  // alert since the session started. Never answers, scores or results.
   facilitator.get('/sessions/:id/live', requireRole('facilitator'), async (req, res) => {
     const database = needDb();
     const session = await ownSession(req);
@@ -2513,8 +2450,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     });
   });
 
-  // This is where the facilitator's laptop uploads sealed hand-overs collected from study phones without internet.
-  // The laptop never sees inside; the server opens each one, checks the person's proof and stores it as usual.
   facilitator.post('/handover', requireRole('facilitator'), async (req, res) => {
     const database = needDb();
     const envelope = HandoverEnvelope.parse(req.body);
@@ -2547,7 +2482,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     let saved = 0;
     let already = 0;
     let invalid = 0;
-    // Safety events first, so an item 9 answer reaches the safety queue even if a check-up cannot be stored.
     for (const event of payload.safetyEvents) {
       const created = await saveItem9Event(database, payload.userId, event).catch((e: unknown) => {
         if (e instanceof AppError) return null;
@@ -2583,7 +2517,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.json({ saved, already, invalid });
   });
 
-  // QR set-up: a one-time link (15 minutes) that ties a study phone to this session.
   facilitator.post('/sessions/:id/device-link', requireRole('facilitator'), async (req, res) => {
     const database = needDb();
     const session = await ownSession(req);
@@ -2598,7 +2531,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.status(201).json({ url: `${siteUrl(req)}/setup/${code}`, expiresAt: expires.toISOString() });
   });
 
-  // End the session and ask every linked study phone to wipe itself.
   facilitator.post('/sessions/:id/wipe', requireRole('facilitator'), async (req, res) => {
     const database = needDb();
     const session = await ownSession(req);
@@ -2914,7 +2846,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     );
   });
 
-  // This is the one-click research report: aggregate, de-identified numbers for the study write-up.
   admin.get('/research-report', async (req, res) => {
     const database = needDb();
     const count = async (sql: string, params: unknown[] = []) =>
@@ -3406,9 +3337,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   const generatedToday = new Map<string, { day: string; count: number }>();
   const GUIDE_DAILY_LIMIT = 20;
 
-  // This is where a guide answer is made: the approved template first, then Gemini only when every gate allows it.
-  // With prepare set, it runs right after a check-up so the answer is ready when the person opens the guide; it
-  // does nothing (and logs nothing) when Gemini is not allowed for this person.
   const answerGuide = async (
     database: Db,
     userId: string,
@@ -3483,7 +3411,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         Object.entries({ ...content.text, ...answers }).filter(
           ([id]) =>
             ((id.startsWith('guide.') || id.startsWith('band.')) && !/^band\.(phq9|gad7)\./.test(id)) ||
-            // Only the answers for this person's own results, so a generated answer cannot borrow another band's.
             ownAnswers.has(id),
         ),
       );
@@ -3564,9 +3491,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/guide', guide);
 
-  // This is where the Ask Rinda chat answers: up to CHAT_TURNS_PER_DAY questions a day about Rinda Health, the
-  // person's own results and the six habits. Crisis words and personal details are stopped on the phone first and
-  // again here; the question and answer are never stored or logged, only a daily count.
   const chat = Router();
   chat.use(requireAuth, requireRole('participant', 'facilitator'));
 
@@ -3634,7 +3558,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
               : 'SELECT results, plan, safety FROM assessments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
             body.assessmentId ? [body.assessmentId, user.id] : [user.id],
           );
-    // Results that need care today or a safety follow-up are left to the approved text and Get help now.
     if (row && (row.plan.urgent !== null || row.safety.tier !== null)) return unavailable();
 
     const counted = await one<{ turns: number }>(
@@ -3676,7 +3599,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         ruleset.domains.diet.meetsAt,
         CHAT_TURNS_PER_DAY,
         ...numbersIn(said),
-        // Numbers already in the approved text may be repeated; any other number still fails the check.
         ...numbersIn(Object.values(library).join(' ')),
       ]),
     ];
@@ -3794,7 +3716,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/participant/email-reports', emailReports);
 
-  // This is where a participant switches WhatsApp notices on or off. The notice never holds results.
   const whatsapp = Router();
   whatsapp.use(requireAuth, requireRole('participant'));
 
@@ -3884,7 +3805,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   return app;
 }
 
-// This is where the made-up demo accounts are created. It refuses to run in the pilot.
 export async function seed(
   db: Db,
   config: AppConfig,
@@ -3974,8 +3894,6 @@ export async function seed(
   };
 }
 
-// This is where the guide's model providers are checked with the keys in .env: which models each one offers, and
-// whether every model in the chain answers a harmless test. Keys are never printed and no personal data is sent.
 async function checkModels(config: AppConfig) {
   const list = async (
     name: string,
@@ -4056,7 +3974,6 @@ async function checkModels(config: AppConfig) {
   }
 }
 
-// This is where the command line starts: serve, migrate, seed, db-check or models-check.
 async function main() {
   let config: AppConfig;
   try {

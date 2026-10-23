@@ -1,4 +1,3 @@
-// This is where every call to our API is defined, using RTK Query.
 import { createApi, fetchBaseQuery, type FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 import type {
   CheckupSubmission,

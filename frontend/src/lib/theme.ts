@@ -1,6 +1,3 @@
-// This is where light or dark mode is decided. It follows the phone or computer until the person taps the
-// sun/moon button; that choice is kept in a small cookie holding only "light" or "dark", so it can be read
-// straight away at start-up without opening the app's storage.
 import { useSyncExternalStore } from 'react';
 
 type Theme = 'light' | 'dark';

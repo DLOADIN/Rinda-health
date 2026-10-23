@@ -1,5 +1,3 @@
-// This is the page a study phone opens after scanning the facilitator's QR code. It links the phone to the session
-// in shared-phone mode, switches to the participant's language, and goes on to sign-in.
 import { CircleCheck, CircleAlert, Smartphone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 
-// One claim per code, even when React runs the effect twice in development.
 const claims = new Map<string, Promise<{ deviceToken: string; language: 'en' | 'rw' } | null>>();
 function claim(code: string) {
   let pending = claims.get(code);

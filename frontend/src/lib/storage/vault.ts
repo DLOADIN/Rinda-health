@@ -1,4 +1,3 @@
-// This is the encrypted storage on the phone. The key never leaves the browser and cannot be exported.
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
 interface RindaDB extends DBSchema {

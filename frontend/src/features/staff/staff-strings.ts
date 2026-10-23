@@ -1,4 +1,3 @@
-// The staff screens' text loads with those screens, so participants never download it.
 import { i18n } from '@/lib/i18n';
 import en from '@/locales/en/staff.json';
 import rw from '@/locales/rw/staff.json';

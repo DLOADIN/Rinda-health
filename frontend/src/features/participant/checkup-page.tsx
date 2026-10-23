@@ -240,7 +240,6 @@ export function CheckupPage() {
     return (
       <div className="flex flex-col gap-6">
         <PageHeader title={t('checkup.title')} />
-        {/* Saved on this phone with no internet: the QR hand-over is offered right here. */}
         {me ? (
           <Button variant="outline" className="self-start" onClick={() => setHandoverOpen(true)}>
             <QrCode aria-hidden="true" data-icon="inline-start" />

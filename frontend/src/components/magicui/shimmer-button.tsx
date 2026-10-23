@@ -1,4 +1,3 @@
-// Adapted from Magic UI (MIT): a pill button with a slow light sweeping around its edge. Use with asChild for links.
 import { Slot } from 'radix-ui';
 import type { ComponentPropsWithoutRef } from 'react';
 import { cn } from '@/lib/utils';

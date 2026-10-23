@@ -1,5 +1,3 @@
-// This runs only on study phones set up from a facilitator's QR code. Every 15 seconds it asks whether the session
-// has ended; when it has, it sends anything still waiting, then clears the phone and shows the neutral screen.
 import { flushOutbox } from '@/lib/offline';
 import { clearPersonalCache, readSecret, saveSecret } from '@/lib/storage/vault';
 

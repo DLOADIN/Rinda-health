@@ -1,4 +1,3 @@
-// This is where test pictures of a monitor screen are drawn, for the blood pressure reader tests.
 import type { Gray } from '@/lib/bp-reader';
 
 const SEGMENTS: Record<number, string> = {
@@ -23,7 +22,6 @@ export interface Screen {
   seed?: number;
 }
 
-// This draws a fake monitor screen the way an LCD shows it: separate bars with small gaps between them.
 export function drawScreen({
   rows,
   slant = 0,
@@ -45,7 +43,6 @@ export function drawScreen({
       }
   };
   let top = 20;
-  // A small label, like "SYS mmHg", that must not be read as a number.
   fill(20, 6, 40, 8, 10);
   for (const { value, height: h } of rows) {
     const w = h * 0.55;
@@ -68,7 +65,6 @@ export function drawScreen({
     });
     top += h + 22;
   }
-  // The monitor's dark casing around the screen, as a camera usually sees it.
   if (casing)
     for (let y = 0; y < height; y++)
       for (let x = 0; x < width; x++)

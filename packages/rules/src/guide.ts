@@ -38,8 +38,6 @@ export function composeGuideAnswer(
   const area = (d: string) => t(`guide.area.${d}`);
   const step = (target: PlanTarget) => t(`guide.target.${target.kind}`, { ...target });
   const paragraphs: GuideParagraph[] = [];
-  // The offline answer set: why this result matters and what helps. An area whose approved safety text is already
-  // showing gets nothing more, and missing entries are left out, so the answer never shows a raw ID.
   const advice = (
     r: DomainResult,
     parts: ReadonlyArray<'why' | 'tips'> = ['why', 'tips'],
@@ -50,7 +48,6 @@ export function composeGuideAnswer(
   };
 
   if (plan.urgent) paragraphs.push({ text: t(plan.urgent.contentId), sourceIds: [plan.urgent.contentId] });
-  // "All is well" wording never follows the approved seek-care text.
   const allWell = !plan.urgent;
   const adviceFor = (results: readonly DomainResult[], parts?: ReadonlyArray<'why' | 'tips'>) => {
     const found = results.flatMap((r) => {
@@ -111,7 +108,6 @@ export function composeGuideAnswer(
   }
 
   if (chipId === 'tips') {
-    // Areas follow the planner's order, so the most important one comes first.
     const chosen = plan.focus
       .flatMap((f) => f.domains)
       .flatMap((d) => result.ncd.filter((r) => r.domain === d));
@@ -141,8 +137,6 @@ export function composeGuideAnswer(
     return { paragraphs, followUpChipIds: ['first_step', 'overview'] };
   }
 
-  // Each area gets a plain sentence that fits how it is doing ("this needs your attention"), with the band's own
-  // name kept in brackets. Wording that is missing falls back to the short "Area: band." line.
   const lineId = (r: DomainResult) => {
     const id = `guide.tpl.area.${r.severity}`;
     return text(id) !== id ? id : 'guide.tpl.area';

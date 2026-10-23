@@ -59,7 +59,6 @@ for (const lang of LANGUAGES) {
       1 +
       JSON.stringify(body).split(REVISE_MARKER).length -
       1;
-    // This is where a pilot release stops until a reviewer has really confirmed every phone number.
     if (release && 'entries' in result.data && Array.isArray(result.data.entries))
       for (const entry of result.data.entries)
         if (!entry.verifiedOn || !entry.verifiedBy)
@@ -94,11 +93,9 @@ for (const ruleset of parsedRulesets) {
   }
 }
 
-// Every area and result the guide can explain needs its two offline answers, in every language.
 for (const ruleset of parsedRulesets) {
   for (const lang of LANGUAGES) {
     const answers = new Set(keysOf(bodies.get(`${lang}/guide-answers.json`) ?? { entries: {} }));
-    // Mood and stress never get guide answers, and "seek care today" keeps only its approved safety text.
     for (const id of answers)
       if (/^ga\.(phq9|gad7)\./.test(id) || /\.seek_care_today\./.test(id))
         errors.push(`${lang}/guide-answers.json: ${id} is not allowed`);

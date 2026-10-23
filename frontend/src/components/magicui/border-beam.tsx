@@ -1,5 +1,3 @@
-// Adapted from Magic UI (MIT): a small glowing light that travels around a card's border. Put it inside a
-// relative, rounded parent.
 import type { CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
 

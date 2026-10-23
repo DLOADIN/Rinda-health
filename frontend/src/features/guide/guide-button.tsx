@@ -7,8 +7,6 @@ import type { Assessment } from '@/lib/api';
 
 const GuidePanel = lazy(() => import('@/features/guide/guide-panel'));
 
-// This is where a guide that fails to open stays a small message beside its button, instead of taking the whole
-// page to the error screen; the person can go back to their own dashboard or try again.
 class GuideBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
   override state = { failed: false };
   static getDerivedStateFromError() {

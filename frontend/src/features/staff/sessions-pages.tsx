@@ -241,10 +241,6 @@ function minutesLabel(seconds: number) {
   return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`;
 }
 
-/**
- * This is the live session console. It follows the participant's step every few seconds and shows a calm alert if
- * a safety screen opens. It never shows answers, scores or results.
- */
 function LiveConsole({ live }: { live: LiveSession }) {
   const { t } = useTranslation();
   const [now, setNow] = useState(() => Date.now());
@@ -330,10 +326,6 @@ function LiveConsole({ live }: { live: LiveSession }) {
   );
 }
 
-/**
- * This is the study phone card: a one-time QR code that links a phone to this session, and the button that ends
- * the session and wipes the phone. The QR library loads only here.
- */
 function StudyPhoneCard({ session, live }: { session: Session; live: LiveSession | undefined }) {
   const { t } = useTranslation();
   const [link, { data: linkData, isLoading: linking, error: linkError }] = useDeviceLinkMutation();

@@ -1,5 +1,3 @@
-// This is the one-click research report: de-identified, aggregate numbers for the study write-up, with a CSV
-// download and a print view that saves as PDF.
 import { Download, Printer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '@/components/api-error';

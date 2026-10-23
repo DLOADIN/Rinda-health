@@ -1,4 +1,3 @@
-// This is where the safety tiers are decided. checkItem9 must stay instant and run before anything is sent.
 import { isValue } from './score.ts';
 import type { Answer, AssessmentInput, AssessmentResult, Ruleset, WellnessDomain } from './types.ts';
 

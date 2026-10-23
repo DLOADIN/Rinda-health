@@ -18,7 +18,6 @@ export function GoogleButton({ intent, role }: { intent: 'login' | 'signup'; rol
       <FieldSeparator>{t('auth.or')}</FieldSeparator>
       <Button asChild variant="outline" className="w-full">
         <a href={`/api/v1/auth/google/start?${params.toString()}`}>
-          {/* Google's own "G" mark, served from our site; its brand rules ask that it keeps its colours. */}
           <img
             src="/images/google-g.svg"
             alt=""

@@ -1,12 +1,7 @@
-// This is where the part of a photo the person boxed around the monitor's numbers becomes a reading. The number rows
-// are found inside the box, each row is read twice (by the seven-segment OCR and by our own segment reader), and
-// only a pair that makes sense as systolic over diastolic is offered. Nothing leaves the phone.
 import { otsu, readBpDisplay, readRow, slide, type BpReading, type Box, type Gray } from '@/lib/bp-reader';
 
 export interface NumberRow extends Box {
-  /** Digit height in pixels. */
   size: number;
-  /** The stroke mask the row was found in; when present, the row is cut from it rather than from the grey image. */
   ink?: Uint8Array;
 }
 
@@ -15,14 +10,12 @@ export interface RowRead {
   confidence: number;
 }
 
-/** Reads the digits in a clean crop (black digits on white). Supplied by the caller so tests can pass a fake. */
 export type RowOcr = (crop: Gray) => Promise<RowRead>;
 
 const SYS = [60, 260] as const;
 const DIA = [30, 160] as const;
 const PULSE = [30, 220] as const;
 
-/** Rectangular grey-scale dilation (max) or erosion (min), with its own horizontal and vertical reach. */
 function morphRect(data: Uint8Array, width: number, height: number, rx: number, ry: number, max: boolean) {
   const tmp = new Uint8Array(data.length);
   const out = new Uint8Array(data.length);
@@ -41,7 +34,6 @@ function morphRect(data: Uint8Array, width: number, height: number, rx: number, 
   return out;
 }
 
-/** Strokes darker than their surroundings, for digits of about `size` pixels tall. */
 export function darkStrokes(img: Gray, size: number): Uint8Array {
   const { data, width, height } = img;
   const r = Math.max(2, Math.round(size * 0.25));
@@ -52,7 +44,6 @@ export function darkStrokes(img: Gray, size: number): Uint8Array {
   return hat.map((v) => (v > t ? 1 : 0));
 }
 
-/** Turns a grey image about its centre, keeping its size; corners that come from outside are left white. */
 export function rotateGray(img: Gray, angle: number): Gray {
   if (!angle) return img;
   const { data, width, height } = img;
@@ -88,10 +79,6 @@ function runs(profile: number[], minValue: number, maxGap: number): Array<[numbe
   return out;
 }
 
-/**
- * Removes shapes taller or wider than any digit, such as the edge of the casing or a long bar beside the numbers,
- * which would otherwise join the rows together.
- */
 function dropTallShapes(ink: Uint8Array, width: number, height: number, size: number): Uint8Array {
   const out = Uint8Array.from(ink);
   const seen = new Uint8Array(ink.length);
@@ -126,10 +113,6 @@ function dropTallShapes(ink: Uint8Array, width: number, height: number, size: nu
   return out;
 }
 
-/**
- * Finds the rows of large digits inside a box drawn around the numbers. Rows are bands of ink across the box; within a
- * band only the tall shapes count, so labels such as SYS or mmHg beside the digits are left out of the row.
- */
 export function rowsInBox(img: Gray, size: number): NumberRow[] {
   const { width, height } = img;
   const ink = dropTallShapes(darkStrokes(img, size), width, height, size);
@@ -138,8 +121,6 @@ export function rowsInBox(img: Gray, size: number): NumberRow[] {
     for (let x = 0; x < width; x++) n += ink[y * width + x] ?? 0;
     return n;
   });
-  // A thin scale or bar down one side puts a little ink on every line, so "empty" means little compared with the
-  // busiest line, not no ink at all.
   const busiest = Math.max(0, ...profile);
   const bands = runs(profile, Math.max(2, busiest * 0.12), Math.max(1, Math.round(size * 0.06))).filter(
     ([a, b]) => b - a + 1 >= size * 0.45,
@@ -168,7 +149,6 @@ export function rowsInBox(img: Gray, size: number): NumberRow[] {
     const first = tall[0];
     const last = tall[tall.length - 1];
     if (!first || !last) continue;
-    // The row is only as high as its digits, so a small label just above or below them is left out.
     const top = Math.min(...tall.map((g) => g.top));
     const bottom = Math.max(...tall.map((g) => g.bottom));
     rows.push({ x0: first.a, x1: last.b, y0: top, y1: bottom, size: bottom - top + 1, ink });
@@ -176,7 +156,6 @@ export function rowsInBox(img: Gray, size: number): NumberRow[] {
   return rows;
 }
 
-/** Cuts a row out of a grey image with a margin, scaled to a fixed digit height, as black digits on white. */
 export function cropRow(img: Gray, row: Box, digitHeight = 80, angle = 0): Gray {
   const h0 = row.y1 - row.y0 + 1;
   const pad = Math.round(h0 * 0.18);
@@ -193,7 +172,6 @@ export function cropRow(img: Gray, row: Box, digitHeight = 80, angle = 0): Gray 
   const cx = x0 + w / 2;
   const cy = y0 + h / 2;
   const mask = (row as NumberRow).ink;
-  // From the stroke mask only the row's own band counts, so bits of the rows above and below are left out.
   const at = (x: number, y: number) => {
     const cx2 = Math.min(img.width - 1, Math.max(0, x));
     const cy2 = Math.min(img.height - 1, Math.max(0, y));
@@ -217,21 +195,15 @@ export function cropRow(img: Gray, row: Box, digitHeight = 80, angle = 0): Gray 
         at(xa, ya + 1) * (1 - fx) * fy +
         at(xa + 1, ya + 1) * fx * fy;
     }
-  // Inside one row there are only two things, digits and screen, so a threshold taken here is reliable.
   const t = mask ? 127 : otsu(pixels);
   return { data: pixels.map((v) => (v <= t ? 0 : 255)), width: W, height: H };
 }
 
-/** Our own seven-segment reader on a clean crop. */
 export function readCropOwn(crop: Gray): number | null {
   const ink = crop.data.map((v) => (v === 0 ? 1 : 0));
   return readRow(ink, crop.width, { x0: 0, x1: crop.width - 1, y0: 0, y1: crop.height - 1 });
 }
 
-/**
- * The numbers a row's text could stand for. Many monitors draw a thin bar just after the digits, which reads as an
- * extra 1 at the end, so that reading is offered with and without it.
- */
 export function rowValues(text: string): number[] {
   const digits = text.replace(/\D/g, '');
   const out = new Set<number>();
@@ -242,7 +214,6 @@ export function rowValues(text: string): number[] {
 
 const within = (v: number, [lo, hi]: readonly [number, number]) => v >= lo && v <= hi;
 
-/** Two rows sit one above the other, the same size and roughly lined up, as systolic and diastolic do. */
 function stacked(a: NumberRow, b: NumberRow): boolean {
   if (b.y0 <= a.y0) return false;
   const big = Math.max(a.size, b.size);
@@ -275,13 +246,11 @@ async function readOne(
     onRow?.({ row, angle, own, text: read.text, confidence: read.confidence });
     const weight = read.confidence >= 60 ? 2 : 1;
     for (const v of options) values.set(v, (values.get(v) ?? 0) + weight);
-    // When both readers agree on the straight crop there is no need to try it turned.
     if (own !== null && options.includes(own)) break;
   }
   return { ...row, values };
 }
 
-/** Picks the best believable systolic and diastolic (and pulse, if there is one) from the rows read. */
 function bestPair(read: ReadRow[]): { score: number; reading: BpReading } | null {
   let best: { score: number; reading: BpReading } | null = null;
   for (const a of read)
@@ -290,7 +259,6 @@ function bestPair(read: ReadRow[]): { score: number; reading: BpReading } | null
       for (const [s, sw] of a.values)
         for (const [d, dw] of b.values) {
           if (!within(s, SYS) || !within(d, DIA) || d >= s) continue;
-          // Each number must have been seen at least twice (both readers, or one reader at two angles).
           if (sw < 3 || dw < 3) continue;
           const score = sw + dw;
           if (best && score <= best.score) continue;
@@ -308,10 +276,8 @@ function bestPair(read: ReadRow[]): { score: number; reading: BpReading } | null
 
 export interface BoxReadOptions {
   ocr: RowOcr;
-  /** Gives up after this many milliseconds, so the person is never kept waiting long. */
   deadline?: number;
   now?: () => number;
-  /** Called with what each row read, for checking the reader against test photos. */
   onRow?: (info: {
     row: NumberRow;
     angle: number;
@@ -321,20 +287,13 @@ export interface BoxReadOptions {
   }) => void;
 }
 
-/**
- * Reads systolic, diastolic and (if shown) pulse from the grey picture inside the box the person drew. Returns null
- * when no believable pair is found, so the person is told nothing was read rather than shown a guess.
- */
 export async function readBpInBox(img: Gray, options: BoxReadOptions): Promise<BpReading | null> {
   const now = options.now ?? (() => performance.now());
   const end = now() + (options.deadline ?? 8000);
   const late = () => now() > end;
-  // The box usually holds two or three rows, so a digit is somewhere between a fifth and a half of its height.
-  // A monitor photographed at an angle is also tried turned a little either way.
   for (const angle of [0, -8, 8, -15, 15]) {
     if (late()) break;
     const turned = rotateGray(img, angle);
-    // Our whole-screen reader goes first: it answers only when every way it reads the screen agrees.
     const whole = readBpDisplay(turned);
     if (whole) return whole;
     const rows: NumberRow[] = [];
@@ -344,8 +303,6 @@ export async function readBpInBox(img: Gray, options: BoxReadOptions): Promise<B
           rows.push(r);
     }
     rows.sort((a, b) => a.y0 - b.y0);
-    // Systolic and diastolic are the biggest numbers on the screen; the smaller pulse row can never stand in for them.
-    // A row more than about half the box tall is two rows run together, never one number.
     const sane = rows.filter((r) => r.size <= img.height * 0.58);
     const partnered = sane.filter((r) => sane.some((o) => o !== r && (stacked(r, o) || stacked(o, r))));
     const biggest = Math.max(0, ...partnered.map((r) => r.size));
@@ -361,10 +318,6 @@ export async function readBpInBox(img: Gray, options: BoxReadOptions): Promise<B
   return null;
 }
 
-/**
- * Cuts the box the person drew out of the photo as grey, resized so the box is a comfortable working size whatever
- * the photo's resolution. Box corners are fractions of the photo's width and height.
- */
 export function boxToGray(
   rgba: Uint8ClampedArray,
   width: number,

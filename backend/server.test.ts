@@ -40,7 +40,6 @@ function sinkLogger() {
   return { logger: createLogger('info', sink), lines };
 }
 
-// A Gemini reply holding an answer that passes every check against GOOD_LIBRARY.
 const GOOD_LIBRARY = { 'guide.tip': 'Small steps help.' };
 const geminiAnswer = (text = 'Small steps help.', sourceIds = ['guide.tip']) =>
   new Response(
@@ -80,7 +79,6 @@ describe('without a database', () => {
     await explainWithModels(config, fakeFetch, {}, GOOD_LIBRARY, []);
     expect(asked).toEqual(['model-two']);
 
-    // A busy model (503) is passed over for that request only, not for the day.
     const busyConfig = loadConfig({
       APP_ENV: 'test',
       GEMINI_API_KEY: 'k',
@@ -154,7 +152,6 @@ describe('without a database', () => {
     });
     const fakeFetch = (async (url: string, init: RequestInit) => {
       const body = String(init.body);
-      // The provider keys travel only in headers, never in what is sent about the person.
       expect(body).not.toMatch(/g-key|groq-key|or-key/);
       if (url.includes('generativelanguage')) {
         asked.push('gemini');
@@ -174,28 +171,23 @@ describe('without a database', () => {
       );
     }) as unknown as typeof fetch;
 
-    // Gemini has used up its allowance and Groq does not answer in time, so OpenRouter answers.
     const library = { 'guide.tip': 'Small steps help.' };
     const first = await explainWithModels(config, fakeFetch, {}, library, []);
     expect(first).toMatchObject({ outcome: 'pass', model: 'openrouter:chain/free:free' });
     expect(first.answer?.paragraphs[0]?.text).toBe('Small steps help.');
     expect(asked).toEqual(['gemini', 'groq', 'openrouter']);
 
-    // Next time Gemini is skipped for the day, and a Groq that answers is used.
     asked.length = 0;
     groq = 'ok';
     expect((await explainWithModels(config, fakeFetch, {}, library, [])).model).toBe('groq:chain-groq');
     expect(asked).toEqual(['groq']);
 
-    // When nothing answers, the result says so once; the chain does not start again from the top.
     const down = (async () => new Response('{}', { status: 503 })) as unknown as typeof fetch;
     const none = await explainWithModels(config, down, {}, {}, []);
     expect(none).toMatchObject({ answer: null, outcome: 'error', model: null });
 
-    // In the pilot only Gemini is asked, because free tiers may keep what is sent to them.
     const pilot = { ...config, APP_ENV: 'pilot' as const };
     expect(guideChain(pilot).map((s) => s.provider)).toEqual(['gemini']);
-    // A provider without a key is left out.
     expect(guideChain({ ...config, GROQ_API_KEY: undefined }).map((s) => s.provider)).toEqual([
       'gemini',
       'openrouter',
@@ -208,7 +200,6 @@ describe('without a database', () => {
     expect(generativeGuideAllowed(pilot({ GROQ_API_KEY: 'k', OPENROUTER_API_KEY: 'k' }))).toBe(false);
     expect(generativeGuideAllowed(pilot({ GEMINI_API_KEY: 'k', GEMINI_PAID_TIER: 'false' }))).toBe(false);
     expect(generativeGuideAllowed(pilot({ GEMINI_API_KEY: 'k', GEMINI_PAID_TIER: 'true' }))).toBe(true);
-    // Outside the pilot any provider with a key will do, but never without the ethics reference.
     expect(generativeGuideAllowed({ ...base, GROQ_API_KEY: 'k' })).toBe(true);
     expect(generativeGuideAllowed({ ...base, GROQ_API_KEY: 'k', ETHICS_AMENDMENT_REF: undefined })).toBe(
       false,
@@ -232,7 +223,6 @@ describe('without a database', () => {
     expect(frames.length).toBeGreaterThan(2);
     const collect = createCollector();
     let complete: string | null = null;
-    // Frames arrive out of order and repeated, as a camera sees a looping QR code.
     for (const frame of [...frames].reverse().concat(frames)) complete ??= collect(frame)?.complete ?? null;
     expect(JSON.parse(complete ?? '{}').ct).toBe(sealed.ct + 'A'.repeat(4000));
     expect(openHandover(server.ecdh, sealed)).toEqual(payload);
@@ -273,7 +263,6 @@ describe('without a database', () => {
       'https://example.org',
     );
     expect(loadConfig({ APP_ENV: 'test' }).PUBLIC_URL).toBe('http://localhost:5173');
-    // On Vercel a PUBLIC_URL copied from a PC's .env never sends anyone to localhost.
     expect(loadConfig({ ...vercel, PUBLIC_URL: 'http://localhost:5173' }).PUBLIC_URL).toBe(
       'https://rinda-health.vercel.app',
     );
@@ -324,7 +313,6 @@ describe('without a database', () => {
     await request(app)
       .post('/api/v1/auth/signup?pin=482915')
       .send({ identifier: 'x@y.co', password: 'Sentinel482915' });
-    // Random request IDs are hex, so digits inside them are not values.
     const log = lines.join('').replace(/"reqId":"[0-9a-f]+"/g, '');
     expect(log).not.toContain('482915');
     expect(log).not.toContain('x@y.co');
@@ -659,7 +647,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     const location = new URL(start.headers['location'] as string);
     expect(location.searchParams.get('code_challenge_method')).toBe('S256');
     expect(location.searchParams.get('scope')).toBe('openid email');
-    // On a PC Google returns to localhost; through the live address it returns there instead.
     expect(location.searchParams.get('redirect_uri')).toBe(
       'http://localhost:5173/api/v1/auth/google/callback',
     );
@@ -721,7 +708,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     });
     expect((await ask('first_step')).body.source).toBe('template');
     expect(outbound.some((o) => o.url.includes('generativelanguage'))).toBe(false);
-    // "What can I do?" works through the API too, with answers drawn from the offline answer set.
     const tips = await ask('tips').expect(200);
     expect(tips.body.source).toBe('template');
     expect(tips.body.paragraphs.flatMap((p: { sourceIds: string[] }) => p.sourceIds)).toContain(
@@ -1120,7 +1106,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     const { agent: fac } = await signup('facilitator', 'live-fac@example.com');
     const { agent: p, me: participant } = await signup('participant', 'live-p@example.com');
     const progress = (step: string) => p.post('/api/v1/participant/session-progress').send({ step });
-    await progress('signin').expect(204); // no session yet
+    await progress('signin').expect(204);
 
     const session = await fac
       .post('/api/v1/facilitator/sessions')
@@ -1146,7 +1132,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     await fac.post(`/api/v1/facilitator/sessions/${session.body.id}/end`).expect(200);
     const after = (await live().expect(200)).body;
     expect(after).toMatchObject({ ended: true, current: null });
-    await progress('results').expect(204); // nothing is tracked once the session ends
+    await progress('results').expect(204);
   });
 
   it('research report: aggregate numbers only, for researcher-admins', async () => {
@@ -1186,7 +1172,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       .expect(404);
     const claim = (await phone.post('/api/v1/devices/claim').send({ code }).expect(200)).body;
     expect(claim).toMatchObject({ language: 'en', deviceLabel: 'Phone 2' });
-    await phone.post('/api/v1/devices/claim').send({ code }).expect(404); // one-time only
+    await phone.post('/api/v1/devices/claim').send({ code }).expect(404);
 
     const status = () => phone.get('/api/v1/devices/status').set('x-device-token', claim.deviceToken);
     expect((await status().expect(200)).body).toEqual({ wipe: false });
@@ -1254,7 +1240,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     });
     const mine = (await phone.get('/api/v1/participant/assessments').expect(200)).body as unknown[];
     expect(mine).toHaveLength(1);
-    // The phone sending the same check-up itself later gives back the same stored one, not a second.
     await phone
       .post('/api/v1/participant/assessments')
       .set('Idempotency-Key', key)
@@ -1274,7 +1259,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       .send({ ...sealed, kid: '00000000' })
       .expect(400);
 
-    // Someone who has not agreed to take part: the package opens, but nothing is stored.
     const { agent: noConsent, me: other2 } = await signup(
       'participant',
       'ho-nc@example.com',
@@ -1329,7 +1313,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
   });
 
   it('logs hold no identifiers, passwords or health values (FR-15)', () => {
-    // Random request IDs are hex, so digits inside them are not values.
     const log = lines.join('').replace(/"reqId":"[0-9a-f]+"/g, '');
     for (const sentinel of [
       'correct-horse-1',

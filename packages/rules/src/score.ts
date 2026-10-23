@@ -1,4 +1,3 @@
-// This is where every result is worked out. Pure functions only, so the phone and the server always agree.
 import {
   INSUFFICIENT,
   type Answer,

@@ -1,4 +1,3 @@
-// Adapted from Magic UI (MIT): a soft dotted background, faded out towards the edges.
 import { useId } from 'react';
 import { cn } from '@/lib/utils';
 

@@ -63,7 +63,6 @@ const ConsentPage = lazy(() =>
   import('@/features/consent/consent-page').then((m) => ({ default: m.ConsentPage })),
 );
 
-// Participants see the purpose, age check and consent choices before any health question.
 function ConsentGate({ me, children }: { me: Me; children: ReactNode }) {
   const { t } = useTranslation();
   const isParticipant = me.role === 'participant';
@@ -110,8 +109,6 @@ function NavItems({ items }: { items: NavItem[] }) {
           item.to === '/app' ? pathname === '/app' || pathname === '/app/' : pathname.startsWith(item.to);
         return (
           <SidebarMenuItem key={item.to}>
-            {/* On hover the item eases to the right, its icon grows a little and a bar grows on its left edge (the
-                bar stays on the current page). People who ask for less motion get the colour change only. */}
             <SidebarMenuButton
               asChild
               isActive={active}
@@ -316,17 +313,14 @@ function Shell({ me }: { me: Me }) {
   }, [dispatch]);
   useOutboxSync(me, onSent);
 
-  // On a study phone set up by QR code, this watches for the facilitator ending the session and clears the phone.
   useEffect(() => {
     if (isParticipant) void import('@/lib/study-device').then((m) => m.resumeStudyDevice());
   }, [isParticipant]);
 
-  // Keeps what this phone needs to seal an offline hand-over, fetched while there is internet.
   useEffect(() => {
     if (isParticipant) void import('@/lib/handover').then((m) => m.refreshHandoverPass(me.id));
   }, [isParticipant, me.id]);
 
-  // Lets the facilitator's live console follow which study step this participant is on.
   useEffect(() => {
     enableSessionProgress(isParticipant);
     return () => enableSessionProgress(false);

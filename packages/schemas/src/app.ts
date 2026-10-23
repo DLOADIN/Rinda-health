@@ -160,10 +160,6 @@ export const CheckupSubmission = z.strictObject({
 });
 export type CheckupSubmission = z.infer<typeof CheckupSubmission>;
 
-/**
- * Offline hand-over: a study phone seals its waiting check-ups to the server's public key and shows them as QR codes;
- * the facilitator's laptop scans and uploads the sealed package, which only the server can open.
- */
 const b64url = z.string().regex(/^[A-Za-z0-9_-]+$/);
 const handoverKid = z.string().regex(/^[0-9a-f]{8}$/);
 const handoverToken = z.string().regex(/^\d{9,11}\.[A-Za-z0-9_-]{43}$/);
@@ -207,11 +203,9 @@ export const TASK_CODES = [
   'results',
   'get_help',
 ] as const;
-/** The participant's app reports which study step it is on, so the facilitator can follow along live. */
 export const SessionProgressRequest = z.strictObject({ step: z.enum(TASK_CODES) });
 export type SessionProgressRequest = z.infer<typeof SessionProgressRequest>;
 
-/** A study phone claims its one-time set-up code from the facilitator's QR code. */
 export const DeviceClaimRequest = z.strictObject({ code: z.string().regex(/^[A-Za-z0-9_-]{20,64}$/) });
 export type DeviceClaimRequest = z.infer<typeof DeviceClaimRequest>;
 

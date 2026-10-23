@@ -1,5 +1,3 @@
-// This is where the seven-segment OCR is started, only when someone first reads a blood pressure photo. Every file
-// comes from our own site (/ocr, see scripts/copy-ocr.mjs) and the picture is read on this device.
 import type { Worker } from 'tesseract.js';
 import type { RowOcr } from '@/lib/bp-photo';
 import type { Gray } from '@/lib/bp-reader';
@@ -7,7 +5,6 @@ import type { Gray } from '@/lib/bp-reader';
 let starting: Promise<Worker> | null = null;
 
 function start(): Promise<Worker> {
-  // The ready-made ES module build, so the bundler adds no CommonJS helpers to the code every page loads.
   starting ??= import('tesseract.js/dist/tesseract.esm.min.js').then(
     async ({ default: { createWorker, PSM } }) => {
       const worker = await createWorker('ssd_int', 1, {
@@ -24,20 +21,17 @@ function start(): Promise<Worker> {
       return worker;
     },
   );
-  // A failed start (for example offline before the files were ever cached) can be tried again later.
   starting.catch(() => {
     starting = null;
   });
   return starting;
 }
 
-/** Starts loading the OCR early, for example when the person picks a photo, so reading feels quick. */
 export function warmUpOcr(): void {
   void start().catch(() => undefined);
 }
 
 function toCanvas(img: Gray): HTMLCanvasElement {
-  // A white margin around the digits helps the OCR find the line.
   const margin = 20;
   const canvas = document.createElement('canvas');
   canvas.width = img.width + margin * 2;
@@ -58,7 +52,6 @@ function toCanvas(img: Gray): HTMLCanvasElement {
   return canvas;
 }
 
-/** Reads the digits in one clean row crop. */
 export const readRowOcr: RowOcr = async (crop) => {
   const worker = await start();
   const { data } = await worker.recognize(toCanvas(crop));

@@ -1,5 +1,3 @@
-// English ships with the app; the Kinyarwanda text loads the first time someone switches to it (it is still saved
-// for offline use), which keeps the first download small.
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from '@/locales/en/common.json';

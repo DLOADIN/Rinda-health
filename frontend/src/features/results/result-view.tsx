@@ -39,7 +39,6 @@ function useValueText() {
     if (r.domain === 'bp' && assessment.values?.systolic != null && assessment.values.diastolic != null) {
       return `${assessment.values.systolic}/${assessment.values.diastolic} ${t('checkup.units.mmHg')}`;
     }
-    // Tobacco is a yes or no question, so its "value" is the person's own answer.
     if (r.domain === 'tobacco' && r.band !== 'insufficient') {
       return t(r.band === 'attention' ? 'results.value.tobaccoYes' : 'results.value.tobaccoNo');
     }
@@ -85,8 +84,6 @@ function stepFor(plan: Plan, domain: string) {
   );
 }
 
-// Each card is tinted by its band: green for good, amber for needs attention, red only for seek care today.
-// The word and the icon are always shown too, so colour is never the only signal.
 const CARD_TONE: Record<DomainResult['severity'], string> = {
   ok: 'border-l-4 border-l-band-ok bg-band-ok/10',
   attention: 'border-l-4 border-l-band-attention bg-band-attention/10',

@@ -36,7 +36,6 @@ export function ResultsPage() {
   const [handoverOpen, setHandoverOpen] = useState(false);
   const [safetyWaiting, setSafetyWaiting] = useState(0);
   const meId = me?.id;
-  // A safety event waiting on its own can also be handed over, even with no check-up waiting.
   useEffect(() => {
     if (!meId) return;
     let active = true;

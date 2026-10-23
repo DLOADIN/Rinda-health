@@ -30,7 +30,6 @@ export function LoginPage() {
   });
   const callbackError = params.get('error');
 
-  // A study phone waiting at sign-in still clears itself when the facilitator ends the session.
   useEffect(() => {
     void import('@/lib/study-device').then((m) => m.resumeStudyDevice());
   }, []);

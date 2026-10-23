@@ -1,5 +1,3 @@
-// This is the sign-in and sign-up layout: one framed panel with the photos on one side and the form on the other,
-// and on phones a small photo above the form. The photos change slowly on their own (never for people who prefer reduced motion).
 import '@/features/landing/landing-strings';
 import { ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';

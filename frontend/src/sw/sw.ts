@@ -1,4 +1,3 @@
-// This is the service worker that lets Rinda open and work offline after the first visit.
 /// <reference lib="webworker" />
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
@@ -28,7 +27,6 @@ registerRoute(
   new NetworkFirst({ cacheName: 'rinda-config', networkTimeoutSeconds: 3 }),
 );
 
-// Staff screens and the QR reader are kept after first use, so a facilitator's laptop can collect offline later.
 registerRoute(
   ({ request, url }) =>
     (request.destination === 'script' &&
@@ -37,7 +35,6 @@ registerRoute(
   new CacheFirst({ cacheName: 'rinda-assets' }),
 );
 
-// The blood pressure photo reader's OCR files are large, so they are fetched only when first used, then kept.
 registerRoute(
   ({ url }) =>
     url.pathname.startsWith('/ocr/') || /\/assets\/(tesseract|bp-camera)[^/]*\.js$/.test(url.pathname),

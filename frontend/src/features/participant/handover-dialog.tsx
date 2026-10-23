@@ -1,6 +1,3 @@
-// This is where a phone with no internet hands its waiting check-ups to the facilitator. It shows a short loop of
-// QR codes for the facilitator's laptop camera. What the codes carry is locked so only Rinda's server can open it,
-// and everything also stays on the phone and still sends itself when the internet comes back.
 import { CircleAlert, LockKeyhole } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -54,7 +51,6 @@ export default function HandoverDialog({ userId, open, onOpenChange }: Props) {
   const [index, setIndex] = useState(0);
   const [round, setRound] = useState(0);
 
-  // A fresh code every two minutes: the package is sealed again with a new key, so an old photo of it is useless.
   useEffect(() => {
     if (!open) return;
     const timer = window.setInterval(() => setRound((r) => r + 1), CODE_LIFETIME_MS);
@@ -74,7 +70,6 @@ export default function HandoverDialog({ userId, open, onOpenChange }: Props) {
     };
   }, [open, userId, round]);
 
-  // The codes take turns so the laptop can collect every part; the order does not matter.
   const total = state.kind === 'ready' ? state.codes.length : 0;
   useEffect(() => {
     if (total < 2) return;

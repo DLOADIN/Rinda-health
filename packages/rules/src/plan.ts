@@ -1,4 +1,3 @@
-// This is where we pick the few areas a person should focus on first.
 import type { AssessmentResult, DomainResult, NcdDomain, Ruleset } from './types.ts';
 
 export type PlanTarget =

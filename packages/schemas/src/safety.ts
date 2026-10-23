@@ -1,4 +1,3 @@
-// Safety events never hold answers or scores; the strict schema refuses any extra field.
 import { z } from 'zod';
 
 export const SafetyAction = z.enum([

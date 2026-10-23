@@ -1,4 +1,3 @@
-// The slide-out menu on phones. It is loaded only the first time someone taps the menu button.
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';

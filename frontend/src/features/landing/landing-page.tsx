@@ -1,4 +1,3 @@
-// This is the public landing page: what Rinda is, how it works, who made it, and how to reach us.
 import '@/features/landing/landing-strings';
 import {
   ArrowRight,

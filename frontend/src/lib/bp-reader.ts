@@ -1,6 +1,3 @@
-// This is where a photo of a digital blood pressure monitor becomes numbers. It reads the large seven-segment
-// digits on the phone itself; no image ever leaves the device, and the person always confirms what was read.
-
 export interface Gray {
   data: Uint8Array;
   width: number;
@@ -20,7 +17,6 @@ export interface Box {
   y1: number;
 }
 
-// Segments in the order a, b, c, d, e, f, g (top, top-right, bottom-right, bottom, bottom-left, top-left, middle).
 const DIGITS: Record<string, number> = {
   '1111110': 0,
   '0110000': 1,
@@ -38,7 +34,6 @@ const DIGITS: Record<string, number> = {
 };
 const PATTERNS = Object.entries(DIGITS);
 
-/** Turns RGBA pixels into grey, scaled down so the longest side is at most `max` pixels. */
 export function toGray(rgba: Uint8ClampedArray, width: number, height: number, max = 360): Gray {
   const scale = Math.min(1, max / Math.max(width, height));
   const w = Math.max(1, Math.round(width * scale));
@@ -55,7 +50,6 @@ export function toGray(rgba: Uint8ClampedArray, width: number, height: number, m
   return { data, width: w, height: h };
 }
 
-/** A light 3 x 3 blur, so camera grain does not turn into stray specks. */
 function smooth(img: Gray): Gray {
   const { data, width, height } = img;
   const out = new Uint8Array(width * height);
@@ -77,10 +71,6 @@ function smooth(img: Gray): Gray {
   return { data: out, width, height };
 }
 
-/**
- * Sliding-window minimum or maximum of one line (van Herk / Gil-Werman), so the cost does not grow with the
- * window: each value is the best of the window from x - r to x + r.
- */
 export function slide(line: Float64Array, r: number, max: boolean): Float64Array {
   const n = line.length;
   const k = 2 * r + 1;
@@ -103,7 +93,6 @@ export function slide(line: Float64Array, r: number, max: boolean): Float64Array
   return out;
 }
 
-/** Square grey-scale dilation (max) or erosion (min): rows first, then columns. */
 export function morph(data: Uint8Array, width: number, height: number, r: number, max: boolean): Uint8Array {
   const tmp = new Uint8Array(data.length);
   const out = new Uint8Array(data.length);
@@ -122,7 +111,6 @@ export function morph(data: Uint8Array, width: number, height: number, r: number
   return out;
 }
 
-/** Otsu's threshold for a set of values from 0 to 255. */
 export function otsu(values: Uint8Array): number {
   const hist = new Array<number>(256).fill(0);
   for (const v of values) hist[v] = (hist[v] ?? 0) + 1;
@@ -148,10 +136,6 @@ export function otsu(values: Uint8Array): number {
   return threshold;
 }
 
-/**
- * Marks thin strokes darker (and lighter) than their surroundings. A top-hat filter takes away anything wider than a
- * digit stroke first, so shadows across the screen and the dark border around it are not mistaken for digits.
- */
 function binarize(img: Gray, stroke: number): { dark: Uint8Array; light: Uint8Array } {
   const { data, width, height } = img;
   const r = Math.max(3, Math.round(Math.min(width, height) * stroke));
@@ -170,10 +154,6 @@ function binarize(img: Gray, stroke: number): { dark: Uint8Array; light: Uint8Ar
   return { dark: mark(darkHat), light: mark(lightHat) };
 }
 
-/**
- * Removes long straight lines, such as the edges of the screen, which can touch the digits and join them together.
- * A digit's own strokes are far shorter than these.
- */
 function dropLines(ink: Uint8Array, width: number, height: number): Uint8Array {
   const out = Uint8Array.from(ink);
   const longRow = Math.max(8, Math.round(width * 0.2));
@@ -203,7 +183,6 @@ function dropLines(ink: Uint8Array, width: number, height: number): Uint8Array {
   return out;
 }
 
-/** Drops lone specks: an ink pixel needs at least two ink neighbours to count. */
 export function despeckle(ink: Uint8Array, width: number, height: number): Uint8Array {
   const out = new Uint8Array(ink.length);
   for (let y = 0; y < height; y++)
@@ -218,10 +197,6 @@ export function despeckle(ink: Uint8Array, width: number, height: number): Uint8
   return out;
 }
 
-/**
- * Keeps only shapes that could be parts of digits. Anything touching the edge of the picture (the casing, a finger)
- * or far too big to be a segment (the screen's outline, a frame line) is removed.
- */
 function keepDigitShapes(ink: Uint8Array, width: number, height: number): Uint8Array {
   const out = Uint8Array.from(ink);
   const seen = new Uint8Array(ink.length);
@@ -284,7 +259,6 @@ function runs(profile: number[], minValue: number, maxGap: number): Array<[numbe
   return out;
 }
 
-/** Seven-segment digits are often slanted; this finds the shear that makes the gaps between digits clearest. */
 function bestShear(ink: Uint8Array, width: number, box: Box): number {
   const mid = (box.y0 + box.y1) / 2;
   let best = 0;
@@ -308,7 +282,6 @@ function readDigit(get: (x: number, y: number) => number, box: Box, rowHeight: n
   const w = box.x1 - box.x0 + 1;
   const h = box.y1 - box.y0 + 1;
   if (h < rowHeight * 0.6) return null;
-  // A narrow, tall shape is a 1 (it has only the right-hand segments).
   if (w < h * 0.3) return 1;
   const frac = (fx0: number, fx1: number, fy0: number, fy1: number) => {
     const xa = box.x0 + Math.floor(fx0 * w);
@@ -325,18 +298,17 @@ function readDigit(get: (x: number, y: number) => number, box: Box, rowHeight: n
     return all ? on / all : 0;
   };
   const segs = [
-    frac(0.3, 0.7, 0, 0.16), // a
-    frac(0.7, 1, 0.12, 0.42), // b
-    frac(0.7, 1, 0.58, 0.88), // c
-    frac(0.3, 0.7, 0.84, 1), // d
-    frac(0, 0.3, 0.58, 0.88), // e
-    frac(0, 0.3, 0.12, 0.42), // f
-    frac(0.3, 0.7, 0.42, 0.58), // g
+    frac(0.3, 0.7, 0, 0.16),
+    frac(0.7, 1, 0.12, 0.42),
+    frac(0.7, 1, 0.58, 0.88),
+    frac(0.3, 0.7, 0.84, 1),
+    frac(0, 0.3, 0.58, 0.88),
+    frac(0, 0.3, 0.12, 0.42),
+    frac(0.3, 0.7, 0.42, 0.58),
   ];
   const code = segs.map((v) => (v > 0.3 ? '1' : '0')).join('');
   const exact = DIGITS[code];
   if (exact !== undefined) return exact;
-  // Allow one segment to be misread, but only when exactly one digit is that close.
   const near = PATTERNS.filter(([p]) => [...p].filter((c, i) => c !== code[i]).length === 1).map(
     ([, d]) => d,
   );
@@ -348,7 +320,6 @@ export function readRow(ink: Uint8Array, width: number, row: Box): number | null
   const shear = bestShear(ink, width, row);
   const mid = (row.y0 + row.y1) / 2;
   const height = row.y1 - row.y0 + 1;
-  // Straighten the row into its own small image.
   const off = Math.ceil(Math.abs(shear) * height);
   const w = row.x1 - row.x0 + 1 + off * 2;
   const straight = new Uint8Array(w * height);
@@ -379,13 +350,10 @@ export function readRow(ink: Uint8Array, width: number, row: Box): number | null
           y0 = Math.min(y0, y);
           y1 = Math.max(y1, y);
         }
-    // Labels and icons inside the row are much shorter than the digits, so they are skipped.
     if (y1 >= 0) boxes.push({ x0, x1, y0, y1 });
   }
   const tallest = Math.max(0, ...boxes.map((b) => b.y1 - b.y0 + 1));
   const digits = boxes.filter((b) => b.y1 - b.y0 + 1 >= tallest * 0.75);
-  // Many monitors show a thin level or memory bar just after the last digit. A real 1 at the end sits further
-  // away (it is drawn on the right of its own digit space), so a thin shape tucked close to the last digit is dropped.
   while (digits.length > 1) {
     const last = digits[digits.length - 1];
     const before = digits[digits.length - 2];
@@ -405,18 +373,11 @@ export function readRow(ink: Uint8Array, width: number, row: Box): number | null
   return value;
 }
 
-// The filter size has to suit how thick the digit strokes look, which depends on how close the picture was taken.
 const STROKES = [0.03, 0.05, 0.08];
 
-/**
- * Reads systolic, diastolic and (if shown) pulse from a grey image of the monitor's screen. Returns null when it
- * is not sure, so the person is never shown a guess that does not look like a real reading.
- */
 export function readBpDisplay(img: Gray): BpReading | null {
   const { width, height } = img;
   const smoothed = smooth(img);
-  // Screens can be dark-on-light or backlit, and digits can look thin or thick. Every combination is tried, and a
-  // reading is offered only if none of them disagrees.
   const found: BpReading[] = [];
   for (const stroke of STROKES) {
     const { dark, light } = binarize(smoothed, stroke);
@@ -439,10 +400,6 @@ const MAX_PHOTO_WINDOWS = 120;
 
 export type PhotoWindow = readonly [x: number, y: number, w: number, h: number];
 
-/**
- * The windows a photo is searched with: the whole picture, then smaller squares and portrait boxes sized against
- * its shorter side, nearest the middle first because people usually centre the monitor.
- */
 export function photoWindows(width: number, height: number): PhotoWindow[] {
   const out: Array<PhotoWindow & { d: number }> = [];
   const short = Math.min(width, height);
@@ -460,17 +417,12 @@ export function photoWindows(width: number, height: number): PhotoWindow[] {
     }
   }
   out.sort((a, b) => a.d - b.d);
-  // Capped, so a photo with no readable screen gives up in a few seconds instead of keeping the person waiting.
   return [
     [0, 0, width, height],
     ...out.slice(0, MAX_PHOTO_WINDOWS - 1).map(([x, y, w, h]) => [x, y, w, h] as const),
   ];
 }
 
-/**
- * The windows to try around a spot the person tapped on the monitor's screen: a few sizes, each nudged a little
- * in every direction, all kept inside the photo.
- */
 export function windowsAround(width: number, height: number, cx: number, cy: number): PhotoWindow[] {
   const short = Math.min(width, height);
   const out: PhotoWindow[] = [];
@@ -494,7 +446,6 @@ export function windowsAround(width: number, height: number, cx: number, cy: num
   return out;
 }
 
-/** Reads the screen around a tapped spot; several windows must agree, as with a whole photo. */
 export function readBpAround(
   rgba: Uint8ClampedArray,
   width: number,
@@ -518,10 +469,6 @@ export function readBpAround(
   return vote.result();
 }
 
-/**
- * What is tried around a tapped spot: windows read straight first, then, only if nothing clear came of those,
- * the same windows slightly rotated in case the monitor was photographed at an angle.
- */
 export function tapAttempts(width: number, height: number, cx: number, cy: number) {
   const straight = windowsAround(width, height, cx, cy);
   const turned = TILTS.flatMap((angle) =>
@@ -532,7 +479,6 @@ export function tapAttempts(width: number, height: number, cx: number, cy: numbe
 
 const TILTS = [-16, 16, -8, 8];
 
-/** Reads one window of a photo. */
 export function readPhotoWindow(
   rgba: Uint8ClampedArray,
   width: number,
@@ -541,8 +487,6 @@ export function readPhotoWindow(
 ): BpReading | null {
   const [x0, y0, w, h] = win;
   const height = Math.floor(rgba.length / 4 / width);
-  // Small screens in a photo have digits only a few pixels thick, so every window is resized (smoothly, up or
-  // down) to a working size before it is read. A monitor photographed at an angle is turned upright first.
   const scale = WORK_SIZE / Math.max(w, h);
   const W = Math.max(1, Math.round(w * scale));
   const H = Math.max(1, Math.round(h * scale));
@@ -577,7 +521,6 @@ export function readPhotoWindow(
 
 const WORK_SIZE = 220;
 
-/** Keeps a tally of what the windows read, and says when one reading clearly wins. */
 export function createPhotoVote() {
   const votes = new Map<string, { n: number; r: BpReading }>();
   const ranked = () => [...votes.values()].sort((a, b) => b.n - a.n);
@@ -587,12 +530,10 @@ export function createPhotoVote() {
       const v = votes.get(key);
       votes.set(key, { n: (v?.n ?? 0) + 1, r: v?.r.pulse != null ? v.r : r });
     },
-    /** Sure enough to stop searching early. */
     settled() {
       const [best, next] = ranked();
       return Boolean(best && best.n >= 3 && best.n >= 3 * (next?.n ?? 0));
     },
-    /** The reading to offer: at least two windows, and at least twice as many as any other reading. */
     result(): BpReading | null {
       const [best, next] = ranked();
       return best && best.n >= 2 && best.n >= 2 * (next?.n ?? 0) ? best.r : null;
@@ -600,10 +541,6 @@ export function createPhotoVote() {
   };
 }
 
-/**
- * Reads a whole photo, where the monitor's screen may be anywhere and any size. A reading is offered only when
- * several windows agree on it and it clearly beats anything else read.
- */
 export function readBpPhoto(rgba: Uint8ClampedArray, width: number, height: number): BpReading | null {
   const vote = createPhotoVote();
   for (const win of photoWindows(width, height)) {
@@ -627,7 +564,6 @@ function readInk(ink: Uint8Array, width: number, height: number): BpReading | nu
   if (bands.length < 2) return null;
   const tallest = Math.max(...bands.map(([a, b]) => b - a + 1));
   const numberRows = bands.filter(([a, b]) => b - a + 1 >= tallest * 0.45);
-  // Each number stays tied to its own row: a row that cannot be read is never filled in by the one below it.
   const values: Array<number | null> = [];
   for (const [y0, y1] of numberRows) {
     let x0 = width;
@@ -643,7 +579,6 @@ function readInk(ink: Uint8Array, width: number, height: number): BpReading | nu
   }
   const [systolic, diastolic, pulse] = values;
   if (systolic == null || diastolic == null) return null;
-  // Systolic and diastolic are shown at the same size; a smaller pulse row in second place means a row was lost.
   const [first, second] = numberRows;
   if (!first || !second) return null;
   const h1 = first[1] - first[0] + 1;
@@ -654,7 +589,6 @@ function readInk(ink: Uint8Array, width: number, height: number): BpReading | nu
   return { systolic, diastolic, pulse: pulse != null && pulse >= 30 && pulse <= 220 ? pulse : null };
 }
 
-/** Several frames must agree before a reading is offered, which filters out blur and reflections. */
 export function agreeingReading(recent: readonly BpReading[], needed = 3): BpReading | null {
   const counts = new Map<string, { n: number; r: BpReading }>();
   for (const r of recent) {

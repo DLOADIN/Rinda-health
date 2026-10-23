@@ -1,5 +1,3 @@
-// This is the frame for the public pages (landing, sign in, sign up): a floating nav at the top, the page at full
-// width, and "Get help now" and Exit always within reach.
 import { DoorOpen, HeartPulse, Menu } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';

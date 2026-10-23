@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { readBpInBox, rotateGray, rowValues, type RowOcr } from '@/lib/bp-photo';
 import { drawScreen, MONITOR } from '@/lib/bp-test-screen';
 
-// Stands in for the seven-segment OCR, which needs a browser; our own segment reader still reads every row.
 const silentOcr: RowOcr = async () => ({ text: '', confidence: 0 });
 const sayingOcr =
   (text: string, confidence = 90): RowOcr =>
@@ -56,7 +55,6 @@ describe('readBpInBox', () => {
   });
 
   it('never accepts a number only one weak read supports', async () => {
-    // Every row "reads" as 150 with low confidence and there are no digits for our own reader to confirm it.
     const r = await readBpInBox(drawScreen({ rows: [] }), { ocr: sayingOcr('150', 20) });
     expect(r).toBeNull();
   });

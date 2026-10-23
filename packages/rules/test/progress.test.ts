@@ -23,8 +23,8 @@ const area = (flat: FlatInput, domain: string): DomainResult => {
 
 describe('targetPercent', () => {
   it('shows activity and fruit and vegetables as a share of the ruleset target', () => {
-    expect(targetPercent(area(base, 'activity'), ruleset)).toBe(40); // 60 of 150 minutes
-    expect(targetPercent(area(base, 'diet'), ruleset)).toBe(60); // 3 of 5 servings
+    expect(targetPercent(area(base, 'activity'), ruleset)).toBe(40);
+    expect(targetPercent(area(base, 'diet'), ruleset)).toBe(60);
   });
 
   it('counts vigorous minutes double, rounds down and stops at 100', () => {

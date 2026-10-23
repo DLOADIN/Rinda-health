@@ -5,7 +5,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { GuideButton } from '@/features/guide/guide-button';
 import '@/lib/i18n';
 
-// The guide's own code fails to load, as it can after a new release or when the connection drops.
 vi.mock('@/features/guide/guide-panel', () => ({
   default: () => {
     throw new Error('chunk failed to load');

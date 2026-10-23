@@ -1,4 +1,3 @@
-// This is the password box with an eye button, so people can check what they typed before signing in.
 import { Eye, EyeOff } from 'lucide-react';
 import { useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -34,7 +34,6 @@ interface Props {
 export default function GuidePanel({ assessment, open, onOpenChange, initialChip }: Props) {
   const { t } = useTranslation();
   const { text: appText, lang } = useContent();
-  // The offline answer set lives with the guide, so it works without Gemini and without internet.
   const text = useCallback(
     (id: string) => {
       const found = appText(id);
@@ -72,7 +71,6 @@ export default function GuidePanel({ assessment, open, onOpenChange, initialChip
     void explain({ assessmentId: assessment.id, chipId: chip, language: lang }).then((r) => {
       if (!current) return;
       if ('data' in r && r.data) setServed({ chip, answer: r.data });
-      // No answer from the server at all: say so and offer the way back, while the approved answer stays shown.
       else setFailedFor(chip);
     });
     return () => {
@@ -90,8 +88,6 @@ export default function GuidePanel({ assessment, open, onOpenChange, initialChip
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="data-[vaul-drawer-direction=bottom]:h-[90dvh] data-[vaul-drawer-direction=bottom]:max-h-[90dvh]">
-        {/* The whole guide scrolls inside the drawer, with a scrollbar that always shows on phones and computers, so
-            the end of a long answer is never cut off. Dragging here scrolls the text instead of closing the drawer. */}
         <ScrollArea
           type="always"
           data-vaul-no-drag
@@ -165,7 +161,6 @@ export default function GuidePanel({ assessment, open, onOpenChange, initialChip
                         ? text('guide.label.generated')
                         : text('guide.label.template')}
                     </Badge>
-                    {/* The answer box grows to fit the whole answer; the drawer's own scrollbar reaches the end of it. */}
                     <div className="flex min-h-40 flex-col gap-3 rounded-xl border bg-card/60 p-4 text-base">
                       {answer.paragraphs.map((p, i) => (
                         <p key={i} className="leading-relaxed">

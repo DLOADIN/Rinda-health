@@ -46,8 +46,7 @@ test.describe('app shell', () => {
   });
 
   test('has no axe violations (WCAG 2.2 AA)', async ({ page }) => {
-    test.setTimeout(90_000); // the landing page is long, so the full scan takes a while
-    // Scan the settled page: sections fade in on scroll, and half-faded text would read as low contrast.
+    test.setTimeout(90_000);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.reload();
     await expect(page.getByRole('button', { name: 'Get help now' })).toBeVisible();

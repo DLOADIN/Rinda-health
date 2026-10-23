@@ -30,7 +30,6 @@ const buttonVariants = cva(
           "size-6 rounded-[min(var(--radius-md),8px)] in-data-[slot=button-group]:rounded-md [&_svg:not([class*='size-'])]:size-3",
         'icon-sm': 'size-8 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-md',
         'icon-lg': 'size-10',
-        // 44px on touch screens (NFR-08); compact where a mouse or trackpad is used.
         touch:
           'h-11 gap-2 px-5 text-base has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4 pointer-fine:h-9 pointer-fine:gap-1.5 pointer-fine:px-4 pointer-fine:text-sm',
         'icon-touch': 'size-11 pointer-fine:size-9',
