@@ -76,8 +76,8 @@ Mental-wellness domains have no chips. Their pages show approved support content
 | `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODELS` | Gemini key and the models tried in order |
 | `GEMINI_PAID_TIER` | Must be `true` in the pilot: the operator's statement that the key is on a paid tier whose terms exclude training on prompts (nothing checks the billing tier) |
 | `GUIDE_PROVIDERS` | Order of providers outside the pilot, default `gemini,groq,openrouter` |
-| `GROQ_API_KEY`, `GROQ_MODELS` | Groq key and models (outside the pilot only) |
-| `OPENROUTER_API_KEY`, `OPENROUTER_MODELS` | OpenRouter key and free models (outside the pilot only) |
+| `GROQ_API_KEY` (or `GROQ_CLIENT_API_KEY`), `GROQ_MODELS` | Groq key and models (outside the pilot only) |
+| `OPENROUTER_API_KEY` (or `OPEN_ROUTER_API_KEY`), `OPENROUTER_MODELS` | OpenRouter key and free models (outside the pilot only) |
 
 `npm run models:check` lists each provider's models and tests every model in the chain with a harmless prompt, without printing keys.
 

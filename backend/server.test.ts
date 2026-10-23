@@ -40,6 +40,23 @@ function sinkLogger() {
   return { logger: createLogger('info', sink), lines };
 }
 
+// A Gemini reply holding an answer that passes every check against GOOD_LIBRARY.
+const GOOD_LIBRARY = { 'guide.tip': 'Small steps help.' };
+const geminiAnswer = (text = 'Small steps help.', sourceIds = ['guide.tip']) =>
+  new Response(
+    JSON.stringify({
+      candidates: [
+        {
+          finishReason: 'STOP',
+          content: {
+            parts: [{ text: JSON.stringify({ paragraphs: [{ text, sourceIds }], followUpChipIds: [] }) }],
+          },
+        },
+      ],
+    }),
+    { status: 200 },
+  );
+
 describe('without a database', () => {
   it('moves to the next free Gemini model when one has used up its allowance, and skips it for the day', async () => {
     const config = loadConfig({
@@ -54,13 +71,13 @@ describe('without a database', () => {
       const model = /models\/([^:]+):/.exec(url)?.[1] ?? '';
       asked.push(model);
       if (model === 'model-one') return new Response('{}', { status: 429 });
-      return new Response(JSON.stringify({ candidates: [] }), { status: 200 });
+      return geminiAnswer();
     }) as unknown as typeof fetch;
-    const first = await explainWithModels(config, fakeFetch, {}, {}, []);
+    const first = await explainWithModels(config, fakeFetch, {}, GOOD_LIBRARY, []);
     expect(first.model).toBe('model-two');
     expect(asked).toEqual(['model-one', 'model-two']);
     asked.length = 0;
-    await explainWithModels(config, fakeFetch, {}, {}, []);
+    await explainWithModels(config, fakeFetch, {}, GOOD_LIBRARY, []);
     expect(asked).toEqual(['model-two']);
 
     // A busy model (503) is passed over for that request only, not for the day.
@@ -74,10 +91,43 @@ describe('without a database', () => {
     const busyFetch = (async (url: string) =>
       url.includes('busy-one') && busy
         ? new Response('{}', { status: 503 })
-        : new Response(JSON.stringify({ candidates: [] }), { status: 200 })) as unknown as typeof fetch;
-    expect((await explainWithModels(busyConfig, busyFetch, {}, {}, [])).model).toBe('calm-two');
+        : geminiAnswer()) as unknown as typeof fetch;
+    expect((await explainWithModels(busyConfig, busyFetch, {}, GOOD_LIBRARY, [])).model).toBe('calm-two');
     busy = false;
-    expect((await explainWithModels(busyConfig, busyFetch, {}, {}, [])).model).toBe('busy-one');
+    expect((await explainWithModels(busyConfig, busyFetch, {}, GOOD_LIBRARY, [])).model).toBe('busy-one');
+  });
+
+  it('asks the next model when an answer is empty or fails the checks, and keeps the last outcome if none passes', async () => {
+    const config = loadConfig({
+      APP_ENV: 'test',
+      GEMINI_API_KEY: 'k',
+      GEMINI_MODEL: 'checks-empty',
+      GEMINI_FALLBACK_MODELS: 'checks-diagnoses,checks-good',
+    });
+    const asked: string[] = [];
+    const fakeFetch = (async (url: string) => {
+      const model = /models\/([^:]+):/.exec(url)?.[1] ?? '';
+      asked.push(model);
+      if (model === 'checks-empty') return new Response(JSON.stringify({ candidates: [] }), { status: 200 });
+      if (model === 'checks-diagnoses') return geminiAnswer('You have a disease.');
+      return geminiAnswer();
+    }) as unknown as typeof fetch;
+    const r = await explainWithModels(config, fakeFetch, {}, GOOD_LIBRARY, []);
+    expect(r).toMatchObject({ outcome: 'pass', model: 'checks-good' });
+    expect(asked).toEqual(['checks-empty', 'checks-diagnoses', 'checks-good']);
+
+    const allBad = loadConfig({
+      APP_ENV: 'test',
+      GEMINI_API_KEY: 'k',
+      GEMINI_MODEL: 'bad-a',
+      GEMINI_FALLBACK_MODELS: 'bad-b',
+    });
+    const badFetch = (async () => geminiAnswer('You have a disease.')) as unknown as typeof fetch;
+    expect(await explainWithModels(allBad, badFetch, {}, GOOD_LIBRARY, [])).toMatchObject({
+      answer: null,
+      outcome: 'banned',
+      model: 'bad-b',
+    });
   });
 
   it('carries on to Groq and then OpenRouter when Gemini cannot answer, and never loops back', async () => {

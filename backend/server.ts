@@ -131,15 +131,17 @@ const EnvSchema = z
     // Tried in order when the first model has used up its free allowance for the day.
     GEMINI_FALLBACK_MODELS: z
       .string()
-      .default('gemini-3.5-flash-lite,gemini-flash-latest,gemini-flash-lite-latest,gemini-3.1-flash-lite'),
+      .default('gemini-3.5-flash-lite,gemini-flash-lite-latest,gemini-3.6-flash,gemini-flash-latest'),
     // Other providers with free allowances, tried after Gemini in this order; one without a key is skipped.
     GUIDE_PROVIDERS: z.string().default('gemini,groq,openrouter'),
     GROQ_API_KEY: optionalText,
-    GROQ_MODELS: z.string().default('openai/gpt-oss-20b,qwen/qwen3-32b'),
+    GROQ_MODELS: z.string().default('openai/gpt-oss-20b,openai/gpt-oss-120b,qwen/qwen3.8-27b'),
     OPENROUTER_API_KEY: optionalText,
     OPENROUTER_MODELS: z
       .string()
-      .default('deepseek/deepseek-chat-v3.1:free,meta-llama/llama-3.3-70b-instruct:free'),
+      .default(
+        'nvidia/nemotron-3.5-super-vl:free,nvidia/nemotron-3-ultra-550b-a55b:free,nvidia/nemotron-3.5-lightning:free,google/gemma-4-31b-it:free',
+      ),
     ETHICS_AMENDMENT_REF: optionalText,
     GEMINI_PAID_TIER: z.preprocess(emptyAsUndefined, z.enum(['true', 'false']).default('false')),
     BREVO_API_KEY: optionalText,
@@ -197,6 +199,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const pointsAtPc =
     !input['PUBLIC_URL'] || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(input['PUBLIC_URL']);
   if (vercelHost && pointsAtPc) input['PUBLIC_URL'] = `https://${vercelHost}`;
+  // The provider keys are also accepted under the names their own sites suggest.
+  input['GROQ_API_KEY'] ??= env['GROQ_CLIENT_API_KEY'];
+  input['OPENROUTER_API_KEY'] ??= env['OPEN_ROUTER_API_KEY'];
   if ((appEnv === 'development' || appEnv === 'test') && !input['SESSION_SECRET']) {
     input['SESSION_SECRET'] = randomBytes(48).toString('base64url');
     generatedSecret = true;
@@ -775,6 +780,7 @@ export async function explainWithModels(
 ): Promise<GeminiResult> {
   const today = new Date().toISOString().slice(0, 10);
   const end = now() + GUIDE_CHAIN_MS;
+  let last: GeminiResult | null = null;
   for (const step of guideChain(config)) {
     const name = stepName(step);
     if (spentModels.get(name) === today) continue;
@@ -796,9 +802,11 @@ export async function explainWithModels(
       continue;
     }
     if (result === 'busy') continue;
-    return { ...result, model: name };
+    if (result.answer) return { ...result, model: name };
+    // An empty reply, or one that failed our checks, is not shown: the next model gets the same question.
+    last = { ...result, model: name };
   }
-  return { answer: null, outcome: 'error', inputTokens: null, outputTokens: null, model: null };
+  return last ?? { answer: null, outcome: 'error', inputTokens: null, outputTokens: null, model: null };
 }
 
 const libraryLines = (library: Record<string, string>) =>
@@ -825,7 +833,12 @@ async function askOpenAiStyle(
     body: JSON.stringify({
       model: step.model,
       temperature: 0.4,
-      max_tokens: 1024,
+      // Room for models that think before answering, and a request to keep that thinking short.
+      max_tokens: 4096,
+      ...(step.provider === 'groq' && step.model.startsWith('openai/gpt-oss')
+        ? { reasoning_effort: 'low' }
+        : {}),
+      ...(step.provider === 'openrouter' ? { reasoning: { enabled: false } } : {}),
       response_format: { type: 'json_object' },
       messages: [
         {
