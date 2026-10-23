@@ -1,5 +1,4 @@
 import type { Role } from '@rinda/schemas';
-import { Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { FieldSeparator } from '@/components/ui/field';
@@ -19,7 +18,14 @@ export function GoogleButton({ intent, role }: { intent: 'login' | 'signup'; rol
       <FieldSeparator>{t('auth.or')}</FieldSeparator>
       <Button asChild variant="outline" className="w-full">
         <a href={`/api/v1/auth/google/start?${params.toString()}`}>
-          <Globe aria-hidden="true" data-icon="inline-start" />
+          {/* Google's own "G" mark, served from our site; its brand rules ask that it keeps its colours. */}
+          <img
+            src="/images/google-g.svg"
+            alt=""
+            aria-hidden="true"
+            data-icon="inline-start"
+            className="size-4"
+          />
           {t('auth.google')}
         </a>
       </Button>
