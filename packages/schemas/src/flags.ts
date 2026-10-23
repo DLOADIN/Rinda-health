@@ -15,6 +15,7 @@ export const FLAG_KEYS = [
   'usabilityEvents',
   'pilotInsights',
   'messaging',
+  'phoneHealth',
 ] as const;
 export const FlagKey = z.enum(FLAG_KEYS);
 export type FlagKey = z.infer<typeof FlagKey>;

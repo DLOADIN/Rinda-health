@@ -1,7 +1,7 @@
 import { RULESET_V1 } from '@rinda/content';
 import { validateMeasurement, type MeasurementType } from '@rinda/rules';
 import type { CheckupAnswers, CheckupSubmission } from '@rinda/schemas';
-import { Camera, QrCode } from 'lucide-react';
+import { Camera, Smartphone, QrCode } from 'lucide-react';
 import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -29,6 +29,10 @@ import {
 import { addToOutbox, queueSafetyEvent, scoreOnPhone } from '@/lib/offline';
 import { reportStep } from '@/lib/session-progress';
 import { useCached } from '@/lib/use-cached';
+import '@/features/profile/phone-strings';
+import type { PhoneHealthStatus } from '@rinda/schemas';
+import { toast } from 'sonner';
+import { isNativeApp } from '@/lib/phone-health';
 import { useContent } from '@/lib/content';
 
 const BpCamera = lazy(() => import('@/features/participant/bp-camera'));
@@ -84,6 +88,42 @@ export function CheckupPage() {
   const [startedAt] = useState(() => new Date().toISOString());
   const [answers, setAnswers] = useState<Answers>(EMPTY);
   const [raw, setRaw] = useState<Partial<Record<NumberKey, string>>>({});
+
+  const fillFromPhone = async () => {
+    const res = await fetch('/api/v1/participant/phone-health', { credentials: 'same-origin' }).catch(
+      () => null,
+    );
+    const status = res?.ok ? ((await res.json()) as PhoneHealthStatus) : null;
+    const latest = (type: string) => status?.readings.find((r) => r.type === type);
+    const bp = latest('bloodPressure');
+    const weight = latest('weight');
+    const height = latest('height');
+    if (!bp && !weight && !height) {
+      toast(t('phone.noRecent'));
+      return;
+    }
+    const heightCm = height ? (/^m/i.test(height.unit) ? height.value * 100 : height.value) : undefined;
+    const today = new Date().toLocaleDateString('en-CA');
+    const old = [bp, weight, height].some((r) => r && r.day !== today);
+    const next: Partial<Answers> = {
+      ...(bp
+        ? { systolic: Math.round(bp.value), diastolic: bp.value2 === null ? null : Math.round(bp.value2) }
+        : {}),
+      ...(weight ? { weightKg: Math.round(weight.value * 10) / 10 } : {}),
+      ...(heightCm !== undefined ? { heightCm: Math.round(heightCm * 10) / 10 } : {}),
+      ...(old ? { measurementSource: 'recalled' as const } : {}),
+    };
+    setAnswers((a) => ({ ...a, ...next }));
+    setRaw((r) => ({
+      ...r,
+      ...Object.fromEntries(
+        (['systolic', 'diastolic', 'weightKg', 'heightCm'] as const)
+          .filter((k) => typeof next[k] === 'number')
+          .map((k) => [k, String(next[k])]),
+      ),
+    }));
+    toast.success(t('phone.filled'));
+  };
   const [wellness, setWellness] = useState(WELLNESS_START);
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -357,6 +397,12 @@ export function CheckupPage() {
           <Camera aria-hidden="true" data-icon="inline-start" />
           {t('checkup.camera.open')}
         </Button>
+        {isNativeApp() ? (
+          <Button type="button" variant="outline" className="self-start" onClick={() => void fillFromPhone()}>
+            <Smartphone aria-hidden="true" data-icon="inline-start" />
+            {t('phone.fill')}
+          </Button>
+        ) : null}
         {cameraOpen ? (
           <Suspense fallback={null}>
             <BpCamera

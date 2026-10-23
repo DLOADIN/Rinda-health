@@ -774,6 +774,56 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     ]);
   });
 
+  it('phone health readings: only with consent, upserted per day, deleted when sharing stops', async () => {
+    const { agent } = await signup('participant', 'phone-health@example.com');
+    const day = new Date().toISOString().slice(0, 10);
+    const upload = {
+      platform: 'android',
+      readings: [
+        { type: 'heartRate', day, value: 72, value2: null, min: 58, max: 131, unit: 'bpm' },
+        { type: 'bloodPressure', day, value: 118, value2: 76, min: null, max: null, unit: 'mmHg' },
+        { type: 'steps', day, value: 6400, value2: null, min: null, max: null, unit: 'count' },
+      ],
+    };
+    expect((await agent.get('/api/v1/participant/phone-health')).body).toMatchObject({
+      available: true,
+      share: false,
+      readings: [],
+    });
+    const refused = await agent.post('/api/v1/participant/phone-health/readings').send(upload);
+    expect(refused.status).toBe(409);
+
+    await agent.put('/api/v1/participant/phone-health/consent').send({ share: true }).expect(200);
+    await agent.post('/api/v1/participant/phone-health/readings').send(upload).expect(200);
+    await agent
+      .post('/api/v1/participant/phone-health/readings')
+      .send({ ...upload, readings: [{ ...upload.readings[0], value: 75 }] })
+      .expect(200);
+    const listed = (await agent.get('/api/v1/participant/phone-health')).body;
+    expect(listed.share).toBe(true);
+    expect(listed.readings).toHaveLength(3);
+    expect(listed.readings.find((r: { type: string }) => r.type === 'heartRate')).toMatchObject({
+      value: 75,
+      min: 58,
+      max: 131,
+      platform: 'android',
+    });
+    expect(listed.readings.find((r: { type: string }) => r.type === 'bloodPressure')).toMatchObject({
+      value: 118,
+      value2: 76,
+    });
+
+    await agent
+      .post('/api/v1/participant/phone-health/readings')
+      .send({ ...upload, readings: [{ ...upload.readings[0], value: 900 }] })
+      .expect(400);
+
+    await agent.put('/api/v1/participant/phone-health/consent').send({ share: false }).expect(200);
+    const after = await db.query("SELECT count(*)::int AS n FROM phone_health_readings WHERE unit = 'bpm'");
+    expect(after.rows[0].n).toBe(0);
+    expect((await agent.get('/api/v1/participant/phone-health')).body.readings).toEqual([]);
+  });
+
   it('Ask Rinda chat: five questions a day about Rinda Health, and crisis words are never sent', async () => {
     const { agent } = await signup('participant', 'chat-user@example.com');
     await agent

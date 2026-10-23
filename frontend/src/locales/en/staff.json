@@ -198,7 +198,8 @@
       "readAloud": "Read aloud",
       "usabilityEvents": "Screen timing for research",
       "pilotInsights": "Pilot insights",
-      "messaging": "Email reports"
+      "messaging": "Email reports",
+      "phoneHealth": "Phone health readings"
     }
   },
   "research": {

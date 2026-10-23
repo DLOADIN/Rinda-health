@@ -54,6 +54,8 @@ import {
   GuideAnswer,
   GuideExplainRequest,
   ChatRequest,
+  PhoneHealthShare,
+  PhoneHealthUpload,
   GuideFeedbackRequest,
   ConsentChange,
   ConsentSubmission,
@@ -1358,6 +1360,7 @@ const DEVELOPMENT_FLAGS: Flags = {
   usabilityEvents: false,
   pilotInsights: true,
   messaging: true,
+  phoneHealth: true,
 };
 const PILOT_FLAGS: Flags = {
   ...DEVELOPMENT_FLAGS,
@@ -1366,6 +1369,7 @@ const PILOT_FLAGS: Flags = {
   readAloud: false,
   usabilityEvents: false,
   messaging: false,
+  phoneHealth: false,
 };
 export const FLAG_DEFAULTS: Record<AppConfig['APP_ENV'], Flags> = {
   development: DEVELOPMENT_FLAGS,
@@ -2233,6 +2237,96 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     });
     res.status(201).json({ score: susScore(body.items) });
   });
+  const phoneHealthShare = async (database: Db, userId: string) => {
+    const row = await one<{ granted: boolean }>(
+      database,
+      "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'phone_health' ORDER BY created_at DESC LIMIT 1",
+      [userId],
+    );
+    return row?.granted === true;
+  };
+
+  participant.get('/phone-health', async (req, res) => {
+    const database = needDb();
+    const flags = await currentFlags(database, config);
+    const share = await phoneHealthShare(database, me(req).id);
+    const rowsFound = share
+      ? await rows<{
+          type: string;
+          day: Date;
+          value: number;
+          value2: number | null;
+          min_value: number | null;
+          max_value: number | null;
+          unit: string;
+          platform: 'ios' | 'android';
+          updated_at: Date;
+        }>(
+          database,
+          `SELECT type, day, value, value2, min_value, max_value, unit, platform, updated_at
+             FROM phone_health_readings WHERE user_id = $1 AND day >= current_date - 30 ORDER BY day DESC, type`,
+          [me(req).id],
+        )
+      : [];
+    res.json({
+      available: flags.phoneHealth,
+      share,
+      lastSync:
+        rowsFound
+          .reduce<Date | null>((a, r) => (!a || r.updated_at > a ? r.updated_at : a), null)
+          ?.toISOString() ?? null,
+      readings: rowsFound.map((r) => ({
+        type: r.type,
+        day: r.day.toISOString().slice(0, 10),
+        value: r.value,
+        value2: r.value2,
+        min: r.min_value,
+        max: r.max_value,
+        unit: r.unit,
+        platform: r.platform,
+      })),
+    });
+  });
+
+  participant.put('/phone-health/consent', async (req, res) => {
+    const database = needDb();
+    const body = PhoneHealthShare.parse(req.body);
+    const user = await one<{ preferred_language: 'en' | 'rw' }>(
+      database,
+      'SELECT preferred_language FROM users WHERE id = $1',
+      [me(req).id],
+    );
+    await tx(database, async (client) => {
+      await client.query(
+        `INSERT INTO consent_events (user_id, scope, granted, consent_doc_version, language)
+         VALUES ($1, 'phone_health', $2, 'phone-health-0.1.0', $3)`,
+        [me(req).id, body.share, user?.preferred_language ?? 'en'],
+      );
+      if (!body.share)
+        await client.query('DELETE FROM phone_health_readings WHERE user_id = $1', [me(req).id]);
+    });
+    res.json(body);
+  });
+
+  participant.post('/phone-health/readings', async (req, res) => {
+    const database = needDb();
+    const body = PhoneHealthUpload.parse(req.body);
+    const flags = await currentFlags(database, config);
+    if (!flags.phoneHealth || !(await phoneHealthShare(database, me(req).id)))
+      throw new AppError(409, 'CONSENT_REQUIRED', 'Turn on sharing phone health readings first.');
+    await tx(database, async (client) => {
+      for (const r of body.readings)
+        await client.query(
+          `INSERT INTO phone_health_readings (user_id, type, day, value, value2, min_value, max_value, unit, platform)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           ON CONFLICT (user_id, type, day) DO UPDATE SET value = $4, value2 = $5, min_value = $6, max_value = $7,
+             unit = $8, platform = $9, updated_at = now()`,
+          [me(req).id, r.type, r.day, r.value, r.value2, r.min, r.max, r.unit, body.platform],
+        );
+    });
+    res.json({ saved: body.readings.length });
+  });
+
   participant.post('/session-progress', async (req, res) => {
     const database = needDb();
     const body = SessionProgressRequest.parse(req.body);

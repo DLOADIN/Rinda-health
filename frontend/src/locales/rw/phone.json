@@ -1,0 +1,40 @@
+{
+  "phone": {
+    "title": "Ibipimo by'ubuzima bivuye muri telefoni",
+    "intro": "Rinda ishobora gusoma amakuru y'ubuzima telefoni yawe isanzwe ibika muri Apple Health cyangwa Health Connect, nk'umutima utera, intambwe, ibitotsi, umuvuduko w'amaraso n'ibiro. Hoherezwa incamake imwe gusa ku munsi, kandi ushobora guhagarika igihe icyo ari cyo cyose.",
+    "share": "Sangiza Rinda ibipimo by'ubuzima biri muri telefoni yanjye",
+    "read": "Soma muri telefoni yanjye ubu",
+    "reading": "Turimo gusoma telefoni yawe",
+    "saved": "Ibipimo {{count}} by'iminsi byabitswe",
+    "none": "Nta bipimo birahari.",
+    "lastSync": "Byasomwe bwa nyuma {{date}}",
+    "onlyApp": "Ibi bikora muri porogaramu ya Rinda kuri telefoni, aho telefoni yawe yemerera Rinda gusoma amakuru y'ubuzima.",
+    "failed": "Rinda ntiyashoboye gusoma amakuru y'ubuzima ya telefoni yawe. Reba ko Health Connect (Android) cyangwa Apple Health (iPhone) yemerera Rinda kuyasoma.",
+    "settings": "Fungura igenamiterere rya Health Connect",
+    "iosNote": "Kuri iPhone, Apple ntibwira porogaramu ibipimo wemeye, bityo igipimo kibura gishobora kuba kitarasangijwe.",
+    "off": "Ibipimo by'ubuzima bivuye muri telefoni ntibirafungurwa.",
+    "fill": "Uzuza uhereye kuri telefoni yanjye",
+    "filled": "Byuzujwe uhereye kuri telefoni yawe. Reba imibare mbere yo gukomeza.",
+    "noRecent": "Nta bipimo bya vuba biri muri telefoni yawe.",
+    "latest": "Ibipimo biheruka",
+    "types": {
+      "steps": "Intambwe",
+      "distance": "Intera",
+      "calories": "Ingufu zakoreshejwe",
+      "exerciseTime": "Imyitozo",
+      "flightsClimbed": "Amagorofa wazamutse",
+      "heartRate": "Umutima utera",
+      "restingHeartRate": "Umutima utera uruhutse",
+      "heartRateVariability": "Ihindagurika ry'umutima",
+      "bloodPressure": "Umuvuduko w'amaraso",
+      "oxygenSaturation": "Umwuka mu maraso",
+      "respiratoryRate": "Guhumeka",
+      "weight": "Ibiro",
+      "height": "Uburebure",
+      "bodyFat": "Ibinure",
+      "bodyTemperature": "Ubushyuhe bw'umubiri",
+      "bloodGlucose": "Isukari mu maraso",
+      "sleep": "Ibitotsi"
+    }
+  }
+}

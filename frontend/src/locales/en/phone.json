@@ -1,0 +1,40 @@
+{
+  "phone": {
+    "title": "Phone health readings",
+    "intro": "Rinda can read the health data your phone already keeps in Apple Health or Health Connect, such as heart rate, steps, sleep, blood pressure and weight. Only one summary per day is sent, and you can stop at any time.",
+    "share": "Share my phone's health readings with Rinda",
+    "read": "Read from my phone now",
+    "reading": "Reading your phone",
+    "saved": "{{count}} daily readings saved",
+    "none": "No readings yet.",
+    "lastSync": "Last read {{date}}",
+    "onlyApp": "This works in the Rinda phone app, where your phone lets Rinda read its health data.",
+    "failed": "Rinda could not read your phone's health data. Check that Health Connect (Android) or Apple Health (iPhone) allows Rinda to read it.",
+    "settings": "Open Health Connect settings",
+    "iosNote": "On iPhone, Apple does not tell apps which readings you allowed, so a missing reading may mean it was not shared.",
+    "off": "Phone health readings are not switched on yet.",
+    "fill": "Fill from my phone",
+    "filled": "Filled from your phone. Check the numbers before you continue.",
+    "noRecent": "No recent readings from your phone.",
+    "latest": "Latest readings",
+    "types": {
+      "steps": "Steps",
+      "distance": "Distance",
+      "calories": "Active calories",
+      "exerciseTime": "Exercise",
+      "flightsClimbed": "Floors climbed",
+      "heartRate": "Heart rate",
+      "restingHeartRate": "Resting heart rate",
+      "heartRateVariability": "Heart rate variability",
+      "bloodPressure": "Blood pressure",
+      "oxygenSaturation": "Blood oxygen",
+      "respiratoryRate": "Breathing rate",
+      "weight": "Weight",
+      "height": "Height",
+      "bodyFat": "Body fat",
+      "bodyTemperature": "Body temperature",
+      "bloodGlucose": "Blood sugar",
+      "sleep": "Sleep"
+    }
+  }
+}

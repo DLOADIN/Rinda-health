@@ -6,3 +6,4 @@ export * from './flags.ts';
 export * from './guide.ts';
 export * from './app.ts';
 export * from './chat.ts';
+export * from './phone-health.ts';

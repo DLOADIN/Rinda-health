@@ -16,6 +16,8 @@ export default tseslint.config(
       'test-results/**',
       'backend/db/**',
       'frontend/public/ocr/**',
+      'frontend/android/**',
+      'frontend/ios/**',
       '.*/**',
       'Badget-main/**',
     ],

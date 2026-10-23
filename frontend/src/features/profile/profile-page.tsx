@@ -33,6 +33,7 @@ import {
   useSaveParticipantProfileMutation,
   useUpdateMeMutation,
 } from '@/lib/api';
+import { PhoneHealthCard } from '@/features/profile/phone-health-card';
 import { formatDate } from '@/lib/format';
 
 function DetailsCard({ me }: { me: Me }) {
@@ -506,6 +507,7 @@ export function ProfilePage({ me, onSignOut }: { me: Me; onSignOut: () => void }
         {isParticipant ? <WhatsAppCard /> : null}
         {isParticipant ? <EmailReportsCard /> : null}
         {isParticipant ? <AiCard /> : null}
+        {isParticipant ? <PhoneHealthCard /> : null}
         <InstallCard />
         {isParticipant ? <DeletionCard /> : null}
       </div>

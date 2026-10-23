@@ -34,7 +34,7 @@ export function LanguageSwitch({
           key={lang}
           value={lang}
           lang={lang}
-          className="min-h-11 min-w-11 px-3"
+          className="border border-color-border/500 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground data-[state=on]:bg-accent data-[state=on]:text-foreground"
           aria-label={t(`language.${lang}`)}
         >
           {lang.toUpperCase()}

@@ -13,3 +13,5 @@ docs
 !.github/
 Badget-main
 frontend/public/ocr
+frontend/android
+frontend/ios
