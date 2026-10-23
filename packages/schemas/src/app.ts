@@ -282,3 +282,6 @@ export type WhatsAppPreference = z.infer<typeof WhatsAppPreference>;
 
 export const AiPreference = z.strictObject({ ai: z.boolean() });
 export type AiPreference = z.infer<typeof AiPreference>;
+
+export const SmsPreference = z.strictObject({ sms: z.boolean() });
+export type SmsPreference = z.infer<typeof SmsPreference>;

@@ -27,7 +27,7 @@ describe('rowValues', () => {
 
 describe('readBpInBox', () => {
   it('reads systolic and diastolic from a boxed screen', async () => {
-    const r = await readBpInBox(drawScreen({ rows: MONITOR(128, 84, 72) }), { ocr: silentOcr });
+    const r = await readBpInBox(drawScreen({ rows: MONITOR(128, 84, 72) }), { ocr: silentOcr, now: () => 0 });
     expect(r).toMatchObject({ systolic: 128, diastolic: 84 });
   });
 
@@ -40,22 +40,22 @@ describe('readBpInBox', () => {
 
   it('reads a screen photographed at an angle', async () => {
     const tilted = rotateGray(drawScreen({ rows: MONITOR(118, 76) }), 8);
-    const r = await readBpInBox(tilted, { ocr: silentOcr });
+    const r = await readBpInBox(tilted, { ocr: silentOcr, now: () => 0 });
     expect(r).toMatchObject({ systolic: 118, diastolic: 76 });
   });
 
   it('says nothing was read for an empty box', async () => {
-    const r = await readBpInBox(drawScreen({ rows: [] }), { ocr: sayingOcr('120') });
+    const r = await readBpInBox(drawScreen({ rows: [] }), { ocr: sayingOcr('120'), now: () => 0 });
     expect(r).toBeNull();
   });
 
   it('refuses a pair where the lower number is not smaller', async () => {
-    const r = await readBpInBox(drawScreen({ rows: MONITOR(84, 128) }), { ocr: silentOcr });
+    const r = await readBpInBox(drawScreen({ rows: MONITOR(84, 128) }), { ocr: silentOcr, now: () => 0 });
     expect(r).toBeNull();
   });
 
   it('never accepts a number only one weak read supports', async () => {
-    const r = await readBpInBox(drawScreen({ rows: [] }), { ocr: sayingOcr('150', 20) });
+    const r = await readBpInBox(drawScreen({ rows: [] }), { ocr: sayingOcr('150', 20), now: () => 0 });
     expect(r).toBeNull();
   });
 

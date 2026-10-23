@@ -28,6 +28,8 @@
     "rules.support": "Niba igiteranyo icyo ari cyo cyose kigeze kuri {tier1} cyangwa kirenga, Rinda yerekana ubutumwa bwo kugushyigikira n'aho wabona ubufasha. Ibisubizo by'imitekerereze n'umunaniro ntibijya biteranywa n'ibindi bisubizo.",
     "rules.source": "Inkomoko: {source}",
     "email.report.percent": "{percent}% by'intego nzima",
-    "email.report.explanation": "Icyo ibi bisobanuye kuri wowe"
+    "email.report.explanation": "Icyo ibi bisobanuye kuri wowe",
+    "email.report.chat": "Ufite ikibazo ku byavuye mu isuzuma ryawe? Fungura Rinda ubaze mu kiganiro. Ushobora kubaza ibibazo bigera kuri 5 ku munsi.",
+    "sms.notice.ready": "Rinda: ibyavuye mu isuzuma ryawe biriteguye. Bireba kandi uganire na Rinda kuri {link} Kugira ngo uhagarike ubu butumwa, koresha Umwirondoro wawe kuri Rinda."
   }
 }

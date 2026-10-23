@@ -11,7 +11,8 @@
     "db:seed": "tsx server.ts seed",
     "db:check": "tsx server.ts db-check",
     "build": "vite build --config vite.vercel.config.ts",
-    "models:check": "tsx server.ts models-check"
+    "models:check": "tsx server.ts models-check",
+    "sms:check": "tsx server.ts sms-check"
   },
   "dependencies": {
     "@rinda/content": "*",

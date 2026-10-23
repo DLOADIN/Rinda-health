@@ -341,6 +341,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     BREVO_API_KEY: 'test-brevo-key',
     EMAIL_FROM: 'reports@rinda.test',
     WHATSAPP_TOKEN: 'test-wa-token',
+    PINDO_API_TOKEN: 'test-pindo-token',
     WHATSAPP_PHONE_NUMBER_ID: '1234567890',
     PUBLIC_URL: 'http://localhost:5173',
   });
@@ -364,6 +365,8 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     }
     if (url.includes('graph.facebook.com'))
       return new Response('{"messages":[{"id":"wamid.test"}]}', { status: 200 });
+    if (url.includes('api.pindo.io'))
+      return new Response('{"status":"sent","sms_id":"out_sms_test"}', { status: 201 });
     if (url.includes('api.brevo.com')) return new Response('{"messageId":"<test@brevo>"}', { status: 201 });
     return new Response(
       JSON.stringify({
@@ -1151,6 +1154,47 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     expect(call?.body).not.toMatch(/hypertension|below|band|systolic|142/i);
     const events = await db.query(
       "SELECT status FROM message_events WHERE user_id = $1 AND channel = 'whatsapp'",
+      [me.id],
+    );
+    expect(events.rows).toEqual([{ status: 'sent' }]);
+  });
+
+  it('SMS notices through Pindo: only after opt-in, a link to the site and never results', async () => {
+    const byEmail = await signup('participant', 'sms-no-phone@example.com');
+    await byEmail.agent.put('/api/v1/participant/sms-notices').send({ sms: true }).expect(409);
+
+    const { agent, me } = await signup('participant', '0788 555 999');
+    expect((await agent.get('/api/v1/participant/sms-notices')).body).toEqual({
+      sms: false,
+      available: true,
+      hasPhone: true,
+    });
+    const submit = () =>
+      agent
+        .post('/api/v1/participant/assessments')
+        .set('Idempotency-Key', randomUUID())
+        .send({ language: 'en', startedAt: new Date().toISOString(), answers });
+    const calls = () => outbound.filter((o) => o.url.includes('api.pindo.io'));
+
+    outbound.length = 0;
+    await submit().expect(201);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(calls()).toHaveLength(0);
+
+    await agent.put('/api/v1/participant/sms-notices').send({ sms: true, extra: 1 }).expect(400);
+    await agent.put('/api/v1/participant/sms-notices').send({ sms: true }).expect(200);
+    await submit().expect(201);
+    for (let i = 0; i < 40 && calls().length === 0; i++) await new Promise((r) => setTimeout(r, 250));
+    await new Promise((r) => setTimeout(r, 400));
+    const call = calls()[0];
+    expect(call?.url).toBe('https://api.pindo.io/v1/sms/');
+    const body = JSON.parse(call?.body ?? '{}');
+    expect(body).toMatchObject({ to: '+250788555999', sender: 'PindoTest' });
+    expect(body.text).toContain('http://localhost:5173/app');
+    expect(body.text).toContain('chat with Rinda');
+    expect(call?.body).not.toMatch(/hypertension|below|band|systolic|142|test-pindo-token/i);
+    const events = await db.query(
+      "SELECT status FROM message_events WHERE user_id = $1 AND channel = 'sms'",
       [me.id],
     );
     expect(events.rows).toEqual([{ status: 'sent' }]);

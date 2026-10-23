@@ -28,6 +28,8 @@
     "rules.support": "If either total is {tier1} or more, Rinda shows a supportive message and places to get help. Mood and stress results are never added to the other results.",
     "rules.source": "Source: {source}",
     "email.report.percent": "{percent}% of the healthy target",
-    "email.report.explanation": "What this means for you"
+    "email.report.explanation": "What this means for you",
+    "email.report.chat": "Have a question about your results? Open Rinda and ask in the chat. You can ask up to 5 questions a day.",
+    "sms.notice.ready": "Rinda: your check-up results are ready. See them and chat with Rinda at {link} To stop these texts, use your Rinda Profile."
   }
 }
