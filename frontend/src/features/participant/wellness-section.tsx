@@ -3,11 +3,11 @@ import { RULESET_V1 } from '@rinda/content';
 import { checkItem9 } from '@rinda/rules';
 import { HeartHandshake } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ReferralList } from '@/components/referral-list';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldDescription, FieldGroup } from '@/components/ui/field';
 import { Choice } from '@/features/participant/choice';
+export { SafetyScreen } from '@/features/participant/safety-screen';
 import { useContent } from '@/lib/content';
 
 export type WellnessMode = 'intro' | 'answering' | 'declined' | 'stopped';
@@ -109,33 +109,6 @@ export function WellnessSection({
           </FieldGroup>
         ) : null}
       </CardContent>
-    </Card>
-  );
-}
-
-export function SafetyScreen({ onStop, onContinue }: { onStop: () => void; onContinue: () => void }) {
-  const { t } = useTranslation();
-  const { text } = useContent();
-  return (
-    <Card className="border-band-wellness bg-brand-blush-soft" role="region" aria-labelledby="safety-title">
-      <CardHeader>
-        <CardTitle id="safety-title" className="flex items-center gap-2 text-2xl">
-          <HeartHandshake aria-hidden="true" className="size-6" />
-          {text('safety.screen.title')}
-        </CardTitle>
-        <CardDescription className="text-base text-foreground">{text('safety.screen.body')}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ReferralList />
-      </CardContent>
-      <CardFooter className="flex flex-col gap-2 sm:flex-row">
-        <Button type="button" onClick={onStop}>
-          {t('safetyScreen.stop')}
-        </Button>
-        <Button type="button" variant="outline" onClick={onContinue}>
-          {t('safetyScreen.continue')}
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

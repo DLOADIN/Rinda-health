@@ -5,3 +5,4 @@ export * from './safety.ts';
 export * from './flags.ts';
 export * from './guide.ts';
 export * from './app.ts';
+export * from './chat.ts';

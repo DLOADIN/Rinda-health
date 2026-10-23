@@ -201,7 +201,7 @@ function AppSidebar({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const close = useCloseOnPhone();
   const items = NAV[me.role];
   const main = items.filter((i) => i.to !== '/app/profile' && i.to !== '/app/help');
-  const secondary = items.filter((i) => i.to === '/app/profile' || i.to === '/app/help');
+  const secondary = items.filter((i) => i.to === '/app/profile');
   const quick = QUICK_ACTION[me.role];
   return (
     <Sidebar collapsible="offcanvas" variant="inset">

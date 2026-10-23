@@ -214,6 +214,9 @@ function RoleSections({ data, me }: { data: Dashboard; me: Me }) {
   if (data.role === 'facilitator') {
     return (
       <div className="grid gap-4 @4xl/main:grid-cols-2">
+        <div className="@4xl/main:col-span-2">
+          <GuideButton assessment={null} />
+        </div>
         {data.sessionsByDay ? (
           <Suspense fallback={chartFallback}>
             <DailyAreaChart title={t('charts.sessionsTitle')} data={data.sessionsByDay} />

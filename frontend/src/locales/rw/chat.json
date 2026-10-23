@@ -1,0 +1,23 @@
+{
+  "chat": {
+    "title": "Ganira na Rinda",
+    "left": "Usigaje ibibazo {{count}} kuri 5 uyu munsi",
+    "intro": "Muraho, ndi Rinda. Mbaza ibibazo bigera kuri 5 ku munsi ku byavuye mu isuzuma ryawe n'imibereho ya buri munsi.",
+    "introStaff": "Muraho, ndi Rinda. Mbaza ibibazo bigera kuri 5 ku munsi kuri Rinda Health n'imico itandatu ya buri munsi isuzuma.",
+    "placeholder": "Baza ku byavuye mu isuzuma cyangwa ku mico yawe",
+    "send": "Ohereza ikibazo",
+    "you": "Wavuze",
+    "rinda": "Rinda yavuze",
+    "thinking": "Rinda iratekereza",
+    "offTopic": "Nshobora gufasha gusa ku bibazo bijyanye na Rinda Health, ibyavuye mu isuzuma ryawe n'imico ya buri munsi.",
+    "unavailable": "Sinshobora gusubiza ubu. Ongera ugerageze nyuma, cyangwa usubire ku rupapuro rwawe.",
+    "personal": "Nyamuneka ntushyiremo nimero za telefoni, nimero z'indangamuntu cyangwa aderesi za imeyili.",
+    "limit": "Wabajije ibibazo 5 byawe by'uyu munsi. Ongera ugaruke ejo.",
+    "offline": "Ikiganiro gikenera interineti.",
+    "off": "Ikiganiro ntigifunguye kuri konti yawe. Ushobora gufungura ibisobanuro bya AI muri porofayili yawe.",
+    "english": "Ikiganiro gisubiza mu Cyongereza gusa ubu.",
+    "chars": "Inyuguti {{count}} kuri 200",
+    "suggestions": "Ibibazo byatanzwe",
+    "label": "Ikibazo cyawe"
+  }
+}

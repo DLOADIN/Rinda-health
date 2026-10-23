@@ -1,0 +1,23 @@
+{
+  "chat": {
+    "title": "Chat with Rinda",
+    "left": "{{count}} of 5 questions left today",
+    "intro": "Hi, I am Rinda. Ask me up to 5 questions a day about your check-up results and everyday habits.",
+    "introStaff": "Hi, I am Rinda. Ask me up to 5 questions a day about Rinda Health and the six everyday habits it checks.",
+    "placeholder": "Ask about your results or habits",
+    "send": "Send question",
+    "you": "You said",
+    "rinda": "Rinda said",
+    "thinking": "Rinda is thinking",
+    "offTopic": "I can only help with questions about Rinda Health, your check-up results and everyday habits.",
+    "unavailable": "I cannot answer right now. You can try again later, or go back to your dashboard.",
+    "personal": "Please leave out phone numbers, ID numbers and email addresses.",
+    "limit": "You have asked your 5 questions for today. Please come back tomorrow.",
+    "offline": "The chat needs an internet connection.",
+    "off": "The chat is not on for your account. You can turn on AI explanations in your profile.",
+    "english": "The chat answers in English for now.",
+    "chars": "{{count}} of 200 characters",
+    "suggestions": "Suggested questions",
+    "label": "Your question"
+  }
+}

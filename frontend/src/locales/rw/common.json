@@ -2,8 +2,7 @@
   "app": {
     "name": "Rinda",
     "fullName": "Rinda Health",
-    "skipToContent": "Jya ku bikubiyemo by'ingenzi",
-    "tagline": "Isuzuma ryihariye kandi ry'inyigisho ry'imibereho yawe ya buri munsi"
+    "skipToContent": "Jya ku bikubiyemo by'ingenzi"
   },
   "language": {
     "label": "Ururimi",
@@ -20,10 +19,6 @@
   "status": {
     "offline": "Nta interineti: ibisubizo bibitswe kuri iyi telefoni",
     "online": "Kuri interineti"
-  },
-  "welcome": {
-    "start": "Tangira",
-    "comingSoon": "Ibibazo bizaza mu cyiciro cya mbere."
   },
   "landing": {
     "login": "Injira",
@@ -48,8 +43,7 @@
     "now": "Vugurura ubu"
   },
   "errors": {
-    "generic": "Habaye ikibazo. Ongera ugerageze.",
-    "notFound": "Iyi paji ntibaho."
+    "generic": "Habaye ikibazo. Ongera ugerageze."
   },
   "apiErrors": {
     "VALIDATION_FAILED": "Hari amakuru abura cyangwa atanditse neza.",
@@ -107,9 +101,7 @@
       "google": "Kwinjira ukoresheje Google ntibyarangiye. Ongera ugerageze.",
       "google_no_account": "Nta konti ikoresha iyi meyili ya Google. Banza ufungure konti.",
       "account_off": "Iyi konti yarahagaritswe. Vugana n'itsinda ry'ubushakashatsi."
-    },
-    "loginHeading": "Injira muri Rinda",
-    "signupHeading": "Iyandikishe muri Rinda"
+    }
   },
   "nav": {
     "home": "Ahabanza",
@@ -204,8 +196,6 @@
     "language": "Ururimi nkunda",
     "save": "Bika impinduka",
     "saved": "Byabitswe.",
-    "role": "Uruhare",
-    "signInMethods": "Uburyo bwo kwinjira",
     "methodPassword": "Ijambo ry'ibanga",
     "methodGoogle": "Google",
     "passwordTitle": "Hindura ijambo ry'ibanga",
@@ -379,8 +369,6 @@
     "dietTitle": "Imbuto n'imboga uko byagiye bihinduka",
     "dietAlt": "Ibipimo ku munsi, uhereye ku bya kera: {{list}}",
     "dietEmpty": "Ibipimo by'imbuto n'imboga urya bizagaragara hano.",
-    "top": "Hejuru",
-    "bottom": "Hasi",
     "servings": "Ibipimo",
     "checkupsTitle": "Amasuzuma, iminsi 14 ishize",
     "signupsTitle": "Konti nshya, iminsi 14 ishize",
@@ -390,7 +378,6 @@
   },
   "home": {
     "heroTitle": "Reka twite ku buzima bwawe bwa buri munsi",
-    "heroSubtitle": "Intambwe nto ziriyongera. Dore aho uhagaze uyu munsi.",
     "lastCheckup": "Isuzuma riheruka {{date}}",
     "firstCheckup": "Tangira isuzuma rigufi. Rimara iminota igera kuri itanu.",
     "askRinda": "Baza Rinda"
@@ -399,7 +386,6 @@
     "title": "Baza Rinda",
     "intro": "Hitamo ikibazo. Rinda isubiza ishingiye ku bisubizo byawe.",
     "needCheckup": "Banza ukore isuzuma kugira ngo Rinda ibashe gusubiza.",
-    "loading": "Rinda irimo gutekereza…",
     "helpful": "Ibi byagufashije?",
     "yes": "Yego",
     "no": "Oya",

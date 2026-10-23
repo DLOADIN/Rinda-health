@@ -23,3 +23,4 @@ export {
   type GuideParagraph,
   type TextLookup,
 } from './guide.ts';
+export { checkChatQuestion, CHAT_MAX_CHARS, CHAT_TURNS_PER_DAY, type ChatCheck } from './chat-guard.ts';

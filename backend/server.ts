@@ -20,6 +20,8 @@ import { GUIDE_ANSWERS } from '@rinda/content/guide-answers';
 import {
   allowedNumbers,
   assessSafety,
+  CHAT_TURNS_PER_DAY,
+  checkChatQuestion,
   composeGuideAnswer,
   fillSlots,
   targetPercent,
@@ -53,6 +55,7 @@ import {
   FlagUpdateRequest,
   GuideAnswer,
   GuideExplainRequest,
+  ChatRequest,
   GuideFeedbackRequest,
   ConsentChange,
   ConsentSubmission,
@@ -133,10 +136,14 @@ const EnvSchema = z
       .string()
       .default('gemini-3.5-flash-lite,gemini-flash-lite-latest,gemini-3.6-flash,gemini-flash-latest'),
     // Other providers with free allowances, tried after Gemini in this order; one without a key is skipped.
-    GUIDE_PROVIDERS: z.string().default('gemini,groq,openrouter'),
+    GUIDE_PROVIDERS: z.string().default('gemini,groq,openrouter,cerebras,mistral'),
     GROQ_API_KEY: optionalText,
     GROQ_MODELS: z.string().default('openai/gpt-oss-20b,openai/gpt-oss-120b,qwen/qwen3.8-27b'),
     OPENROUTER_API_KEY: optionalText,
+    CEREBRAS_API_KEY: optionalText,
+    CEREBRAS_MODELS: z.string().default('gpt-oss-120b,llama3.1-8b'),
+    MISTRAL_API_KEY: optionalText,
+    MISTRAL_MODELS: z.string().default('mistral-small-latest,open-mistral-nemo'),
     OPENROUTER_MODELS: z
       .string()
       .default(
@@ -640,6 +647,31 @@ These limits keep people safe, so follow them exactly:
 - Write in the requested language, in at most 4 short paragraphs and under 150 words.
 - For each paragraph, list the IDs of the approved texts it draws on, taken from the library.`;
 
+export const OFF_TOPIC_ID = 'rinda.off_topic';
+
+const CHAT_SYSTEM_PROMPT = `You are Rinda, the chat helper inside Rinda Health, an educational app that helps young adults in Rwanda
+(aged 18 to 35) understand six everyday habits linked to non-communicable diseases: tobacco, alcohol, physical
+activity, fruit and vegetables, body size and blood pressure.
+
+You receive the person's question, the earlier turns of this short chat, and, when they have done a check-up, their
+results as calculated by fixed rules. Answer only questions about Rinda Health, how to use it, their own results and
+those six habits.
+
+If the question is about anything else, including mood, stress, anxiety or mental health, medicines or treatment, a
+diagnosis, another person, or anything that is not about these habits, do not answer it. Reply with exactly
+{"paragraphs":[{"text":"off topic","sourceIds":["${OFF_TOPIC_ID}"]}],"followUpChipIds":[]}.
+
+These limits keep people safe, so follow them exactly:
+- Use only the facts and approved text you are given. If something is not there, leave it out.
+- Copy numbers exactly as given. Never calculate, round or estimate a new number.
+- Results are educational bands, not diagnoses. Never say the person has a disease.
+- No medicines, doses, treatments, phone numbers, links or emergency instructions. The app shows those itself.
+- No weight-loss targets and no comments about body shape. Talk about everyday habits.
+- Do not mention mood, stress, anxiety or mental health.
+- Be warm and practical, with no blame, fear or shame. Use short sentences and everyday words.
+- Write in the requested language, in at most 3 short paragraphs and under 120 words.
+- For each paragraph, list the IDs of the approved texts it draws on, taken from the library.`;
+
 const GEMINI_ANSWER_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -656,7 +688,8 @@ const GEMINI_ANSWER_SCHEMA = {
   required: ['paragraphs', 'followUpChipIds'],
 };
 
-export type GuideOutcome = 'pass' | 'schema' | 'length' | 'numbers' | 'sources' | 'banned' | 'scope';
+export type GuideOutcome =
+  'pass' | 'schema' | 'length' | 'numbers' | 'sources' | 'banned' | 'scope' | 'off_topic';
 
 const NUMBER_WORDS: Record<string, number> = {
   one: 1,
@@ -725,7 +758,7 @@ const spentModels = new Map<string, string>();
 const GUIDE_CHAIN_MS = 25_000;
 const SPENT = new Set([401, 402, 403, 404, 429]);
 
-type Provider = 'gemini' | 'groq' | 'openrouter';
+type Provider = 'gemini' | 'groq' | 'openrouter' | 'cerebras' | 'mistral';
 export interface ChainStep {
   provider: Provider;
   model: string;
@@ -737,6 +770,8 @@ const OPENAI_STYLE: Record<
 > = {
   groq: { base: 'https://api.groq.com/openai/v1', key: (c) => c.GROQ_API_KEY },
   openrouter: { base: 'https://openrouter.ai/api/v1', key: (c) => c.OPENROUTER_API_KEY },
+  cerebras: { base: 'https://api.cerebras.ai/v1', key: (c) => c.CEREBRAS_API_KEY },
+  mistral: { base: 'https://api.mistral.ai/v1', key: (c) => c.MISTRAL_API_KEY },
 };
 
 const modelList = (...lists: string[]) => [
@@ -763,6 +798,10 @@ export function guideChain(config: AppConfig): ChainStep[] {
       return modelList(config.GROQ_MODELS).map((model) => ({ provider: 'groq', model }));
     if (p === 'openrouter' && config.OPENROUTER_API_KEY)
       return modelList(config.OPENROUTER_MODELS).map((model) => ({ provider: 'openrouter', model }));
+    if (p === 'cerebras' && config.CEREBRAS_API_KEY)
+      return modelList(config.CEREBRAS_MODELS).map((model) => ({ provider: 'cerebras', model }));
+    if (p === 'mistral' && config.MISTRAL_API_KEY)
+      return modelList(config.MISTRAL_MODELS).map((model) => ({ provider: 'mistral', model }));
     return [];
   });
 }
@@ -777,6 +816,7 @@ export async function explainWithModels(
   library: Record<string, string>,
   allowed: readonly number[],
   now: () => number = Date.now,
+  system: string = GUIDE_SYSTEM_PROMPT,
 ): Promise<GeminiResult> {
   const today = new Date().toISOString().slice(0, 10);
   const end = now() + GUIDE_CHAIN_MS;
@@ -791,8 +831,8 @@ export async function explainWithModels(
     try {
       result =
         step.provider === 'gemini'
-          ? await askGemini(config, fetchFn, step.model, facts, library, allowed, signal)
-          : await askOpenAiStyle(config, fetchFn, step, facts, library, allowed, signal);
+          ? await askGemini(config, fetchFn, step.model, facts, library, allowed, signal, system)
+          : await askOpenAiStyle(config, fetchFn, step, facts, library, allowed, signal, system);
     } catch {
       // No answer in time, or the connection failed: try the next model.
       result = 'busy';
@@ -802,7 +842,7 @@ export async function explainWithModels(
       continue;
     }
     if (result === 'busy') continue;
-    if (result.answer) return { ...result, model: name };
+    if (result.answer || result.outcome === 'off_topic') return { ...result, model: name };
     // An empty reply, or one that failed our checks, is not shown: the next model gets the same question.
     last = { ...result, model: name };
   }
@@ -824,6 +864,7 @@ async function askOpenAiStyle(
   library: Record<string, string>,
   allowed: readonly number[],
   signal: AbortSignal,
+  system: string,
 ): Promise<Omit<GeminiResult, 'model'> | 'spent' | 'busy'> {
   const provider = OPENAI_STYLE[step.provider as Exclude<Provider, 'gemini'>];
   const res = await fetchFn(`${provider.base}/chat/completions`, {
@@ -843,7 +884,7 @@ async function askOpenAiStyle(
       messages: [
         {
           role: 'system',
-          content: `${GUIDE_SYSTEM_PROMPT}\n\n${JSON_REPLY}\n\nLibrary of approved text:\n${libraryLines(library)}`,
+          content: `${system}\n\n${JSON_REPLY}\n\nLibrary of approved text:\n${libraryLines(library)}`,
         },
         { role: 'user', content: JSON.stringify(facts) },
       ],
@@ -886,6 +927,7 @@ async function askGemini(
   library: Record<string, string>,
   allowed: readonly number[],
   signal: AbortSignal,
+  system: string,
 ): Promise<Omit<GeminiResult, 'model'> | 'spent' | 'busy'> {
   const libraryText = libraryLines(library);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
@@ -895,7 +937,7 @@ async function askGemini(
     signal,
     body: JSON.stringify({
       systemInstruction: {
-        parts: [{ text: `${GUIDE_SYSTEM_PROMPT}\n\nLibrary of approved text:\n${libraryText}` }],
+        parts: [{ text: `${system}\n\nLibrary of approved text:\n${libraryText}` }],
       },
       contents: [{ role: 'user', parts: [{ text: JSON.stringify(facts) }] }],
       generationConfig: {
@@ -949,6 +991,9 @@ function readAnswer(
   } catch {
     return { answer: null, outcome: 'schema', ...usage };
   }
+  const paragraphs = (parsed as { paragraphs?: Array<{ sourceIds?: unknown[] }> }).paragraphs;
+  if (Array.isArray(paragraphs) && paragraphs.some((p) => p.sourceIds?.includes(OFF_TOPIC_ID)))
+    return { answer: null, outcome: 'off_topic', ...usage };
   const answer = GuideAnswer.safeParse({
     ...(parsed as object),
     followUpChipIds: ((parsed as { followUpChipIds?: unknown[] }).followUpChipIds ?? [])
@@ -3518,6 +3563,179 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     res.status(204).end();
   });
   mount('/api/v1/guide', guide);
+
+  // This is where the Ask Rinda chat answers: up to CHAT_TURNS_PER_DAY questions a day about Rinda Health, the
+  // person's own results and the six habits. Crisis words and personal details are stopped on the phone first and
+  // again here; the question and answer are never stored or logged, only a daily count.
+  const chat = Router();
+  chat.use(requireAuth, requireRole('participant', 'facilitator'));
+
+  const chatTurnsLeft = async (database: Db, userId: string) => {
+    const row = await one<{ turns: number }>(
+      database,
+      'SELECT turns FROM guide_chat_usage WHERE user_id = $1 AND day = current_date',
+      [userId],
+    );
+    return Math.max(0, CHAT_TURNS_PER_DAY - (row?.turns ?? 0));
+  };
+
+  const chatAvailable = async (database: Db, userId: string, role: string) => {
+    const flags = await currentFlags(database, config);
+    if (!flags.guideGenerative || !generativeGuideAllowed(config)) return false;
+    if (role !== 'participant') return true;
+    const consent = await one<{ granted: boolean }>(
+      database,
+      "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'ai_explanations' ORDER BY created_at DESC LIMIT 1",
+      [userId],
+    );
+    return consent?.granted === true;
+  };
+
+  chat.get('/', async (req, res) => {
+    const database = needDb();
+    const user = me(req);
+    res.json({
+      available: await chatAvailable(database, user.id, user.role),
+      turnsLeft: await chatTurnsLeft(database, user.id),
+    });
+  });
+
+  chat.post('/', async (req, res) => {
+    const database = needDb();
+    const user = me(req);
+    const body = ChatRequest.parse(req.body);
+    const started = Date.now();
+    for (const text of [
+      body.question ?? '',
+      ...body.history.filter((t) => t.role === 'user').map((t) => t.text),
+    ]) {
+      if (!text) continue;
+      const check = checkChatQuestion(text);
+      if (check === 'crisis')
+        throw new AppError(422, 'CHAT_SAFETY', 'This question is not sent. Please use Get help now.');
+      if (check !== 'ok')
+        throw new AppError(
+          422,
+          'CHAT_PERSONAL',
+          'Please leave out phone numbers, ID numbers and email addresses.',
+        );
+    }
+    const unavailable = async () =>
+      res.json({ status: 'unavailable', paragraphs: [], turnsLeft: await chatTurnsLeft(database, user.id) });
+    if (body.language === 'rw' || !(await chatAvailable(database, user.id, user.role))) return unavailable();
+
+    const row =
+      user.role !== 'participant'
+        ? null
+        : await one<{ results: AssessmentResult; plan: Plan; safety: SafetyAssessment }>(
+            database,
+            body.assessmentId
+              ? 'SELECT results, plan, safety FROM assessments WHERE id = $1 AND user_id = $2'
+              : 'SELECT results, plan, safety FROM assessments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+            body.assessmentId ? [body.assessmentId, user.id] : [user.id],
+          );
+    // Results that need care today or a safety follow-up are left to the approved text and Get help now.
+    if (row && (row.plan.urgent !== null || row.safety.tier !== null)) return unavailable();
+
+    const counted = await one<{ turns: number }>(
+      database,
+      `INSERT INTO guide_chat_usage (user_id, day, turns) VALUES ($1, current_date, 1)
+       ON CONFLICT (user_id, day) DO UPDATE SET turns = guide_chat_usage.turns + 1
+       WHERE guide_chat_usage.turns < $2 RETURNING turns`,
+      [user.id, CHAT_TURNS_PER_DAY],
+    );
+    if (!counted)
+      throw new AppError(
+        429,
+        'CHAT_LIMIT',
+        'You have asked all of your questions for today. Please come back tomorrow.',
+      );
+
+    const content = BUNDLED_CONTENT[body.language];
+    const answers = GUIDE_ANSWERS[body.language];
+    const lookup = (id: string) => content.text[id] ?? answers[id] ?? id;
+    const question = body.question ?? lookup(`guide.chip.${body.chipId ?? 'overview'}`);
+    const own = row
+      ? new Set(
+          row.results.ncd.flatMap((r) => [`ga.${r.domain}.${r.band}.why`, `ga.${r.domain}.${r.band}.tips`]),
+        )
+      : null;
+    const library = Object.fromEntries(
+      Object.entries({ ...content.text, ...answers }).filter(
+        ([id]) =>
+          ((id.startsWith('guide.') || id.startsWith('band.')) && !/^band\.(phq9|gad7)\./.test(id)) ||
+          (id.startsWith('ga.') && (own === null || own.has(id))),
+      ),
+    );
+    const said = [question, ...body.history.map((t) => t.text)].join(' ');
+    const draft = row ? composeGuideAnswer('overview', row.results, row.plan, lookup) : null;
+    const allowed = [
+      ...new Set([
+        ...(row && draft ? allowedNumbers(row.results, row.plan, draft, []) : []),
+        ruleset.domains.activity.meetsAt,
+        ruleset.domains.diet.meetsAt,
+        CHAT_TURNS_PER_DAY,
+        ...numbersIn(said),
+        // Numbers already in the approved text may be repeated; any other number still fails the check.
+        ...numbersIn(Object.values(library).join(' ')),
+      ]),
+    ];
+    const facts = {
+      language: body.language,
+      question,
+      earlierTurns: body.history,
+      results: row
+        ? row.results.ncd.map((r) => ({
+            domain: r.domain,
+            band: r.band,
+            bandLabel: lookup(r.band === 'insufficient' ? 'band.insufficient' : `band.${r.domain}.${r.band}`),
+            value: r.value,
+          }))
+        : null,
+      plan: row
+        ? row.plan.focus.map((f) => ({ domains: f.domains, target: f.target, reasons: f.reasons }))
+        : null,
+      allowedNumbers: allowed,
+    };
+    let result: Awaited<ReturnType<typeof explainWithModels>> = {
+      answer: null,
+      outcome: 'error',
+      inputTokens: null,
+      outputTokens: null,
+      model: null,
+    };
+    try {
+      result = await explainWithModels(
+        config,
+        fetchFn,
+        facts,
+        library,
+        allowed,
+        Date.now,
+        CHAT_SYSTEM_PROMPT,
+      );
+    } catch {
+      logger.warn({ reqId: req.id, event: 'chat_error' }, 'chat');
+    }
+    await database.query(
+      `INSERT INTO guide_request_log (chip_id, source, validator_outcome, model, latency_ms, input_tokens, output_tokens)
+       VALUES ('chat', $1, $2, $3, $4, $5, $6)`,
+      [
+        result.answer ? 'generated' : 'template',
+        result.outcome,
+        result.model,
+        Date.now() - started,
+        result.inputTokens,
+        result.outputTokens,
+      ],
+    );
+    res.json({
+      status: result.answer ? 'answered' : result.outcome === 'off_topic' ? 'off_topic' : 'unavailable',
+      paragraphs: result.answer?.paragraphs ?? [],
+      turnsLeft: CHAT_TURNS_PER_DAY - counted.turns,
+    });
+  });
+  mount('/api/v1/chat', chat);
 
   const emailReports = Router();
   emailReports.use(requireAuth, requireRole('participant'));

@@ -5,6 +5,7 @@ export type Language = (typeof LANGUAGES)[number];
 
 export const CONTENT_ID = /^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$/;
 export const TODO_MARKER = 'TODO(content)';
+export const REVISE_MARKER = 'Main content to revise';
 
 const header = {
   contentType: z.string().min(1),

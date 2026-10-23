@@ -2,8 +2,7 @@
   "app": {
     "name": "Rinda",
     "fullName": "Rinda Health",
-    "skipToContent": "Skip to main content",
-    "tagline": "A private, educational check of your everyday health habits"
+    "skipToContent": "Skip to main content"
   },
   "language": {
     "label": "Language",
@@ -20,10 +19,6 @@
   "status": {
     "offline": "Offline: answers saved on this phone",
     "online": "Online"
-  },
-  "welcome": {
-    "start": "Start",
-    "comingSoon": "The questionnaire arrives in Milestone 1."
   },
   "landing": {
     "login": "Sign in",
@@ -48,8 +43,7 @@
     "now": "Update now"
   },
   "errors": {
-    "generic": "Something went wrong. Please try again.",
-    "notFound": "This page does not exist."
+    "generic": "Something went wrong. Please try again."
   },
   "apiErrors": {
     "VALIDATION_FAILED": "Some details are missing or not in the right format.",
@@ -107,9 +101,7 @@
       "google": "Google sign-in did not finish. Please try again.",
       "google_no_account": "No account uses this Google email yet. Create an account first.",
       "account_off": "This account is turned off. Please contact the research team."
-    },
-    "loginHeading": "Sign in to Rinda",
-    "signupHeading": "Join Rinda"
+    }
   },
   "nav": {
     "home": "Home",
@@ -204,8 +196,6 @@
     "language": "Preferred language",
     "save": "Save changes",
     "saved": "Saved.",
-    "role": "Role",
-    "signInMethods": "Sign-in methods",
     "methodPassword": "Password",
     "methodGoogle": "Google",
     "passwordTitle": "Change password",
@@ -379,8 +369,6 @@
     "dietTitle": "Fruit and vegetables over time",
     "dietAlt": "Servings a day, oldest first: {{list}}",
     "dietEmpty": "Your fruit and vegetable servings will appear here.",
-    "top": "Top",
-    "bottom": "Bottom",
     "servings": "Servings",
     "checkupsTitle": "Check-ups, last 14 days",
     "signupsTitle": "New accounts, last 14 days",
@@ -390,7 +378,6 @@
   },
   "home": {
     "heroTitle": "Let's look after your everyday health",
-    "heroSubtitle": "Small steps add up. Here is where you stand today.",
     "lastCheckup": "Last check-up {{date}}",
     "firstCheckup": "Start with a short check-up. It takes about five minutes.",
     "askRinda": "Ask Rinda"
@@ -399,7 +386,6 @@
     "title": "Ask Rinda",
     "intro": "Pick a question. Rinda answers from your own results.",
     "needCheckup": "Do a check-up first so Rinda can answer.",
-    "loading": "Rinda is thinking…",
     "helpful": "Was this helpful?",
     "yes": "Yes",
     "no": "No",

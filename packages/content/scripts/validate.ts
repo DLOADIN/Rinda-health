@@ -1,7 +1,14 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LANGUAGES, parseRuleset, ReferralListSchema, TextContentSchema, TODO_MARKER } from '../src/index.ts';
+import {
+  LANGUAGES,
+  parseRuleset,
+  ReferralListSchema,
+  REVISE_MARKER,
+  TextContentSchema,
+  TODO_MARKER,
+} from '../src/index.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const release = process.argv.includes('--release');
@@ -47,7 +54,11 @@ for (const lang of LANGUAGES) {
     }
     if (result.data.language !== lang)
       errors.push(`${lang}/${file}: language field is "${result.data.language}"`);
-    todos += JSON.stringify(body).split(TODO_MARKER).length - 1;
+    todos +=
+      JSON.stringify(body).split(TODO_MARKER).length -
+      1 +
+      JSON.stringify(body).split(REVISE_MARKER).length -
+      1;
     // This is where a pilot release stops until a reviewer has really confirmed every phone number.
     if (release && 'entries' in result.data && Array.isArray(result.data.entries))
       for (const entry of result.data.entries)
