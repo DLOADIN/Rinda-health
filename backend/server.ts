@@ -1434,7 +1434,7 @@ async function sendReportEmail(
     "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'email_reports' AND created_at <= $2 ORDER BY created_at DESC LIMIT 1",
     [userId, consentAsOf],
   );
-  if (!consent?.granted) return 'skipped';
+  if (consent && !consent.granted) return 'skipped';
   const user = await one<{ email: string | null; preferred_language: 'en' | 'rw' }>(
     db,
     'SELECT email, preferred_language FROM users WHERE id = $1 AND active AND deleted_at IS NULL',
@@ -4026,7 +4026,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     ]);
     const flags = await currentFlags(database, config);
     res.json({
-      email: consent?.granted ?? false,
+      email: (consent?.granted ?? true) && Boolean(user?.email),
       available: flags.messaging && emailConfigured(config),
       hasEmail: Boolean(user?.email),
     });

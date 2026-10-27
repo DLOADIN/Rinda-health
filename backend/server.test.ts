@@ -908,7 +908,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     expect(general.body).toMatchObject({ status: 'answered', turnsLeft: 4 });
   });
 
-  it('email reports: only after opt-in, NCD results only, never mental wellness (ADR-020)', async () => {
+  it('email reports: on by default for email accounts, can be switched off, NCD results only (ADR-020)', async () => {
     const byPhone = await signup('participant', '0788 555 444');
     expect((await byPhone.agent.get('/api/v1/participant/email-reports')).body).toEqual({
       email: false,
@@ -929,6 +929,12 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       await new Promise((r) => setTimeout(r, 300));
     };
 
+    expect((await agent.get('/api/v1/participant/email-reports')).body).toEqual({
+      email: true,
+      available: true,
+      hasEmail: true,
+    });
+    await agent.put('/api/v1/participant/email-reports').send({ email: false }).expect(200);
     outbound.length = 0;
     await submit().expect(201);
     await new Promise((r) => setTimeout(r, 300));
@@ -984,6 +990,16 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     await submit().expect(201);
     await new Promise((r) => setTimeout(r, 500));
     expect(brevoCalls()).toHaveLength(0);
+
+    const fresh = await signup('participant', 'default-on@example.com');
+    outbound.length = 0;
+    await fresh.agent
+      .post('/api/v1/participant/assessments')
+      .set('Idempotency-Key', randomUUID())
+      .send({ language: 'en', startedAt: new Date().toISOString(), answers })
+      .expect(201);
+    await waitForBrevo(1);
+    expect(JSON.parse(brevoCalls()[0]?.body ?? '{}').to).toEqual([{ email: 'default-on@example.com' }]);
   });
 
   it('consent comes first: no check-up without taking part, and choices can change later (FR-02, FR-44)', async () => {

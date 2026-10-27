@@ -10,7 +10,7 @@
     "email.report.greeting": "Hello. Here is a summary of your latest Rinda check-up. Each area is looked at on its own.",
     "email.report.disclaimer": "This summary is educational, not a diagnosis, and Rinda is not an emergency service. If you feel unwell or worried, talk to a health worker.",
     "email.report.open": "Open Rinda to read the full explanation",
-    "email.report.optout": "You get this email because you switched on email reports in your Rinda Profile. You can switch them off there at any time.",
+    "email.report.optout": "You get this email because email reports are on in your Rinda Profile. You can switch them off there at any time.",
     "email.report.percent": "{percent}% of the healthy target",
     "email.report.explanation": "What this means for you",
     "email.report.chat": "Have a question about your results? Open Rinda and ask in the chat. You can ask up to 5 questions a day.",
