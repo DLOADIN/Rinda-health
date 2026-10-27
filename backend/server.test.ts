@@ -936,13 +936,20 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
 
     await agent.put('/api/v1/participant/email-reports').send({ email: true, extra: 1 }).expect(400);
     await agent.put('/api/v1/participant/email-reports').send({ email: true }).expect(200);
-    const checkup = await submit().expect(201);
+    const kept: Promise<unknown>[] = [];
+    const contextKey = Symbol.for('@vercel/request-context');
+    const scope = globalThis as Record<symbol, unknown>;
+    scope[contextKey] = { get: () => ({ waitUntil: (task: Promise<unknown>) => kept.push(task) }) };
+    const checkup = await Promise.resolve(submit().expect(201)).finally(() => delete scope[contextKey]);
+    expect(kept).toHaveLength(3);
+    await Promise.all(kept);
+    expect(brevoCalls()).toHaveLength(1);
     await waitForBrevo(1);
     const call = brevoCalls()[0];
     expect(call?.url).toBe('https://api.brevo.com/v3/smtp/email');
     const payload = JSON.parse(call?.body ?? '{}');
     expect(payload).toMatchObject({
-      sender: { name: 'Rinda Health', email: 'reports@rinda.test' },
+      sender: { name: 'Rinda Health Services', email: 'reports@rinda.test' },
       to: [{ email: 'reports-user@example.com' }],
       subject: 'Your Rinda check-up summary',
     });

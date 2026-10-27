@@ -151,7 +151,7 @@ const EnvSchema = z
     GEMINI_PAID_TIER: z.preprocess(emptyAsUndefined, z.enum(['true', 'false']).default('false')),
     BREVO_API_KEY: optionalText,
     EMAIL_FROM: optionalText,
-    EMAIL_FROM_NAME: z.string().default('Rinda Health'),
+    EMAIL_FROM_NAME: z.string().default('Rinda Health Services'),
     MESSAGING_APPROVAL_REF: optionalText,
     PINDO_API_TOKEN: optionalText,
     PINDO_SENDER: z.string().min(1).max(11).default('PindoTest'),
@@ -1250,6 +1250,15 @@ const median = (values: number[]): number | null => {
 
 type EmailOutcome = 'sent' | 'failed' | 'skipped';
 
+type RequestContext = { get?: () => { waitUntil?: (task: Promise<unknown>) => void } | undefined };
+
+function afterResponse(task: Promise<unknown>): void {
+  const context = (globalThis as Record<symbol, RequestContext | undefined>)[
+    Symbol.for('@vercel/request-context')
+  ];
+  context?.get?.()?.waitUntil?.(task);
+}
+
 async function sendReportEmail(
   db: Db,
   config: AppConfig,
@@ -2103,23 +2112,29 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       );
     }
     if (inserted) {
-      void sendWhatsAppNotice(database, config, logger, fetchFn, userId).catch(() =>
-        logger.warn({ reqId, event: 'whatsapp_notice_error' }, 'message'),
+      afterResponse(
+        sendWhatsAppNotice(database, config, logger, fetchFn, userId).catch(() =>
+          logger.warn({ reqId, event: 'whatsapp_notice_error' }, 'message'),
+        ),
       );
-      void sendSmsNotice(database, config, logger, fetchFn, userId).catch(() =>
-        logger.warn({ reqId, event: 'sms_notice_error' }, 'message'),
+      afterResponse(
+        sendSmsNotice(database, config, logger, fetchFn, userId).catch(() =>
+          logger.warn({ reqId, event: 'sms_notice_error' }, 'message'),
+        ),
       );
       const language = body.language;
-      void (async () => {
-        await answerGuide(
-          database,
-          userId,
-          { assessmentId: row.id, chipId: 'overview', language },
-          reqId,
-          true,
-        ).catch(() => null);
-        await sendReportEmail(database, config, logger, fetchFn, userId, row.id, row.created_at);
-      })().catch(() => logger.warn({ reqId, event: 'email_report_error' }, 'message'));
+      afterResponse(
+        (async () => {
+          await answerGuide(
+            database,
+            userId,
+            { assessmentId: row.id, chipId: 'overview', language },
+            reqId,
+            true,
+          ).catch(() => null);
+          await sendReportEmail(database, config, logger, fetchFn, userId, row.id, row.created_at);
+        })().catch(() => logger.warn({ reqId, event: 'email_report_error' }, 'message')),
+      );
     }
     return { status: inserted ? 201 : 200, row };
   };
