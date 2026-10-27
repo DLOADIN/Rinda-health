@@ -420,7 +420,7 @@
   },
   "emailReports": {
     "title": "Email reports",
-    "body": "Get a summary of each check-up by email: the result for each area and one small first step. Mood and stress results are never emailed. Anyone who can open your email can read it.",
+    "body": "Get a summary of each check-up by email: your results and numbers, tips and a plan for the week. Mood and stress results are never emailed. Anyone who can open your email can read it.",
     "toggle": "Email me my check-up summaries",
     "needEmail": "This needs an account with an email address.",
     "unavailable": "Email reports are not switched on yet.",

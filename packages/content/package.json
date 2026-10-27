@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./guide-answers": "./src/guide-answers.ts",
+    "./messages": "./src/messages.ts",
     "./rulesets/*": "./rulesets/*",
     "./en/*": "./en/*",
     "./rw/*": "./rw/*"

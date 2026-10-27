@@ -9,11 +9,6 @@
     "purpose.title": "Murakaza neza kuri Rinda",
     "purpose.body": "Rinda igufasha kumenya imyitwarire ya buri munsi igira ingaruka ku buzima bwawe. Ni iy'inyigisho, si isuzuma rya muganga, kandi si serivisi y'ubutabazi bwihuse. Ushobora gusimbuka ikibazo icyo ari cyo cyose.",
     "neutral.title": "Ushobora gufunga iyi paji.",
-    "email.report.subject": "Incamake y'isuzuma ryawe kuri Rinda",
-    "email.report.greeting": "Muraho. Dore incamake y'isuzuma ryawe riheruka kuri Rinda. Buri gice kirebwa ukwacyo.",
-    "email.report.disclaimer": "Iyi ncamake ni iyo kwiga, si isuzuma rya muganga, kandi Rinda si serivisi y'ubutabazi bwihuse. Niba wumva utameze neza cyangwa uhangayitse, vugana n'umukozi w'ubuzima.",
-    "email.report.open": "Fungura Rinda usome ibisobanuro byose",
-    "email.report.optout": "Wakiriye iyi imeri kubera ko wafunguye raporo kuri imeri mu Mwirondoro wawe kuri Rinda. Ushobora kuzifunga aho igihe icyo ari cyo cyose.",
     "rules.intro": "Buri gisubizo gikomoka ku mategeko adahinduka yavuye mu mabwiriza y'ubuzima yatangajwe. Ibisubizo bimwe bihora bitanga igisubizo kimwe. Aya mategeko ni verisiyo {version}.",
     "rules.skipped": "Ikibazo wasimbutse ntikibarwa nka 0. Iyo igice kidafite ibisubizo bihagije, kigaragaza \"Nta makuru ahagije\".",
     "rules.tobacco": "Niba ubu ukoresha itabi iryo ari ryo ryose, iki gisubizo gisaba kwitonderwa.",
@@ -26,10 +21,6 @@
     "rules.phq9": "Duteranya ibisubizo byawe icyenda (0 kugeza 27). {mild} cyangwa birenga ni bike, {moderate} cyangwa birenga ni biringaniye, {ms} cyangwa birenga ni byinshi, naho {severe} cyangwa birenga ni byinshi cyane.",
     "rules.gad7": "Duteranya ibisubizo byawe birindwi (0 kugeza 21). {mild} cyangwa birenga ni bike, {moderate} cyangwa birenga ni biringaniye, naho {severe} cyangwa birenga ni byinshi cyane.",
     "rules.support": "Niba igiteranyo icyo ari cyo cyose kigeze kuri {tier1} cyangwa kirenga, Rinda yerekana ubutumwa bwo kugushyigikira n'aho wabona ubufasha. Ibisubizo by'imitekerereze n'umunaniro ntibijya biteranywa n'ibindi bisubizo.",
-    "rules.source": "Inkomoko: {source}",
-    "email.report.percent": "{percent}% by'intego nzima",
-    "email.report.explanation": "Icyo ibi bisobanuye kuri wowe",
-    "email.report.chat": "Ufite ikibazo ku byavuye mu isuzuma ryawe? Fungura Rinda ubaze mu kiganiro. Ushobora kubaza ibibazo bigera kuri 5 ku munsi.",
-    "sms.notice.ready": "Rinda: ibyavuye mu isuzuma ryawe biriteguye. Bireba kandi uganire na Rinda kuri {link} Kugira ngo uhagarike ubu butumwa, koresha Umwirondoro wawe kuri Rinda."
+    "rules.source": "Inkomoko: {source}"
   }
 }

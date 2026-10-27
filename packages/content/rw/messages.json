@@ -1,0 +1,31 @@
+{
+  "contentType": "messages",
+  "key": "messages",
+  "version": "0.1.0",
+  "language": "rw",
+  "status": "draft",
+  "reviewers": ["supervisor", "language"],
+  "entries": {
+    "email.report.subject": "Incamake y'isuzuma ryawe kuri Rinda",
+    "email.report.greeting": "Muraho. Dore incamake y'isuzuma ryawe riheruka kuri Rinda. Buri gice kirebwa ukwacyo.",
+    "email.report.disclaimer": "Iyi ncamake ni iyo kwiga, si isuzuma rya muganga, kandi Rinda si serivisi y'ubutabazi bwihuse. Niba wumva utameze neza cyangwa uhangayitse, vugana n'umukozi w'ubuzima.",
+    "email.report.open": "Fungura Rinda usome ibisobanuro byose",
+    "email.report.optout": "Wakiriye iyi imeri kubera ko wafunguye raporo kuri imeri mu Mwirondoro wawe kuri Rinda. Ushobora kuzifunga aho igihe icyo ari cyo cyose.",
+    "email.report.percent": "{percent}% by'intego nzima",
+    "email.report.explanation": "Icyo ibi bisobanuye kuri wowe",
+    "email.report.chat": "Ufite ikibazo ku byavuye mu isuzuma ryawe? Fungura Rinda ubaze mu kiganiro. Ushobora kubaza ibibazo bigera kuri 5 ku munsi.",
+    "sms.notice.ready": "Rinda: ibyavuye mu isuzuma ryawe biriteguye. Bireba kandi uganire na Rinda kuri {link} Kugira ngo uhagarike ubu butumwa, koresha Umwirondoro wawe kuri Rinda.",
+    "email.report.heading": "Incamake y'isuzuma ryawe",
+    "email.report.date": "Isuzuma ryo ku wa {date}",
+    "email.report.areas": "Ibyavuye mu isuzuma, igice ku kindi",
+    "email.report.why": "Impamvu ari ingenzi",
+    "email.report.tips": "Icyo wakora",
+    "email.report.value": "Umubare wawe",
+    "email.report.plan": "Gahunda yawe y'iki cyumweru",
+    "email.report.first": "Tangirira hano",
+    "email.report.count.ok": "Bimeze neza",
+    "email.report.count.work": "Ibyo kwitaho",
+    "email.report.count.missing": "Bitashubijwe",
+    "email.report.footer": "Byoherejwe na Rinda Health Services"
+  }
+}

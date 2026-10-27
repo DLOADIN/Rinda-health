@@ -15,6 +15,7 @@ import { pathToFileURL } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { BUNDLED_CONTENT, RULESET_V1 } from '@rinda/content';
 import { GUIDE_ANSWERS } from '@rinda/content/guide-answers';
+import { MESSAGES } from '@rinda/content/messages';
 import {
   allowedNumbers,
   assessSafety,
@@ -1008,105 +1009,264 @@ export function composeReportEmail(
   plan: Plan,
   link: string,
   explanation: { paragraphs: string[]; generated: boolean } | null = null,
+  checkedAt: Date | null = null,
 ): { subject: string; text: string; html: string } {
   const content = BUNDLED_CONTENT[language];
-  const lookup = (id: string) => content.text[id] ?? GUIDE_ANSWERS[language][id] ?? id;
+  const lookup = (id: string) =>
+    MESSAGES[language][id] ?? content.text[id] ?? GUIDE_ANSWERS[language][id] ?? id;
+  const known = (id: string) => (lookup(id) !== id ? lookup(id) : null);
   const area = (domain: string) => lookup(`guide.area.${domain}`);
-  const answered = results.ncd.filter((r) => r.band !== 'insufficient');
-  const missing = results.ncd.filter((r) => r.band === 'insufficient').map((r) => area(r.domain));
-  const rowsOf = answered.map((r) => {
-    const percent = targetPercent(r, RULESET_V1);
-    const band = lookup(`band.${r.domain}.${r.band}`);
+  const valueDomains = ['activity', 'diet', 'bmi', 'waist', 'alcohol'];
+  const urgentText = plan.urgent ? known(plan.urgent.contentId) : null;
+  const areas = results.ncd.map((r) => {
+    const answered = r.band !== 'insufficient';
+    const percent = answered ? targetPercent(r, RULESET_V1) : null;
+    const urgentArea = r.domain === plan.urgent?.domain;
     return {
-      area: area(r.domain),
-      band: percent === null ? band : `${band} · ${fillSlots(lookup('email.report.percent'), { percent })}`,
       r,
+      answered,
+      name: area(r.domain),
+      band: lookup(answered ? `band.${r.domain}.${r.band}` : 'band.insufficient'),
+      value:
+        answered && r.value !== null && valueDomains.includes(r.domain)
+          ? fillSlots(lookup(`guide.value.${r.domain}`), { value: r.value })
+          : null,
+      percent,
+      percentText: percent === null ? null : fillSlots(lookup('email.report.percent'), { percent }),
+      why: answered && !urgentArea ? known(`ga.${r.domain}.${r.band}.why`) : null,
+      tips: answered && !urgentArea ? known(`ga.${r.domain}.${r.band}.tips`) : null,
     };
   });
-  const explained =
-    explanation ??
-    (() => {
-      const tips = composeGuideAnswer('tips', results, plan, lookup).paragraphs.map((p) => p.text);
-      return tips.length ? { paragraphs: tips, generated: false } : null;
-    })();
-  const steps = [
-    ...new Set(composeGuideAnswer('first_step', results, plan, lookup).paragraphs.map((p) => p.text)),
-  ];
-  const greeting = lookup('email.report.greeting');
-  const disclaimer = lookup('email.report.disclaimer');
-  const open = lookup('email.report.open');
-  const optOut = lookup('email.report.optout');
-  const chat = lookup('email.report.chat');
-  const missingLine = missing.length ? `${lookup('band.insufficient')}: ${missing.join(', ')}` : null;
-
-  const explanationTitle = lookup('email.report.explanation');
-  const generatedNote = explained?.generated
+  const counts = {
+    ok: areas.filter((a) => a.answered && a.r.severity === 'ok').length,
+    work: areas.filter((a) => a.answered && a.r.severity !== 'ok').length,
+    missing: areas.filter((a) => !a.answered).length,
+  };
+  const firstStep = composeGuideAnswer('first_step', results, plan, lookup).paragraphs[0]?.text ?? null;
+  const planLines = plan.focus.map((f) => {
+    const name = f.domains.map(area).join(', ');
+    return f.target
+      ? fillSlots(lookup('guide.tpl.plan.item'), {
+          area: name,
+          step: fillSlots(lookup(`guide.target.${f.target.kind}`), { ...f.target }),
+        })
+      : fillSlots(lookup('guide.tpl.plan.talk'), { area: name });
+  });
+  const generatedNote = explanation?.generated
     ? `${lookup('guide.label.generated')}. ${lookup('guide.label.disclaimer')}`
     : null;
+  const dateText = checkedAt
+    ? fillSlots(lookup('email.report.date'), {
+        date: new Intl.DateTimeFormat(language === 'rw' ? 'rw-RW' : 'en-GB', {
+          dateStyle: 'long',
+          timeZone: 'Africa/Kigali',
+        }).format(checkedAt),
+      })
+    : null;
+  const L = {
+    heading: lookup('email.report.heading'),
+    greeting: lookup('email.report.greeting'),
+    areas: lookup('email.report.areas'),
+    why: lookup('email.report.why'),
+    tips: lookup('email.report.tips'),
+    yourValue: lookup('email.report.value'),
+    plan: lookup('email.report.plan'),
+    first: lookup('email.report.first'),
+    ok: lookup('email.report.count.ok'),
+    work: lookup('email.report.count.work'),
+    missing: lookup('email.report.count.missing'),
+    explanation: lookup('email.report.explanation'),
+    open: lookup('email.report.open'),
+    chat: lookup('email.report.chat'),
+    disclaimer: lookup('email.report.disclaimer'),
+    optOut: lookup('email.report.optout'),
+    footer: lookup('email.report.footer'),
+  };
+
   const text = [
-    greeting,
-    rowsOf.map((x) => `- ${x.area}: ${x.band}`).join('\n'),
-    missingLine,
-    ...steps,
-    explained ? [explanationTitle, ...explained.paragraphs].join('\n\n') : null,
+    L.heading + (dateText ? ` - ${dateText}` : ''),
+    L.greeting,
+    urgentText,
+    `${L.ok}: ${counts.ok} · ${L.work}: ${counts.work} · ${L.missing}: ${counts.missing}`,
+    L.areas,
+    ...areas.map((a) =>
+      [
+        `${a.name}: ${a.band}${a.percentText ? ` · ${a.percentText}` : ''}`,
+        a.value ? `${L.yourValue}: ${a.value}` : null,
+        a.why ? `${L.why}: ${a.why}` : null,
+        a.tips ? `${L.tips}: ${a.tips}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    ),
+    firstStep || planLines.length ? L.plan : null,
+    firstStep ? `${L.first}: ${firstStep}` : null,
+    planLines.length ? planLines.map((p) => `- ${p}`).join('\n') : null,
+    explanation ? [L.explanation, ...explanation.paragraphs].join('\n\n') : null,
     generatedNote,
-    disclaimer,
-    `${open}: ${link}`,
-    chat,
-    optOut,
+    `${L.open}: ${link}`,
+    L.chat,
+    L.disclaimer,
+    L.optOut,
+    L.footer,
   ]
     .filter((p): p is string => Boolean(p))
     .join('\n\n');
 
-  const tone: Record<string, string> = {
-    ok: '#2F6B4F',
-    attention: '#A87C14',
-    confirm: '#C24A63',
-    urgent: '#C2330E',
-    wellness: '#B26F7E',
-    unknown: '#665C54',
+  const c = {
+    page: '#EEF3EF',
+    card: '#FFFFFF',
+    ink: '#16302A',
+    body: '#33463F',
+    muted: '#6A7A73',
+    line: '#E1E9E4',
+    brand: '#1E5B45',
+    brandDeep: '#143F30',
+    mint: '#E6F2EB',
+    mintLine: '#C9E2D3',
+    foot: '#F8FAF9',
+    white: '#FFFFFF',
   };
+  const unknownTone = { fg: '#5D6B65', bg: '#EEF1EF', mark: '?' };
+  const tone: Record<string, { fg: string; bg: string; mark: string }> = {
+    ok: { fg: '#1E6B47', bg: '#E3F4EA', mark: '&#10003;' },
+    attention: { fg: '#8A5B00', bg: '#FDF1D8', mark: '!' },
+    confirm: { fg: '#8E2F45', bg: '#FBE8ED', mark: '+' },
+    urgent: { fg: '#A1300F', bg: '#FCE9E2', mark: '!' },
+    unknown: unknownTone,
+  };
+  const urgentTone = tone.urgent ?? unknownTone;
   const e = escapeHtml;
-  const row = (x: (typeof rowsOf)[number]) =>
-    `<tr><td style="padding:10px 0;border-bottom:1px solid #EBE9E1;color:#2B1D16">${e(x.area)}</td>` +
-    `<td style="padding:10px 0;border-bottom:1px solid #EBE9E1;text-align:right;font-weight:600;color:${tone[x.r.severity] ?? '#2B1D16'}">${e(x.band)}</td></tr>`;
+  const serif = "Georgia,'Times New Roman',serif";
+  const sans = "'Helvetica Neue',Helvetica,Arial,sans-serif";
+  const table = (inner: string, style = '') =>
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${style}">${inner}</table>`;
+  const label = (s: string) =>
+    `<p style="margin:0 0 8px;font-family:${sans};font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;color:${c.brand}">${e(s)}</p>`;
+  const pill = (a: (typeof areas)[number]) => {
+    const t = tone[a.answered ? a.r.severity : 'unknown'] ?? unknownTone;
+    return `<span style="display:inline-block;padding:5px 12px;border-radius:999px;background:${t.bg};color:${t.fg};font-family:${sans};font-size:13px;font-weight:700;white-space:nowrap">${t.mark}&nbsp;&nbsp;${e(a.band)}</span>`;
+  };
+  const bar = (percent: number) => {
+    const filled = Math.max(percent, 2);
+    return table(
+      `<tr><td width="${filled}%" style="height:8px;background:${c.brand};font-size:0;line-height:0">&nbsp;</td>` +
+        (filled < 100
+          ? `<td width="${100 - filled}%" style="height:8px;background:${c.line};font-size:0;line-height:0">&nbsp;</td>`
+          : '') +
+        '</tr>',
+      'margin:12px 0 6px;border-radius:999px;overflow:hidden',
+    );
+  };
+  const detail = (title: string, body: string) =>
+    `<p style="margin:12px 0 0;font-family:${sans};font-size:14px;line-height:1.6;color:${c.body}"><strong style="color:${c.ink}">${e(title)}.</strong> ${e(body)}</p>`;
+  const areaCard = (a: (typeof areas)[number]) =>
+    '<tr><td style="padding:0 0 12px">' +
+    table(
+      '<tr><td style="padding:18px 20px">' +
+        table(
+          `<tr><td style="font-family:${serif};font-size:18px;color:${c.ink};padding:0 12px 6px 0">${e(a.name)}</td>` +
+            `<td align="right" style="padding:0 0 6px">${pill(a)}</td></tr>`,
+        ) +
+        (a.value
+          ? `<p style="margin:4px 0 0;font-family:${sans};font-size:13px;color:${c.muted}">${e(L.yourValue)}: <strong style="color:${c.ink}">${e(a.value)}</strong></p>`
+          : '') +
+        (a.percent !== null
+          ? bar(a.percent) +
+            `<p style="margin:0;font-family:${sans};font-size:12px;color:${c.muted}">${e(a.percentText ?? '')}</p>`
+          : '') +
+        (a.why ? detail(L.why, a.why) : '') +
+        (a.tips ? detail(L.tips, a.tips) : '') +
+        '</td></tr>',
+      `border:1px solid ${c.line};border-radius:14px;background:${c.card}`,
+    ) +
+    '</td></tr>';
+  const stat = (n: number, s: string) =>
+    `<td width="32%" align="center" style="padding:14px 6px;background:${c.mint};border-radius:12px">` +
+    `<p style="margin:0;font-family:${serif};font-size:28px;line-height:1;color:${c.brandDeep}">${n}</p>` +
+    `<p style="margin:6px 0 0;font-family:${sans};font-size:12px;color:${c.body}">${e(s)}</p></td>`;
+  const gap = '<td width="2%">&nbsp;</td>';
+  const block = (inner: string) => `<tr><td style="padding:0 28px 28px">${inner}</td></tr>`;
+  const logoUrl = `${new URL(link).origin}/icons/192.png`;
+
   const html = [
-    '<div style="background:#EBE9E1;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#2B1D16">',
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto">',
-    '<tr><td style="padding:0 4px 16px;font-size:20px;font-weight:700;color:#C2330E">Rinda Health</td></tr>',
-    '<tr><td style="background:#F7F6F3;border:1px solid #D3CEC3;border-radius:16px;padding:24px">',
-    `<p style="margin:0 0 16px;font-size:16px;line-height:1.5">${e(greeting)}</p>`,
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px">',
-    rowsOf.map(row).join(''),
-    '</table>',
-    missingLine ? `<p style="margin:12px 0 0;font-size:13px;color:#665C54">${e(missingLine)}</p>` : '',
-    '<div style="margin:20px 0 0;padding:16px;background:#FBEECD;border-radius:12px">',
-    ...steps.map((p) => `<p style="margin:0 0 8px;font-size:15px;line-height:1.5">${e(p)}</p>`),
-    '</div>',
-    explained
-      ? [
-          `<h2 style="margin:24px 0 8px;font-size:17px;color:#2B1D16">${e(explanationTitle)}</h2>`,
-          ...explained.paragraphs.map(
-            (p) => `<p style="margin:0 0 10px;font-size:15px;line-height:1.6">${e(p)}</p>`,
-          ),
-          generatedNote
-            ? `<p style="margin:8px 0 0;font-size:12px;line-height:1.5;color:#665C54">${e(generatedNote)}</p>`
-            : '',
-        ].join('')
+    `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${e(L.heading)}</title></head>`,
+    `<body style="margin:0;padding:0;background:${c.page}">`,
+    `<div style="display:none;max-height:0;overflow:hidden;opacity:0">${e(L.greeting)}</div>`,
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${c.page}"><tr><td align="center" style="padding:28px 12px">`,
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:${c.card};border-radius:20px;overflow:hidden;border:1px solid ${c.line}">`,
+    `<tr><td style="background:${c.brandDeep};padding:28px 28px 30px">`,
+    '<table role="presentation" cellpadding="0" cellspacing="0"><tr>',
+    `<td width="40" height="40"><img src="${e(logoUrl)}" width="40" height="40" alt="Rinda Health" style="display:block;width:40px;height:40px;border:0;border-radius:10px"></td>`,
+    `<td style="padding-left:12px;font-family:${sans};font-size:15px;font-weight:700;letter-spacing:0.4px;color:${c.white}">Rinda Health</td>`,
+    '</tr></table>',
+    `<h1 style="margin:22px 0 0;font-family:${serif};font-size:28px;line-height:1.25;font-weight:400;color:${c.white}">${e(L.heading)}</h1>`,
+    dateText
+      ? `<p style="margin:8px 0 0;font-family:${sans};font-size:14px;color:${c.mintLine}">${e(dateText)}</p>`
       : '',
-    `<p style="margin:24px 0 0"><a href="${e(link)}" style="display:inline-block;background:#D4380F;color:#FFFFFF;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px">${e(open)}</a></p>`,
-    `<p style="margin:12px 0 0;font-size:14px;line-height:1.5">${e(chat)}</p>`,
-    `<p style="margin:20px 0 0;font-size:13px;line-height:1.5;color:#665C54">${e(disclaimer)}</p>`,
     '</td></tr>',
-    `<tr><td style="padding:16px 4px 0;font-size:12px;line-height:1.5;color:#665C54">${e(optOut)}</td></tr>`,
-    '</table></div>',
+    `<tr><td style="padding:26px 28px 22px"><p style="margin:0;font-family:${sans};font-size:16px;line-height:1.6;color:${c.body}">${e(L.greeting)}</p></td></tr>`,
+    urgentText
+      ? block(
+          table(
+            `<tr><td style="padding:16px 18px;font-family:${sans};font-size:15px;line-height:1.6;color:${c.ink}"><strong style="color:${urgentTone.fg}">${e(area(plan.urgent?.domain ?? 'bp'))}.</strong> ${e(urgentText)}</td></tr>`,
+            `background:${urgentTone.bg};border-radius:14px`,
+          ),
+        )
+      : '',
+    block(
+      table(
+        `<tr>${stat(counts.ok, L.ok)}${gap}${stat(counts.work, L.work)}${gap}${stat(counts.missing, L.missing)}</tr>`,
+      ),
+    ),
+    block(label(L.areas) + table(areas.map(areaCard).join(''))),
+    firstStep || planLines.length
+      ? block(
+          table(
+            '<tr><td style="padding:22px 22px 14px">' +
+              label(L.plan) +
+              (firstStep
+                ? `<p style="margin:4px 0 14px;font-family:${serif};font-size:19px;line-height:1.45;color:${c.brandDeep}">${e(firstStep)}</p>`
+                : '') +
+              planLines
+                .map(
+                  (p) =>
+                    `<p style="margin:0 0 10px;font-family:${sans};font-size:14px;line-height:1.6;color:${c.body}"><span style="color:${c.brand};font-weight:700">&#8594;</span>&nbsp; ${e(p)}</p>`,
+                )
+                .join('') +
+              '</td></tr>',
+            `background:${c.mint};border:1px solid ${c.mintLine};border-radius:16px`,
+          ),
+        )
+      : '',
+    explanation
+      ? block(
+          label(L.explanation) +
+            explanation.paragraphs
+              .map(
+                (p) =>
+                  `<p style="margin:0 0 12px;font-family:${sans};font-size:15px;line-height:1.7;color:${c.body}">${e(p)}</p>`,
+              )
+              .join('') +
+            (generatedNote
+              ? `<p style="margin:6px 0 0;font-family:${sans};font-size:12px;line-height:1.5;color:${c.muted}">${e(generatedNote)}</p>`
+              : ''),
+        )
+      : '',
+    block(
+      `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:999px;background:${c.brand}"><a href="${e(link)}" style="display:inline-block;padding:14px 28px;font-family:${sans};font-size:15px;font-weight:700;color:${c.white};text-decoration:none;border-radius:999px">${e(L.open)}</a></td></tr></table>` +
+        `<p style="margin:16px 0 0;font-family:${sans};font-size:14px;line-height:1.6;color:${c.body}">${e(L.chat)}</p>`,
+    ),
+    `<tr><td style="padding:20px 28px;border-top:1px solid ${c.line};background:${c.foot}"><p style="margin:0;font-family:${sans};font-size:13px;line-height:1.6;color:${c.muted}">${e(L.disclaimer)}</p></td></tr>`,
+    '</table>',
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px"><tr><td align="center" style="padding:18px 8px 0;font-family:${sans};font-size:12px;line-height:1.6;color:${c.muted}">${e(L.optOut)}<br><span style="color:${c.brand};font-weight:700">${e(L.footer)}</span></td></tr></table>`,
+    '</td></tr></table></body></html>',
   ].join('');
   return { subject: lookup('email.report.subject'), text, html };
 }
 
 export function composeSmsNotice(language: 'en' | 'rw', link: string): string {
-  const content = BUNDLED_CONTENT[language];
-  return fillSlots(content.text['sms.notice.ready'] ?? '', { link });
+  return fillSlots(MESSAGES[language]['sms.notice.ready'] ?? '', { link });
 }
 
 export async function sendSmsNotice(
@@ -1280,9 +1440,9 @@ async function sendReportEmail(
     'SELECT email, preferred_language FROM users WHERE id = $1 AND active AND deleted_at IS NULL',
     [userId],
   );
-  const row = await one<{ results: AssessmentResult; plan: Plan }>(
+  const row = await one<{ results: AssessmentResult; plan: Plan; created_at: Date }>(
     db,
-    'SELECT results, plan FROM assessments WHERE id = $1 AND user_id = $2',
+    'SELECT results, plan, created_at FROM assessments WHERE id = $1 AND user_id = $2',
     [assessmentId, userId],
   );
   const record = async (status: EmailOutcome, errorCode: string | null) => {
@@ -1305,6 +1465,7 @@ async function sendReportEmail(
     row.plan,
     `${config.PUBLIC_URL}/app/results/${assessmentId}`,
     prepared ? { paragraphs: prepared.paragraphs.map((p) => p.text), generated: true } : null,
+    row.created_at,
   );
   let res: globalThis.Response;
   try {

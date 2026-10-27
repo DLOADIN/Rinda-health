@@ -420,7 +420,7 @@
   },
   "emailReports": {
     "title": "Raporo kuri imeri",
-    "body": "Akira incamake ya buri suzuma kuri imeri: igisubizo cya buri gice n'intambwe imwe nto yo gutangiriraho. Ibisubizo by'imitekerereze n'umunaniro ntibijya byoherezwa. Umuntu wese ushobora gufungura imeri yawe ashobora kuyisoma.",
+    "body": "Akira incamake ya buri suzuma kuri imeri: ibisubizo n'imibare yawe, inama na gahunda y'icyumweru. Ibisubizo by'imitekerereze n'umunaniro ntibijya byoherezwa. Umuntu wese ushobora gufungura imeri yawe ashobora kuyisoma.",
     "toggle": "Nyoherereza incamake z'isuzuma ryanjye kuri imeri",
     "needEmail": "Ibi bisaba konti ifite aderesi ya imeri.",
     "unavailable": "Raporo kuri imeri ntiziratangira gukora.",

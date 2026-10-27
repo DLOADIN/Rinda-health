@@ -955,7 +955,11 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     });
     expect(payload.textContent).toContain('Blood pressure');
     expect(payload.textContent).toContain('40% of the healthy target');
-    expect(payload.textContent).toContain('What this means for you');
+    expect(payload.textContent).toContain('Why it matters');
+    expect(payload.textContent).toContain('What you can do');
+    expect(payload.textContent).toContain('Your plan for this week');
+    expect(payload.textContent).toContain('Your number: 60 minutes a week');
+    expect(payload.htmlContent).toContain('Sent by Rinda Health Services');
     expect(payload.textContent).toContain(`http://localhost:5173/app/results/${checkup.body.id}`);
     expect(payload.textContent).not.toMatch(/phq|gad|mood|anxiety|depress/i);
     expect(payload.htmlContent).not.toContain('<script');
