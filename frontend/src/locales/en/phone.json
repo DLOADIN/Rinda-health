@@ -56,6 +56,10 @@
     "later": "Not now",
     "save": "Save my choices",
     "saved": "Your choices were saved.",
-    "failed": "Your choices could not be saved. Please try again."
+    "failed": "Your choices could not be saved. Please try again.",
+    "emailAddress": "Your email address",
+    "phone": "Your phone number",
+    "needEmail": "Type your email address to get emails.",
+    "needPhone": "Type your phone number to get text messages."
   }
 }

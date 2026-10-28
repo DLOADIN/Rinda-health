@@ -3,6 +3,7 @@ import type { Me } from '@rinda/schemas';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { ApiError } from '@/components/api-error';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,6 +24,7 @@ import {
   FieldSet,
   FieldTitle,
 } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -76,21 +78,37 @@ function DeliveryForm({
   const { t, i18n } = useTranslation();
   const [saveEmail] = useSetEmailReportsMutation();
   const [saveSms] = useSetSmsNoticesMutation();
-  const [updateMe] = useUpdateMeMutation();
-  const emailUsable = email.hasEmail;
-  const smsUsable = sms.hasPhone;
-  const [wantEmail, setWantEmail] = useState(email.email);
-  const [wantSms, setWantSms] = useState(sms.sms);
+  const [updateMe, { error: contactError }] = useUpdateMeMutation();
+  const [wantEmail, setWantEmail] = useState(email.hasEmail && email.email);
+  const [wantSms, setWantSms] = useState(sms.hasPhone && sms.sms);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('');
   const [language, setLanguage] = useState(me.preferredLanguage);
+  const [missing, setMissing] = useState<'email' | 'phone' | null>(null);
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
+    const addEmail = !email.hasEmail && wantEmail ? newEmail.trim() : '';
+    const addPhone = !sms.hasPhone && wantSms ? newPhone.trim() : '';
+    if (!email.hasEmail && wantEmail && !addEmail) return setMissing('email');
+    if (!sms.hasPhone && wantSms && !addPhone) return setMissing('phone');
+    setMissing(null);
     setSaving(true);
     const languageChanged = language !== me.preferredLanguage;
+    if (languageChanged || addEmail || addPhone) {
+      const updated = await updateMe({
+        ...(languageChanged ? { preferredLanguage: language } : {}),
+        ...(addEmail ? { email: addEmail } : {}),
+        ...(addPhone ? { phone: addPhone } : {}),
+      });
+      if ('error' in updated) {
+        setSaving(false);
+        return;
+      }
+    }
     const results = await Promise.all([
-      emailUsable ? saveEmail({ email: wantEmail }) : null,
-      smsUsable ? saveSms({ sms: wantSms }) : null,
-      languageChanged ? updateMe({ preferredLanguage: language }) : null,
+      email.hasEmail || addEmail ? saveEmail({ email: wantEmail }) : null,
+      sms.hasPhone || addPhone ? saveSms({ sms: wantSms }) : null,
     ]);
     setSaving(false);
     if (results.some((r) => r && 'error' in r)) {
@@ -110,35 +128,52 @@ function DeliveryForm({
           <Field orientation="horizontal" className="min-h-11 justify-between">
             <FieldContent>
               <FieldLabel htmlFor="delivery-email">{t('delivery.email')}</FieldLabel>
-              {!emailUsable ? (
-                <FieldDescription>
-                  {email.available ? t('emailReports.needEmail') : t('emailReports.unavailable')}
-                </FieldDescription>
-              ) : null}
+              {!email.available ? <FieldDescription>{t('emailReports.unavailable')}</FieldDescription> : null}
             </FieldContent>
             <Switch
               id="delivery-email"
-              checked={emailUsable && wantEmail}
-              disabled={!emailUsable || saving}
+              checked={wantEmail}
+              disabled={saving}
               onCheckedChange={setWantEmail}
             />
           </Field>
+          {!email.hasEmail && wantEmail ? (
+            <Field data-invalid={missing === 'email' || undefined}>
+              <FieldLabel htmlFor="delivery-new-email">{t('delivery.emailAddress')}</FieldLabel>
+              <Input
+                id="delivery-new-email"
+                type="email"
+                autoComplete="email"
+                value={newEmail}
+                aria-invalid={missing === 'email' || undefined}
+                onChange={(e) => setNewEmail(e.target.value)}
+              />
+              {missing === 'email' ? <FieldDescription>{t('delivery.needEmail')}</FieldDescription> : null}
+            </Field>
+          ) : null}
           <Field orientation="horizontal" className="min-h-11 justify-between">
             <FieldContent>
               <FieldLabel htmlFor="delivery-sms">{t('delivery.sms')}</FieldLabel>
-              {!smsUsable ? (
-                <FieldDescription>
-                  {sms.available ? t('sms.needPhone') : t('sms.unavailable')}
-                </FieldDescription>
-              ) : null}
+              {!sms.available ? <FieldDescription>{t('sms.unavailable')}</FieldDescription> : null}
             </FieldContent>
-            <Switch
-              id="delivery-sms"
-              checked={smsUsable && wantSms}
-              disabled={!smsUsable || saving}
-              onCheckedChange={setWantSms}
-            />
+            <Switch id="delivery-sms" checked={wantSms} disabled={saving} onCheckedChange={setWantSms} />
           </Field>
+          {!sms.hasPhone && wantSms ? (
+            <Field data-invalid={missing === 'phone' || undefined}>
+              <FieldLabel htmlFor="delivery-new-phone">{t('delivery.phone')}</FieldLabel>
+              <Input
+                id="delivery-new-phone"
+                type="tel"
+                autoComplete="tel"
+                placeholder="0788 123 456"
+                value={newPhone}
+                aria-invalid={missing === 'phone' || undefined}
+                onChange={(e) => setNewPhone(e.target.value)}
+              />
+              {missing === 'phone' ? <FieldDescription>{t('delivery.needPhone')}</FieldDescription> : null}
+            </Field>
+          ) : null}
+          <ApiError error={contactError} />
         </FieldSet>
         <FieldSet>
           <FieldLegend variant="label">{t('delivery.language')}</FieldLegend>

@@ -56,6 +56,10 @@
     "later": "Ubutaha",
     "save": "Bika ibyo nahisemo",
     "saved": "Ibyo wahisemo byabitswe.",
-    "failed": "Ibyo wahisemo ntibyashoboye kubikwa. Ongera ugerageze."
+    "failed": "Ibyo wahisemo ntibyashoboye kubikwa. Ongera ugerageze.",
+    "emailAddress": "Aderesi ya imeri yawe",
+    "phone": "Nimero ya telefoni yawe",
+    "needEmail": "Andika aderesi ya imeri yawe kugira ngo ubone imeri.",
+    "needPhone": "Andika nimero ya telefoni yawe kugira ngo ubone ubutumwa bugufi."
   }
 }

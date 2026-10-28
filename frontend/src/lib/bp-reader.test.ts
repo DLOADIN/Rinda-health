@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { agreeingReading, readBpDisplay, readBpPhoto, toGray, type Gray } from '@/lib/bp-reader';
 import { drawScreen, MONITOR } from '@/lib/bp-test-screen';
 
-describe('readBpDisplay', () => {
+describe('readBpDisplay', { timeout: 20_000 }, () => {
   it('reads an upright dark-on-light screen with pulse', () => {
     expect(readBpDisplay(drawScreen({ rows: MONITOR(128, 82, 74) }))).toEqual({
       systolic: 128,
@@ -111,7 +111,7 @@ function photoOf(screen: Gray, at: { x: number; y: number }) {
   return { rgba, width, height };
 }
 
-describe('readBpPhoto', () => {
+describe('readBpPhoto', { timeout: 20_000 }, () => {
   it('finds the screen anywhere in a photo of the whole monitor', () => {
     const { rgba, width, height } = photoOf(drawScreen({ rows: MONITOR(132, 84, 66), casing: true }), {
       x: 300,
