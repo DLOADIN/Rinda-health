@@ -4021,6 +4021,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       email: (consent?.granted ?? true) && Boolean(user?.email),
       available: flags.messaging && emailConfigured(config),
       hasEmail: Boolean(user?.email),
+      decided: Boolean(consent),
     });
   });
 
@@ -4076,6 +4077,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       sms: (consent?.granted ?? true) && Boolean(user?.phone),
       available: flags.messaging && smsConfigured(config),
       hasPhone: Boolean(user?.phone),
+      decided: Boolean(consent),
     });
   });
 

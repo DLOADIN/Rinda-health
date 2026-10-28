@@ -62,6 +62,14 @@ export interface EmailReportStatus {
   email: boolean;
   available: boolean;
   hasEmail: boolean;
+  decided: boolean;
+}
+
+export interface SmsStatus {
+  sms: boolean;
+  available: boolean;
+  hasPhone: boolean;
+  decided: boolean;
 }
 export interface MetricCard {
   key: string;
@@ -321,6 +329,14 @@ export const api = createApi({
       query: (body) => ({ url: '/participant/email-reports', method: 'PUT', body }),
       invalidatesTags: ['Messaging'],
     }),
+    smsNotices: b.query<SmsStatus, void>({
+      query: () => '/participant/sms-notices',
+      providesTags: ['Messaging'],
+    }),
+    setSmsNotices: b.mutation<{ sms: boolean }, { sms: boolean }>({
+      query: (body) => ({ url: '/participant/sms-notices', method: 'PUT', body }),
+      invalidatesTags: ['Messaging'],
+    }),
     sendEmailReport: b.mutation<{ status: 'sent' | 'failed' }, { assessmentId: string }>({
       query: (body) => ({ url: '/participant/email-reports/send', method: 'POST', body }),
     }),
@@ -481,6 +497,8 @@ export const {
   useGuideFeedbackMutation,
   useEmailReportsQuery,
   useSetEmailReportsMutation,
+  useSmsNoticesQuery,
+  useSetSmsNoticesMutation,
   useSendEmailReportMutation,
   useAiOptInQuery,
   useSetAiOptInMutation,

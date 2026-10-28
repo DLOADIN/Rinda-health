@@ -44,5 +44,18 @@
     "needPhone": "Add your phone number in \"My details\" above to get these.",
     "unavailable": "Text messages are not switched on yet.",
     "saved": "Your choice was saved."
+  },
+  "delivery": {
+    "open": "Check-up results",
+    "title": "How should we send your check-up results?",
+    "body": "After each check-up, Rinda can send you a summary. Choose what suits you. You can change this at any time in your Profile.",
+    "how": "Send my results by",
+    "email": "Email",
+    "sms": "Text message (SMS)",
+    "language": "Language for messages and the app",
+    "later": "Not now",
+    "save": "Save my choices",
+    "saved": "Your choices were saved.",
+    "failed": "Your choices could not be saved. Please try again."
   }
 }

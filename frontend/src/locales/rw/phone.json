@@ -44,5 +44,18 @@
     "needPhone": "Shyiramo nimero ya telefoni yawe muri \"Amakuru yanjye\" hejuru kugira ngo ububone.",
     "unavailable": "Ubutumwa bugufi ntiburafungurwa.",
     "saved": "Icyo wahisemo cyabitswe."
+  },
+  "delivery": {
+    "open": "Ibisubizo by'isuzuma",
+    "title": "Twakoherereza dute ibisubizo by'isuzuma ryawe?",
+    "body": "Nyuma ya buri suzuma, Rinda ishobora kukoherereza incamake. Hitamo ikikunogeye. Ushobora kubihindura igihe icyo ari cyo cyose mu Mwirondoro wawe.",
+    "how": "Nyoherereza ibisubizo byanjye kuri",
+    "email": "Imeri",
+    "sms": "Ubutumwa bugufi (SMS)",
+    "language": "Ururimi rw'ubutumwa n'urubuga",
+    "later": "Ubutaha",
+    "save": "Bika ibyo nahisemo",
+    "saved": "Ibyo wahisemo byabitswe.",
+    "failed": "Ibyo wahisemo ntibyashoboye kubikwa. Ongera ugerageze."
   }
 }

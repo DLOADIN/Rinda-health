@@ -1,5 +1,5 @@
 import type { Me, ParticipantProfile } from '@rinda/schemas';
-import { Download, LogOut, Mail, Smartphone, Sparkles } from 'lucide-react';
+import { BellRing, Download, LogOut, Mail, Smartphone, Sparkles } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -33,6 +33,7 @@ import {
 } from '@/lib/api';
 import { PhoneHealthCard } from '@/features/profile/phone-health-card';
 import { SmsCard } from '@/features/profile/sms-card';
+import { DeliveryDialog, useDeliveryPrompt } from '@/features/profile/delivery-dialog';
 import { formatDate } from '@/lib/format';
 
 function DetailsCard({ me }: { me: Me }) {
@@ -448,17 +449,27 @@ function DeletionCard() {
 export function ProfilePage({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const { t } = useTranslation();
   const isParticipant = me.role === 'participant';
+  const delivery = useDeliveryPrompt(isParticipant);
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title={t('profile.title')}
         actions={
-          <Button variant="outline" onClick={onSignOut}>
-            <LogOut aria-hidden="true" data-icon="inline-start" />
-            {t('profile.signOut')}
-          </Button>
+          <>
+            {isParticipant ? (
+              <Button variant="outline" onClick={() => delivery.setOpen(true)}>
+                <BellRing aria-hidden="true" data-icon="inline-start" />
+                {t('delivery.open')}
+              </Button>
+            ) : null}
+            <Button variant="outline" onClick={onSignOut}>
+              <LogOut aria-hidden="true" data-icon="inline-start" />
+              {t('profile.signOut')}
+            </Button>
+          </>
         }
       />
+      {isParticipant ? <DeliveryDialog me={me} open={delivery.open} onOpenChange={delivery.setOpen} /> : null}
       <div className="grid gap-4 lg:grid-cols-2">
         <DetailsCard me={me} />
         {isParticipant ? <AboutMeCard /> : null}

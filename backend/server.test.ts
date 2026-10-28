@@ -922,6 +922,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       email: false,
       available: true,
       hasEmail: false,
+      decided: false,
     });
     await byPhone.agent.put('/api/v1/participant/email-reports').send({ email: true }).expect(409);
 
@@ -941,6 +942,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       email: true,
       available: true,
       hasEmail: true,
+      decided: false,
     });
     await agent.put('/api/v1/participant/email-reports').send({ email: false }).expect(200);
     outbound.length = 0;
@@ -1019,6 +1021,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       sms: false,
       available: true,
       hasPhone: false,
+      decided: false,
     });
     await byEmail.agent.put('/api/v1/participant/sms-notices').send({ sms: true }).expect(409);
 
@@ -1027,6 +1030,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       sms: true,
       available: true,
       hasPhone: true,
+      decided: false,
     });
     const submit = (who = agent) =>
       who

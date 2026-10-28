@@ -1,51 +1,17 @@
 import '@/features/profile/phone-strings';
 import { MessageSquareText } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { ApiError } from '@/components/api-error';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Switch } from '@/components/ui/switch';
-
-interface SmsStatus {
-  sms: boolean;
-  available: boolean;
-  hasPhone: boolean;
-}
+import { useSetSmsNoticesMutation, useSmsNoticesQuery } from '@/lib/api';
 
 export function SmsCard() {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<SmsStatus | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    void fetch('/api/v1/participant/sms-notices', { credentials: 'same-origin' })
-      .then((res) => (res.ok ? (res.json() as Promise<SmsStatus>) : null))
-      .then((s) => {
-        if (active && s) setStatus(s);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const save = async (sms: boolean) => {
-    setBusy(true);
-    const res = await fetch('/api/v1/participant/sms-notices', {
-      method: 'PUT',
-      credentials: 'same-origin',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sms }),
-    }).catch(() => null);
-    if (res?.ok) {
-      setStatus((s) => (s ? { ...s, sms } : s));
-      toast.success(t('sms.saved'));
-    }
-    setBusy(false);
-  };
-
+  const { data } = useSmsNoticesQuery();
+  const [save, { isLoading, error }] = useSetSmsNoticesMutation();
   return (
     <Card className="glass">
       <CardHeader>
@@ -60,17 +26,20 @@ export function SmsCard() {
           <FieldLabel htmlFor="sms-toggle">{t('sms.toggle')}</FieldLabel>
           <Switch
             id="sms-toggle"
-            checked={status?.sms ?? false}
-            disabled={!status?.available || !status.hasPhone || busy}
-            onCheckedChange={(sms) => void save(sms)}
+            checked={data?.sms ?? false}
+            disabled={!data?.available || !data.hasPhone || isLoading}
+            onCheckedChange={(sms) =>
+              void save({ sms }).then((r) => (!('error' in r) ? toast.success(t('sms.saved')) : undefined))
+            }
           />
         </Field>
-        {status && !status.available ? (
+        {data && !data.available ? (
           <p className="text-sm text-muted-foreground">{t('sms.unavailable')}</p>
         ) : null}
-        {status?.available && !status.hasPhone ? (
+        {data?.available && !data.hasPhone ? (
           <p className="text-sm text-muted-foreground">{t('sms.needPhone')}</p>
         ) : null}
+        <ApiError error={error} />
       </CardContent>
     </Card>
   );
