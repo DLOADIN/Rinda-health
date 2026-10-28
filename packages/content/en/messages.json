@@ -13,7 +13,7 @@
     "email.report.optout": "You get this email because email reports are on in your Rinda Profile. You can switch them off there at any time.",
     "email.report.percent": "{percent}% of the healthy target",
     "email.report.explanation": "What this means for you",
-    "email.report.chat": "Have a question about your results? Open Rinda and ask in the chat. You can ask up to 5 questions a day.",
+    "email.report.chat": "Have a question about your results? Open Rinda and ask in the chat. You can ask up to 15 questions a day.",
     "email.report.heading": "Your check-up summary",
     "email.report.date": "Check-up on {date}",
     "email.report.areas": "Your results, area by area",

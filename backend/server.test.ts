@@ -833,7 +833,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     expect((await agent.get('/api/v1/participant/phone-health')).body.readings).toEqual([]);
   });
 
-  it('Ask Rinda chat: five questions a day about Rinda Health, and crisis words are never sent', async () => {
+  it('Ask Rinda chat: fifteen questions a day about Rinda Health, and crisis words are never sent', async () => {
     const { agent } = await signup('participant', 'chat-user@example.com');
     await agent
       .post('/api/v1/participant/assessments')
@@ -847,12 +847,12 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     const ask = (body: Record<string, unknown>) =>
       agent.post('/api/v1/chat').send({ language: 'en', ...body });
 
-    expect((await agent.get('/api/v1/chat')).body).toEqual({ available: true, turnsLeft: 5 });
+    expect((await agent.get('/api/v1/chat')).body).toEqual({ available: true, turnsLeft: 15 });
     await agent.put('/api/v1/participant/ai-explanations').send({ ai: false }).expect(200);
-    expect((await agent.get('/api/v1/chat')).body).toEqual({ available: false, turnsLeft: 5 });
+    expect((await agent.get('/api/v1/chat')).body).toEqual({ available: false, turnsLeft: 15 });
     expect((await ask({ question: 'How can I walk more?' })).body.status).toBe('unavailable');
     await agent.put('/api/v1/participant/ai-explanations').send({ ai: true }).expect(200);
-    expect((await agent.get('/api/v1/chat')).body).toEqual({ available: true, turnsLeft: 5 });
+    expect((await agent.get('/api/v1/chat')).body).toEqual({ available: true, turnsLeft: 15 });
 
     outbound.length = 0;
     const crisis = await ask({ question: 'I want to kill myself' });
@@ -867,11 +867,11 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     expect(hidden.body.error.code).toBe('CHAT_PERSONAL');
     expect((await ask({ question: 'I feel so stressed lately' })).body).toMatchObject({
       status: 'off_topic',
-      turnsLeft: 5,
+      turnsLeft: 15,
     });
     await ask({ question: 'Hi', chipId: 'tips' }).expect(400);
     expect(outbound).toHaveLength(0);
-    expect((await agent.get('/api/v1/chat')).body.turnsLeft).toBe(5);
+    expect((await agent.get('/api/v1/chat')).body.turnsLeft).toBe(15);
 
     geminiAnswer = {
       paragraphs: [
@@ -880,7 +880,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       followUpChipIds: [],
     };
     const first = await ask({ question: 'How can I walk more?' });
-    expect(first.body).toMatchObject({ status: 'answered', turnsLeft: 4 });
+    expect(first.body).toMatchObject({ status: 'answered', turnsLeft: 14 });
     const sent = outbound.find((o) => o.url.includes('generativelanguage'))?.body ?? '';
     expect(sent).toContain('How can I walk more?');
     for (const secret of ['chat-user@example.com', 'phq9', 'gad7']) expect(sent).not.toContain(secret);
@@ -892,28 +892,29 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     expect((await ask({ question: 'Who won the football match?' })).body).toMatchObject({
       status: 'off_topic',
       paragraphs: [],
-      turnsLeft: 3,
+      turnsLeft: 13,
     });
     geminiAnswer = {
       paragraphs: [{ text: 'Short walks count.', sourceIds: ['guide.tpl.first_step'] }],
       followUpChipIds: [],
     };
-    expect((await ask({ chipId: 'tips' })).body.turnsLeft).toBe(2);
-    expect((await ask({ question: 'And fruit?' })).body.turnsLeft).toBe(1);
-    expect((await ask({ question: 'And salt?' })).body.turnsLeft).toBe(0);
-    const sixth = await ask({ question: 'One more?' });
-    expect(sixth.status).toBe(429);
-    expect(sixth.body.error.code).toBe('CHAT_LIMIT');
+    expect((await ask({ chipId: 'tips' })).body.turnsLeft).toBe(12);
+    expect((await ask({ question: 'And fruit?' })).body.turnsLeft).toBe(11);
+    for (let left = 10; left >= 0; left--)
+      expect((await ask({ question: 'And salt?' })).body.turnsLeft).toBe(left);
+    const overLimit = await ask({ question: 'One more?' });
+    expect(overLimit.status).toBe(429);
+    expect(overLimit.body.error.code).toBe('CHAT_LIMIT');
 
     const chatLog = await db.query("SELECT * FROM guide_request_log WHERE chip_id = 'chat'");
-    expect(chatLog.rows).toHaveLength(5);
+    expect(chatLog.rows).toHaveLength(15);
     expect(JSON.stringify(chatLog.rows)).not.toMatch(/walk more|football|fruit/);
 
     const facilitator = await signup('facilitator', 'chat-facilitator@example.com');
     const general = await facilitator.agent
       .post('/api/v1/chat')
       .send({ language: 'en', question: 'What does Rinda check?' });
-    expect(general.body).toMatchObject({ status: 'answered', turnsLeft: 4 });
+    expect(general.body).toMatchObject({ status: 'answered', turnsLeft: 14 });
   });
 
   it('email reports: on by default for email accounts, can be switched off, NCD results only (ADR-020)', async () => {

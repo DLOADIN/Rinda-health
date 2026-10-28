@@ -8,7 +8,7 @@ import '@/lib/i18n';
 const setup = () => {
   const fetchSpy = vi
     .spyOn(globalThis, 'fetch')
-    .mockImplementation(async () => new Response(JSON.stringify({ available: true, turnsLeft: 5 })));
+    .mockImplementation(async () => new Response(JSON.stringify({ available: true, turnsLeft: 15 })));
   render(
     <MemoryRouter>
       <ChatPanel

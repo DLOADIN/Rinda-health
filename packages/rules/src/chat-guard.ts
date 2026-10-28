@@ -1,7 +1,7 @@
 export type ChatCheck = 'ok' | 'crisis' | 'personal' | 'wellness' | 'empty';
 
 export const CHAT_MAX_CHARS = 200;
-export const CHAT_TURNS_PER_DAY = 5;
+export const CHAT_TURNS_PER_DAY = 15;
 
 const SELF = '(?:my\\s*self|myself)';
 
