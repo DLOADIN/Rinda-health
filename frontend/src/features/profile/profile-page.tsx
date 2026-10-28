@@ -296,7 +296,7 @@ function EmailReportsCard() {
           <Switch
             id="email-reports-toggle"
             checked={data?.email ?? false}
-            disabled={!data?.available || !data.hasEmail || isLoading}
+            disabled={!data?.hasEmail || isLoading}
             onCheckedChange={(email) =>
               void save({ email }).then((r) =>
                 !('error' in r) ? toast.success(t('emailReports.saved')) : undefined,

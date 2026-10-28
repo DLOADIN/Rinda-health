@@ -77,8 +77,8 @@ function DeliveryForm({
   const [saveEmail] = useSetEmailReportsMutation();
   const [saveSms] = useSetSmsNoticesMutation();
   const [updateMe] = useUpdateMeMutation();
-  const emailUsable = email.available && email.hasEmail;
-  const smsUsable = sms.available && sms.hasPhone;
+  const emailUsable = email.hasEmail;
+  const smsUsable = sms.hasPhone;
   const [wantEmail, setWantEmail] = useState(email.email);
   const [wantSms, setWantSms] = useState(sms.sms);
   const [language, setLanguage] = useState(me.preferredLanguage);
@@ -174,10 +174,7 @@ export function useDeliveryPrompt(isParticipant: boolean) {
   const [manual, setManual] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const undecided = Boolean(
-    email &&
-    sms &&
-    ((email.available && email.hasEmail && !email.decided) ||
-      (sms.available && sms.hasPhone && !sms.decided)),
+    email && sms && ((email.hasEmail && !email.decided) || (sms.hasPhone && !sms.decided)),
   );
   const open = manual || (!dismissed && undecided);
   const setOpen = (next: boolean) => {

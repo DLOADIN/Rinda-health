@@ -27,7 +27,7 @@ export function SmsCard() {
           <Switch
             id="sms-toggle"
             checked={data?.sms ?? false}
-            disabled={!data?.available || !data.hasPhone || isLoading}
+            disabled={!data?.hasPhone || isLoading}
             onCheckedChange={(sms) =>
               void save({ sms }).then((r) => (!('error' in r) ? toast.success(t('sms.saved')) : undefined))
             }

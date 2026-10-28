@@ -42,7 +42,7 @@
     "body": "Get a text message after each check-up with your results and numbers, tips and a link to the full report. Mood and stress results are never sent. Anyone who can open your phone can read it.",
     "toggle": "Text me my check-up summaries",
     "needPhone": "Add your phone number in \"My details\" above to get these.",
-    "unavailable": "Text messages are not switched on yet.",
+    "unavailable": "Sending is paused right now. Your choice is saved and used once it starts.",
     "saved": "Your choice was saved."
   },
   "delivery": {

@@ -4033,8 +4033,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       'SELECT preferred_language, email FROM users WHERE id = $1',
       [me(req).id],
     );
-    const flags = await currentFlags(database, config);
-    if (body.email && !(flags.messaging && emailConfigured(config) && user?.email)) {
+    if (body.email && !user?.email) {
       throw new AppError(409, 'CONFLICT', 'Email reports are not available.');
     }
     await database.query(
@@ -4089,8 +4088,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       'SELECT preferred_language, phone FROM users WHERE id = $1',
       [me(req).id],
     );
-    const flags = await currentFlags(database, config);
-    if (body.sms && !(flags.messaging && smsConfigured(config) && user?.phone)) {
+    if (body.sms && !user?.phone) {
       throw new AppError(409, 'CONFLICT', 'Text messages are not available.');
     }
     await database.query(

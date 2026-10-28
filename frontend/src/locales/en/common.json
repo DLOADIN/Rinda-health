@@ -423,7 +423,7 @@
     "body": "Get a summary of each check-up by email: your results and numbers, tips and a plan for the week. Mood and stress results are never emailed. Anyone who can open your email can read it.",
     "toggle": "Email me my check-up summaries",
     "needEmail": "Add your email address in \"My details\" above to get these.",
-    "unavailable": "Email reports are not switched on yet.",
+    "unavailable": "Sending is paused right now. Your choice is saved and used once it starts.",
     "saved": "Your choice was saved.",
     "send": "Email me this summary",
     "sent": "The summary was sent to your email.",
