@@ -58,12 +58,6 @@ export interface ConsentStatus {
   follow_up: boolean;
 }
 
-export interface WhatsAppStatus {
-  whatsapp: boolean;
-  available: boolean;
-  hasPhone: boolean;
-}
-
 export interface EmailReportStatus {
   email: boolean;
   available: boolean;
@@ -243,7 +237,7 @@ export const api = createApi({
     logout: b.mutation<void, void>({ query: () => ({ url: '/auth/logout', method: 'POST' }) }),
     updateMe: b.mutation<Me, UpdateMeRequest>({
       query: (body) => ({ url: '/me', method: 'PATCH', body }),
-      invalidatesTags: ['Me'],
+      invalidatesTags: ['Me', 'Messaging'],
     }),
     changePassword: b.mutation<void, { currentPassword?: string; newPassword: string }>({
       query: (body) => ({ url: '/me/password', method: 'POST', body }),
@@ -318,14 +312,6 @@ export const api = createApi({
     }),
     guideFeedback: b.mutation<void, { requestId: string; helpful: boolean }>({
       query: (body) => ({ url: '/guide/feedback', method: 'POST', body }),
-    }),
-    whatsapp: b.query<WhatsAppStatus, void>({
-      query: () => '/participant/whatsapp',
-      providesTags: ['Messaging'],
-    }),
-    setWhatsApp: b.mutation<{ whatsapp: boolean }, { whatsapp: boolean }>({
-      query: (body) => ({ url: '/participant/whatsapp', method: 'PUT', body }),
-      invalidatesTags: ['Messaging'],
     }),
     emailReports: b.query<EmailReportStatus, void>({
       query: () => '/participant/email-reports',
@@ -494,8 +480,6 @@ export const {
   useExplainMutation,
   useGuideFeedbackMutation,
   useEmailReportsQuery,
-  useWhatsappQuery,
-  useSetWhatsAppMutation,
   useSetEmailReportsMutation,
   useSendEmailReportMutation,
   useAiOptInQuery,

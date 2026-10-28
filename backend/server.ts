@@ -68,9 +68,7 @@ import {
   HandoverEnvelope,
   HandoverPayload,
   DeviceClaimRequest,
-  WhatsAppPreference,
   AiPreference,
-  SmsPreference,
   LoginRequest,
   parseIdentifier,
   normalisePhone,
@@ -154,14 +152,6 @@ const EnvSchema = z
     EMAIL_FROM: optionalText,
     EMAIL_FROM_NAME: z.string().default('Rinda Health Services'),
     MESSAGING_APPROVAL_REF: optionalText,
-    PINDO_API_TOKEN: optionalText,
-    PINDO_SENDER: z.string().min(1).max(11).default('PindoTest'),
-    WHATSAPP_TOKEN: optionalText,
-    WHATSAPP_PHONE_NUMBER_ID: optionalText,
-    WHATSAPP_TEMPLATE: z.string().default('rinda_summary_ready'),
-    WHATSAPP_TEMPLATE_LANGUAGE_EN: z.string().default('en'),
-    WHATSAPP_TEMPLATE_LANGUAGE_RW: z.string().default('en'),
-    WHATSAPP_API_VERSION: z.string().default('v21.0'),
     SEED_PASSWORD: optionalText,
     HANDOVER_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
     HANDOVER_SECRET_PREVIOUS: z.string().min(32, 'must be at least 32 characters').optional(),
@@ -225,8 +215,6 @@ export const generativeGuideAllowed = (c: AppConfig) =>
     ? Boolean(c.GEMINI_API_KEY) && c.GEMINI_PAID_TIER === 'true'
     : guideChain(c).length > 0);
 const emailConfigured = (c: AppConfig) => Boolean(c.BREVO_API_KEY && c.EMAIL_FROM);
-const whatsappConfigured = (c: AppConfig) => Boolean(c.WHATSAPP_TOKEN && c.WHATSAPP_PHONE_NUMBER_ID);
-const smsConfigured = (c: AppConfig) => Boolean(c.PINDO_API_TOKEN);
 
 const SENSITIVE_KEYS = [
   'pin',
@@ -1265,125 +1253,6 @@ export function composeReportEmail(
   return { subject: lookup('email.report.subject'), text, html };
 }
 
-export function composeSmsNotice(language: 'en' | 'rw', link: string): string {
-  return fillSlots(MESSAGES[language]['sms.notice.ready'] ?? '', { link });
-}
-
-export async function sendSmsNotice(
-  db: Db,
-  config: AppConfig,
-  logger: Logger,
-  fetchFn: typeof fetch,
-  userId: string,
-): Promise<'sent' | 'failed' | 'skipped'> {
-  if (!smsConfigured(config) || !(await currentFlags(db, config)).messaging) return 'skipped';
-  const consent = await one<{ granted: boolean }>(
-    db,
-    "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'sms_notices' ORDER BY created_at DESC LIMIT 1",
-    [userId],
-  );
-  if (!consent?.granted) return 'skipped';
-  const user = await one<{ phone: string | null; preferred_language: 'en' | 'rw' }>(
-    db,
-    'SELECT phone, preferred_language FROM users WHERE id = $1 AND active AND deleted_at IS NULL',
-    [userId],
-  );
-  const record = async (status: 'sent' | 'failed' | 'skipped', errorCode: string | null) => {
-    await db.query(
-      'INSERT INTO message_events (user_id, channel, template, status, error_code) VALUES ($1, $2, $3, $4, $5)',
-      [userId, 'sms', 'sms.notice.ready', status, errorCode],
-    );
-    return status;
-  };
-  if (!user?.phone) return record('skipped', 'no_phone');
-  let res: globalThis.Response;
-  try {
-    res = await fetchFn('https://api.pindo.io/v1/sms/', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${config.PINDO_API_TOKEN ?? ''}`,
-      },
-      signal: AbortSignal.timeout(15_000),
-      body: JSON.stringify({
-        to: user.phone,
-        text: composeSmsNotice(user.preferred_language, `${config.PUBLIC_URL}/app`),
-        sender: config.PINDO_SENDER,
-      }),
-    });
-  } catch {
-    logger.warn({ event: 'sms_notice', status: 'failed' }, 'message');
-    return record('failed', 'network');
-  }
-  logger.info({ event: 'sms_notice', status: res.ok ? 'sent' : 'failed', httpStatus: res.status }, 'message');
-  return record(res.ok ? 'sent' : 'failed', res.ok ? null : `http_${res.status}`);
-}
-
-async function sendWhatsAppNotice(
-  db: Db,
-  config: AppConfig,
-  logger: Logger,
-  fetchFn: typeof fetch,
-  userId: string,
-): Promise<'sent' | 'failed' | 'skipped'> {
-  if (!whatsappConfigured(config) || !(await currentFlags(db, config)).messaging) return 'skipped';
-  const consent = await one<{ granted: boolean }>(
-    db,
-    "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'whatsapp_notices' ORDER BY created_at DESC LIMIT 1",
-    [userId],
-  );
-  if (!consent?.granted) return 'skipped';
-  const user = await one<{ phone: string | null; preferred_language: 'en' | 'rw' }>(
-    db,
-    'SELECT phone, preferred_language FROM users WHERE id = $1 AND active AND deleted_at IS NULL',
-    [userId],
-  );
-  const record = async (status: 'sent' | 'failed' | 'skipped', errorCode: string | null) => {
-    await db.query(
-      'INSERT INTO message_events (user_id, channel, template, status, error_code) VALUES ($1, $2, $3, $4, $5)',
-      [userId, 'whatsapp', config.WHATSAPP_TEMPLATE, status, errorCode],
-    );
-    return status;
-  };
-  if (!user?.phone) return record('skipped', 'no_phone');
-  let res: globalThis.Response;
-  try {
-    res = await fetchFn(
-      `https://graph.facebook.com/${config.WHATSAPP_API_VERSION}/${config.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${config.WHATSAPP_TOKEN ?? ''}`,
-        },
-        signal: AbortSignal.timeout(15_000),
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: user.phone.replace(/^\+/, ''),
-          type: 'template',
-          template: {
-            name: config.WHATSAPP_TEMPLATE,
-            language: {
-              code:
-                user.preferred_language === 'rw'
-                  ? config.WHATSAPP_TEMPLATE_LANGUAGE_RW
-                  : config.WHATSAPP_TEMPLATE_LANGUAGE_EN,
-            },
-          },
-        }),
-      },
-    );
-  } catch {
-    logger.warn({ event: 'whatsapp_notice', status: 'failed' }, 'message');
-    return record('failed', 'network');
-  }
-  logger.info(
-    { event: 'whatsapp_notice', status: res.ok ? 'sent' : 'failed', httpStatus: res.status },
-    'message',
-  );
-  return record(res.ok ? 'sent' : 'failed', res.ok ? null : `http_${res.status}`);
-}
-
 async function susScores(db: Db): Promise<number[]> {
   const list = await rows<{ user_id: string; created_at: Date; item_code: string; value: number }>(
     db,
@@ -2273,16 +2142,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       );
     }
     if (inserted) {
-      afterResponse(
-        sendWhatsAppNotice(database, config, logger, fetchFn, userId).catch(() =>
-          logger.warn({ reqId, event: 'whatsapp_notice_error' }, 'message'),
-        ),
-      );
-      afterResponse(
-        sendSmsNotice(database, config, logger, fetchFn, userId).catch(() =>
-          logger.warn({ reqId, event: 'sms_notice_error' }, 'message'),
-        ),
-      );
       const language = body.language;
       afterResponse(
         (async () => {
@@ -3712,7 +3571,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     const templatesOnly =
       !flags.guideGenerative ||
       !generativeGuideAllowed(config) ||
-      aiConsent?.granted !== true ||
+      aiConsent?.granted === false ||
       row.plan.urgent !== null ||
       row.safety.tier !== null ||
       body.language === 'rw' ||
@@ -3847,7 +3706,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'ai_explanations' ORDER BY created_at DESC LIMIT 1",
       [userId],
     );
-    return consent?.granted === true;
+    return consent?.granted !== false;
   };
 
   chat.get('/', async (req, res) => {
@@ -4066,90 +3925,6 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/participant/email-reports', emailReports);
 
-  const whatsapp = Router();
-  whatsapp.use(requireAuth, requireRole('participant'));
-
-  whatsapp.get('/', async (req, res) => {
-    const database = needDb();
-    const consent = await one<{ granted: boolean }>(
-      database,
-      "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'whatsapp_notices' ORDER BY created_at DESC LIMIT 1",
-      [me(req).id],
-    );
-    const user = await one<{ phone: string | null }>(database, 'SELECT phone FROM users WHERE id = $1', [
-      me(req).id,
-    ]);
-    const flags = await currentFlags(database, config);
-    res.json({
-      whatsapp: consent?.granted ?? false,
-      available: flags.messaging && whatsappConfigured(config),
-      hasPhone: Boolean(user?.phone),
-    });
-  });
-
-  whatsapp.put('/', async (req, res) => {
-    const database = needDb();
-    const body = WhatsAppPreference.parse(req.body);
-    const user = await one<{ preferred_language: 'en' | 'rw'; phone: string | null }>(
-      database,
-      'SELECT preferred_language, phone FROM users WHERE id = $1',
-      [me(req).id],
-    );
-    const flags = await currentFlags(database, config);
-    if (body.whatsapp && !(flags.messaging && whatsappConfigured(config) && user?.phone)) {
-      throw new AppError(409, 'CONFLICT', 'WhatsApp notices are not available.');
-    }
-    await database.query(
-      `INSERT INTO consent_events (user_id, scope, granted, consent_doc_version, language)
-       VALUES ($1, 'whatsapp_notices', $2, 'whatsapp-0.1.0', $3)`,
-      [me(req).id, body.whatsapp, user?.preferred_language ?? 'en'],
-    );
-    res.json(body);
-  });
-  mount('/api/v1/participant/whatsapp', whatsapp);
-
-  const sms = Router();
-  sms.use(requireAuth, requireRole('participant'));
-
-  sms.get('/', async (req, res) => {
-    const database = needDb();
-    const consent = await one<{ granted: boolean }>(
-      database,
-      "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'sms_notices' ORDER BY created_at DESC LIMIT 1",
-      [me(req).id],
-    );
-    const user = await one<{ phone: string | null }>(database, 'SELECT phone FROM users WHERE id = $1', [
-      me(req).id,
-    ]);
-    const flags = await currentFlags(database, config);
-    res.json({
-      sms: consent?.granted ?? false,
-      available: flags.messaging && smsConfigured(config),
-      hasPhone: Boolean(user?.phone),
-    });
-  });
-
-  sms.put('/', async (req, res) => {
-    const database = needDb();
-    const body = SmsPreference.parse(req.body);
-    const user = await one<{ preferred_language: 'en' | 'rw'; phone: string | null }>(
-      database,
-      'SELECT preferred_language, phone FROM users WHERE id = $1',
-      [me(req).id],
-    );
-    const flags = await currentFlags(database, config);
-    if (body.sms && !(flags.messaging && smsConfigured(config) && user?.phone)) {
-      throw new AppError(409, 'CONFLICT', 'Text messages are not available.');
-    }
-    await database.query(
-      `INSERT INTO consent_events (user_id, scope, granted, consent_doc_version, language)
-       VALUES ($1, 'sms_notices', $2, 'sms-0.1.0', $3)`,
-      [me(req).id, body.sms, user?.preferred_language ?? 'en'],
-    );
-    res.json(body);
-  });
-  mount('/api/v1/participant/sms-notices', sms);
-
   const aiOptIn = Router();
   aiOptIn.use(requireAuth, requireRole('participant'));
 
@@ -4162,7 +3937,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     );
     const flags = await currentFlags(database, config);
     res.json({
-      ai: consent?.granted ?? false,
+      ai: consent?.granted ?? true,
       available: flags.guideGenerative && generativeGuideAllowed(config),
     });
   });
@@ -4376,34 +4151,6 @@ async function main() {
   }
   const command = process.argv[2] ?? 'serve';
   const logger = createLogger(config.LOG_LEVEL);
-
-  if (command === 'sms-check') {
-    const to = process.argv[3] ?? '';
-    if (!config.PINDO_API_TOKEN || !/^\+\d{9,15}$/.test(to)) {
-      console.error('Set PINDO_API_TOKEN in .env and give a number like +250788123456.');
-      process.exitCode = 1;
-      return;
-    }
-    const res = await fetch('https://api.pindo.io/v1/sms/', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${config.PINDO_API_TOKEN}` },
-      body: JSON.stringify({
-        to,
-        text: composeSmsNotice('en', `${config.PUBLIC_URL}/app`),
-        sender: config.PINDO_SENDER,
-      }),
-    }).catch(() => null);
-    const body = (await res?.json().catch(() => null)) as {
-      status?: string;
-      remaining_balance?: number;
-    } | null;
-    console.log(
-      res
-        ? `HTTP ${res.status} ${body?.status ?? ''} (balance ${body?.remaining_balance ?? 'unknown'})`
-        : 'network error',
-    );
-    return;
-  }
 
   if (command === 'models-check') {
     await checkModels(config);

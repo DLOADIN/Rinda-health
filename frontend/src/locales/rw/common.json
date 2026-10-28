@@ -422,7 +422,7 @@
     "title": "Raporo kuri imeri",
     "body": "Akira incamake ya buri suzuma kuri imeri: ibisubizo n'imibare yawe, inama na gahunda y'icyumweru. Ibisubizo by'imitekerereze n'umunaniro ntibijya byoherezwa. Umuntu wese ushobora gufungura imeri yawe ashobora kuyisoma.",
     "toggle": "Nyoherereza incamake z'isuzuma ryanjye kuri imeri",
-    "needEmail": "Ibi bisaba konti ifite aderesi ya imeri.",
+    "needEmail": "Shyiramo aderesi ya imeri yawe muri \"Amakuru yanjye\" hejuru kugira ngo uzibone.",
     "unavailable": "Raporo kuri imeri ntiziratangira gukora.",
     "saved": "Icyemezo cyawe cyabitswe.",
     "send": "Nyoherereza iyi ncamake kuri imeri",
@@ -445,14 +445,6 @@
     "title": "Uko ibisubizo bibarwa",
     "ncd": "Imibereho n'ibipimo by'umubiri",
     "wellness": "Imitekerereze n'umunaniro"
-  },
-  "whatsapp": {
-    "title": "Ubutumwa kuri WhatsApp",
-    "body": "Akira ubutumwa kuri WhatsApp igihe incamake y'isuzuma ryawe yiteguye. Ubutumwa ntibujya bushyiramo ibisubizo byawe.",
-    "toggle": "Nyoherereza ubutumwa kuri WhatsApp",
-    "needPhone": "Ongeraho nimero ya telefoni yawe muri \"Amakuru yanjye\" kugira ngo ukoreshe ibi.",
-    "unavailable": "Ubutumwa kuri WhatsApp ntiburatangira gukora.",
-    "saved": "Icyemezo cyawe cyabitswe."
   },
   "setup": {
     "working": {

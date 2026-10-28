@@ -30,8 +30,7 @@
     "check:size": "node scripts/check-size.mjs",
     "check": "npm run lint && npm run typecheck && npm run test:coverage && vitest run && npm run content:validate && npm run build && npm run check:size && npm run check:contrast",
     "db:check": "npm run db:check -w @rinda/backend",
-    "models:check": "npm run models:check -w @rinda/backend",
-    "sms:check": "npm run sms:check -w @rinda/backend --"
+    "models:check": "npm run models:check -w @rinda/backend"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

@@ -1,5 +1,5 @@
 import type { Me, ParticipantProfile } from '@rinda/schemas';
-import { Download, LogOut, Mail, Smartphone, Sparkles, MessageCircle } from 'lucide-react';
+import { Download, LogOut, Mail, Smartphone, Sparkles } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -23,8 +23,6 @@ import {
   useChangeConsentMutation,
   useConsentsQuery,
   useEmailReportsQuery,
-  useWhatsappQuery,
-  useSetWhatsAppMutation,
   useSetEmailReportsMutation,
   useAiOptInQuery,
   useSetAiOptInMutation,
@@ -34,7 +32,6 @@ import {
   useUpdateMeMutation,
 } from '@/lib/api';
 import { PhoneHealthCard } from '@/features/profile/phone-health-card';
-import { SmsCard } from '@/features/profile/sms-card';
 import { formatDate } from '@/lib/format';
 
 function DetailsCard({ me }: { me: Me }) {
@@ -278,45 +275,6 @@ function PasswordCard({ me }: { me: Me }) {
   );
 }
 
-function WhatsAppCard() {
-  const { t } = useTranslation();
-  const { data } = useWhatsappQuery();
-  const [save, { isLoading, error }] = useSetWhatsAppMutation();
-  return (
-    <Card className="glass">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <MessageCircle aria-hidden="true" className="size-5 text-brand-ember-strong" />
-          {t('whatsapp.title')}
-        </CardTitle>
-        <CardDescription>{t('whatsapp.body')}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <Field orientation="horizontal" className="min-h-11 justify-between">
-          <FieldLabel htmlFor="wa-toggle">{t('whatsapp.toggle')}</FieldLabel>
-          <Switch
-            id="wa-toggle"
-            checked={data?.whatsapp ?? false}
-            disabled={!data?.available || !data.hasPhone || isLoading}
-            onCheckedChange={(whatsapp) =>
-              void save({ whatsapp }).then((r) =>
-                !('error' in r) ? toast.success(t('whatsapp.saved')) : undefined,
-              )
-            }
-          />
-        </Field>
-        {data && !data.available ? (
-          <p className="text-sm text-muted-foreground">{t('whatsapp.unavailable')}</p>
-        ) : null}
-        {data?.available && !data.hasPhone ? (
-          <p className="text-sm text-muted-foreground">{t('whatsapp.needPhone')}</p>
-        ) : null}
-        <ApiError error={error} />
-      </CardContent>
-    </Card>
-  );
-}
-
 function EmailReportsCard() {
   const { t } = useTranslation();
   const { data } = useEmailReportsQuery();
@@ -505,8 +463,6 @@ export function ProfilePage({ me, onSignOut }: { me: Me; onSignOut: () => void }
         {isParticipant ? <AboutMeCard /> : null}
         <PasswordCard me={me} />
         {isParticipant ? <ConsentsCard /> : null}
-        {isParticipant ? <WhatsAppCard /> : null}
-        {isParticipant ? <SmsCard /> : null}
         {isParticipant ? <EmailReportsCard /> : null}
         {isParticipant ? <AiCard /> : null}
         {isParticipant ? <PhoneHealthCard /> : null}

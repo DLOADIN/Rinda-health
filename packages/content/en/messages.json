@@ -14,7 +14,6 @@
     "email.report.percent": "{percent}% of the healthy target",
     "email.report.explanation": "What this means for you",
     "email.report.chat": "Have a question about your results? Open Rinda and ask in the chat. You can ask up to 5 questions a day.",
-    "sms.notice.ready": "Rinda: your check-up results are ready. See them and chat with Rinda at {link} To stop these texts, use your Rinda Profile.",
     "email.report.heading": "Your check-up summary",
     "email.report.date": "Check-up on {date}",
     "email.report.areas": "Your results, area by area",
