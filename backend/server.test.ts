@@ -340,6 +340,8 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     ETHICS_AMENDMENT_REF: 'SYNTHETIC-DEV-ONLY',
     BREVO_API_KEY: 'test-brevo-key',
     EMAIL_FROM: 'reports@rinda.test',
+    PINDO_API_TOKEN: 'test-pindo-token',
+    SMS_ONLY_TO: '+250788555999, +250788555111',
     PUBLIC_URL: 'http://localhost:5173',
   });
   const { logger, lines } = sinkLogger();
@@ -361,6 +363,8 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       );
     }
     if (url.includes('api.brevo.com')) return new Response('{"messageId":"<test@brevo>"}', { status: 201 });
+    if (url.includes('api.pindo.io'))
+      return new Response('{"status":"sent","sms_id":"out_sms_test"}', { status: 201 });
     return new Response(
       JSON.stringify({
         id_token: `e30.${Buffer.from(JSON.stringify(googleClaims)).toString('base64url')}.sig`,
@@ -951,7 +955,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     const scope = globalThis as Record<symbol, unknown>;
     scope[contextKey] = { get: () => ({ waitUntil: (task: Promise<unknown>) => kept.push(task) }) };
     const checkup = await Promise.resolve(submit().expect(201)).finally(() => delete scope[contextKey]);
-    expect(kept).toHaveLength(1);
+    expect(kept).toHaveLength(2);
     await Promise.all(kept);
     expect(brevoCalls()).toHaveLength(1);
     await waitForBrevo(1);
@@ -975,7 +979,10 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     expect(payload.htmlContent).not.toContain('<script');
     const paragraphs = String(payload.textContent).split('\n\n');
     expect(new Set(paragraphs).size).toBe(paragraphs.length);
-    const events = await db.query('SELECT channel, status FROM message_events WHERE user_id = $1', [me.id]);
+    const events = await db.query(
+      "SELECT channel, status FROM message_events WHERE user_id = $1 AND channel = 'email'",
+      [me.id],
+    );
     expect(events.rows).toEqual([{ channel: 'email', status: 'sent' }]);
 
     await agent
@@ -1004,6 +1011,70 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       .expect(201);
     await waitForBrevo(1);
     expect(JSON.parse(brevoCalls()[0]?.body ?? '{}').to).toEqual([{ email: 'default-on@example.com' }]);
+  });
+
+  it('SMS reports: on by default for phone accounts, NCD results only, can be switched off or limited', async () => {
+    const byEmail = await signup('participant', 'sms-no-phone@example.com');
+    expect((await byEmail.agent.get('/api/v1/participant/sms-notices')).body).toEqual({
+      sms: false,
+      available: true,
+      hasPhone: false,
+    });
+    await byEmail.agent.put('/api/v1/participant/sms-notices').send({ sms: true }).expect(409);
+
+    const { agent, me } = await signup('participant', '0788 555 999');
+    expect((await agent.get('/api/v1/participant/sms-notices')).body).toEqual({
+      sms: true,
+      available: true,
+      hasPhone: true,
+    });
+    const submit = (who = agent) =>
+      who
+        .post('/api/v1/participant/assessments')
+        .set('Idempotency-Key', randomUUID())
+        .send({ language: 'en', startedAt: new Date().toISOString(), answers });
+    const calls = () => outbound.filter((o) => o.url.includes('api.pindo.io'));
+    const settle = () => new Promise((r) => setTimeout(r, 800));
+
+    outbound.length = 0;
+    const checkup = await submit().expect(201);
+    for (let i = 0; i < 40 && calls().length < 1; i++) await new Promise((r) => setTimeout(r, 250));
+    expect(calls()).toHaveLength(1);
+    const call = calls()[0];
+    expect(call?.url).toBe('https://api.pindo.io/v1/sms/');
+    const body = JSON.parse(call?.body ?? '{}');
+    expect(body).toMatchObject({ to: '+250788555999', sender: 'PindoTest' });
+    expect(body.text).toContain('Blood pressure: Confirm at a health centre');
+    expect(body.text).toContain(
+      'Physical activity: Below recommended (60 minutes a week, 40% of the healthy target)',
+    );
+    expect(body.text).toContain(`http://localhost:5173/app/results/${checkup.body.id}`);
+    expect(body.text).not.toMatch(/phq|gad|mood|anxiety|depress|test-pindo-token/i);
+    expect(body.text).toMatch(/^[\x20-\x7E\n]*$/);
+    const events = await db.query(
+      "SELECT status FROM message_events WHERE user_id = $1 AND channel = 'sms'",
+      [me.id],
+    );
+    expect(events.rows).toEqual([{ status: 'sent' }]);
+
+    await agent.put('/api/v1/participant/sms-notices').send({ sms: false, extra: 1 }).expect(400);
+    await agent.put('/api/v1/participant/sms-notices').send({ sms: false }).expect(200);
+    outbound.length = 0;
+    await submit().expect(201);
+    await settle();
+    expect(calls()).toHaveLength(0);
+
+    const outside = await signup('participant', '0788 555 222');
+    outbound.length = 0;
+    await submit(outside.agent).expect(201);
+    const smsEvents = () =>
+      db.query("SELECT status, error_code FROM message_events WHERE user_id = $1 AND channel = 'sms'", [
+        outside.me.id,
+      ]);
+    for (let i = 0; i < 40 && (await smsEvents()).rows.length < 1; i++)
+      await new Promise((r) => setTimeout(r, 250));
+    expect(calls()).toHaveLength(0);
+    expect((await smsEvents()).rows).toEqual([{ status: 'skipped', error_code: 'not_allowed' }]);
   });
 
   it('consent comes first: no check-up without taking part, and choices can change later (FR-02, FR-44)', async () => {

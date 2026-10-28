@@ -68,6 +68,7 @@ import {
   HandoverEnvelope,
   HandoverPayload,
   DeviceClaimRequest,
+  SmsPreference,
   AiPreference,
   LoginRequest,
   parseIdentifier,
@@ -150,6 +151,9 @@ const EnvSchema = z
     GEMINI_PAID_TIER: z.preprocess(emptyAsUndefined, z.enum(['true', 'false']).default('false')),
     BREVO_API_KEY: optionalText,
     EMAIL_FROM: optionalText,
+    PINDO_API_TOKEN: optionalText,
+    PINDO_SENDER: z.string().min(1).max(11).default('PindoTest'),
+    SMS_ONLY_TO: optionalText,
     EMAIL_FROM_NAME: z.string().default('Rinda Health Services'),
     MESSAGING_APPROVAL_REF: optionalText,
     SEED_PASSWORD: optionalText,
@@ -214,6 +218,12 @@ export const generativeGuideAllowed = (c: AppConfig) =>
   (c.APP_ENV === 'pilot'
     ? Boolean(c.GEMINI_API_KEY) && c.GEMINI_PAID_TIER === 'true'
     : guideChain(c).length > 0);
+const smsConfigured = (c: AppConfig) => Boolean(c.PINDO_API_TOKEN);
+const smsOnlyTo = (c: AppConfig) =>
+  (c.SMS_ONLY_TO ?? '')
+    .split(',')
+    .map((n) => n.trim())
+    .filter(Boolean);
 const emailConfigured = (c: AppConfig) => Boolean(c.BREVO_API_KEY && c.EMAIL_FROM);
 
 const SENSITIVE_KEYS = [
@@ -1253,6 +1263,124 @@ export function composeReportEmail(
   return { subject: lookup('email.report.subject'), text, html };
 }
 
+const toGsm = (s: string) =>
+  s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/…/g, '...').replace(/·/g, '-');
+
+export function composeSmsReport(
+  language: 'en' | 'rw',
+  results: AssessmentResult,
+  plan: Plan,
+  link: string,
+  checkedAt: Date,
+): string {
+  const content = BUNDLED_CONTENT[language];
+  const lookup = (id: string) =>
+    MESSAGES[language][id] ?? content.text[id] ?? GUIDE_ANSWERS[language][id] ?? id;
+  const known = (id: string) => (lookup(id) !== id ? lookup(id) : null);
+  const valueDomains = ['activity', 'diet', 'bmi', 'waist', 'alcohol'];
+  const date = new Intl.DateTimeFormat(language === 'rw' ? 'rw-RW' : 'en-GB', {
+    dateStyle: 'long',
+    timeZone: 'Africa/Kigali',
+  }).format(checkedAt);
+  const lines = results.ncd.map((r) => {
+    const name = lookup(`guide.area.${r.domain}`);
+    if (r.band === 'insufficient') return `${name}: ${lookup('band.insufficient')}`;
+    const percent = targetPercent(r, RULESET_V1);
+    const details = [
+      r.value !== null && valueDomains.includes(r.domain)
+        ? fillSlots(lookup(`guide.value.${r.domain}`), { value: r.value })
+        : null,
+      percent === null ? null : fillSlots(lookup('email.report.percent'), { percent }),
+    ].filter(Boolean);
+    return `${name}: ${lookup(`band.${r.domain}.${r.band}`)}${details.length ? ` (${details.join(', ')})` : ''}`;
+  });
+  const tips = results.ncd.flatMap((r) => {
+    if (r.band === 'insufficient' || r.severity === 'ok' || r.domain === plan.urgent?.domain) return [];
+    const tip = known(`ga.${r.domain}.${r.band}.tips`);
+    return tip ? [`${lookup(`guide.area.${r.domain}`)}: ${tip}`] : [];
+  });
+  const firstStep = composeGuideAnswer('first_step', results, plan, lookup).paragraphs[0]?.text ?? null;
+  const urgentText = plan.urgent ? known(plan.urgent.contentId) : null;
+  return toGsm(
+    [
+      fillSlots(lookup('sms.report.intro'), { date }),
+      urgentText,
+      lines.join('\n'),
+      firstStep ? `${lookup('email.report.first')}: ${firstStep}` : null,
+      tips.length ? `${lookup('email.report.tips')}:\n${tips.join('\n')}` : null,
+      fillSlots(lookup('sms.report.link'), { link }),
+      lookup('sms.report.footer'),
+    ]
+      .filter((p): p is string => Boolean(p))
+      .join('\n\n'),
+  );
+}
+
+export async function sendSmsReport(
+  db: Db,
+  config: AppConfig,
+  logger: Logger,
+  fetchFn: typeof fetch,
+  userId: string,
+  assessmentId: string,
+): Promise<'sent' | 'failed' | 'skipped'> {
+  if (!smsConfigured(config) || !(await currentFlags(db, config)).messaging) return 'skipped';
+  const consent = await one<{ granted: boolean }>(
+    db,
+    "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'sms_notices' ORDER BY created_at DESC LIMIT 1",
+    [userId],
+  );
+  if (consent && !consent.granted) return 'skipped';
+  const user = await one<{ phone: string | null; preferred_language: 'en' | 'rw' }>(
+    db,
+    'SELECT phone, preferred_language FROM users WHERE id = $1 AND active AND deleted_at IS NULL',
+    [userId],
+  );
+  const row = await one<{ results: AssessmentResult; plan: Plan; created_at: Date }>(
+    db,
+    'SELECT results, plan, created_at FROM assessments WHERE id = $1 AND user_id = $2',
+    [assessmentId, userId],
+  );
+  const record = async (status: 'sent' | 'failed' | 'skipped', errorCode: string | null) => {
+    await db.query(
+      'INSERT INTO message_events (user_id, channel, template, status, error_code) VALUES ($1, $2, $3, $4, $5)',
+      [userId, 'sms', 'sms.report', status, errorCode],
+    );
+    return status;
+  };
+  if (!user?.phone) return record('skipped', 'no_phone');
+  if (!row) return record('skipped', 'no_checkup');
+  const onlyTo = smsOnlyTo(config);
+  if (onlyTo.length && !onlyTo.includes(user.phone)) return record('skipped', 'not_allowed');
+  let res: globalThis.Response;
+  try {
+    res = await fetchFn('https://api.pindo.io/v1/sms/', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${config.PINDO_API_TOKEN ?? ''}`,
+      },
+      signal: AbortSignal.timeout(15_000),
+      body: JSON.stringify({
+        to: user.phone,
+        text: composeSmsReport(
+          user.preferred_language,
+          row.results,
+          row.plan,
+          `${config.PUBLIC_URL}/app/results/${assessmentId}`,
+          row.created_at,
+        ),
+        sender: config.PINDO_SENDER,
+      }),
+    });
+  } catch {
+    logger.warn({ event: 'sms_report', status: 'failed' }, 'message');
+    return record('failed', 'network');
+  }
+  logger.info({ event: 'sms_report', status: res.ok ? 'sent' : 'failed', httpStatus: res.status }, 'message');
+  return record(res.ok ? 'sent' : 'failed', res.ok ? null : `http_${res.status}`);
+}
+
 async function susScores(db: Db): Promise<number[]> {
   const list = await rows<{ user_id: string; created_at: Date; item_code: string; value: number }>(
     db,
@@ -2142,6 +2270,11 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       );
     }
     if (inserted) {
+      afterResponse(
+        sendSmsReport(database, config, logger, fetchFn, userId, row.id).catch(() =>
+          logger.warn({ reqId, event: 'sms_report_error' }, 'message'),
+        ),
+      );
       const language = body.language;
       afterResponse(
         (async () => {
@@ -3925,6 +4058,48 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
   });
   mount('/api/v1/participant/email-reports', emailReports);
 
+  const sms = Router();
+  sms.use(requireAuth, requireRole('participant'));
+
+  sms.get('/', async (req, res) => {
+    const database = needDb();
+    const consent = await one<{ granted: boolean }>(
+      database,
+      "SELECT granted FROM consent_events WHERE user_id = $1 AND scope = 'sms_notices' ORDER BY created_at DESC LIMIT 1",
+      [me(req).id],
+    );
+    const user = await one<{ phone: string | null }>(database, 'SELECT phone FROM users WHERE id = $1', [
+      me(req).id,
+    ]);
+    const flags = await currentFlags(database, config);
+    res.json({
+      sms: (consent?.granted ?? true) && Boolean(user?.phone),
+      available: flags.messaging && smsConfigured(config),
+      hasPhone: Boolean(user?.phone),
+    });
+  });
+
+  sms.put('/', async (req, res) => {
+    const database = needDb();
+    const body = SmsPreference.parse(req.body);
+    const user = await one<{ preferred_language: 'en' | 'rw'; phone: string | null }>(
+      database,
+      'SELECT preferred_language, phone FROM users WHERE id = $1',
+      [me(req).id],
+    );
+    const flags = await currentFlags(database, config);
+    if (body.sms && !(flags.messaging && smsConfigured(config) && user?.phone)) {
+      throw new AppError(409, 'CONFLICT', 'Text messages are not available.');
+    }
+    await database.query(
+      `INSERT INTO consent_events (user_id, scope, granted, consent_doc_version, language)
+       VALUES ($1, 'sms_notices', $2, 'sms-0.2.0', $3)`,
+      [me(req).id, body.sms, user?.preferred_language ?? 'en'],
+    );
+    res.json(body);
+  });
+  mount('/api/v1/participant/sms-notices', sms);
+
   const aiOptIn = Router();
   aiOptIn.use(requireAuth, requireRole('participant'));
 
@@ -4151,6 +4326,30 @@ async function main() {
   }
   const command = process.argv[2] ?? 'serve';
   const logger = createLogger(config.LOG_LEVEL);
+
+  if (command === 'sms-check') {
+    const to = process.argv[3] ?? '';
+    if (!config.PINDO_API_TOKEN || !/^\+\d{9,15}$/.test(to)) {
+      console.error('Set PINDO_API_TOKEN in .env and give a number like +250788123456.');
+      process.exitCode = 1;
+      return;
+    }
+    const res = await fetch('https://api.pindo.io/v1/sms/', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${config.PINDO_API_TOKEN}` },
+      body: JSON.stringify({ to, text: MESSAGES.en['sms.report.test'] ?? '', sender: config.PINDO_SENDER }),
+    }).catch(() => null);
+    const body = (await res?.json().catch(() => null)) as {
+      status?: string;
+      remaining_balance?: number;
+    } | null;
+    console.log(
+      res
+        ? `HTTP ${res.status} ${body?.status ?? ''} (balance ${body?.remaining_balance ?? 'unknown'})`
+        : 'network error',
+    );
+    return;
+  }
 
   if (command === 'models-check') {
     await checkModels(config);

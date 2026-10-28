@@ -36,5 +36,13 @@
       "bloodGlucose": "Blood sugar",
       "sleep": "Sleep"
     }
+  },
+  "sms": {
+    "title": "Text messages (SMS)",
+    "body": "Get a text message after each check-up with your results and numbers, tips and a link to the full report. Mood and stress results are never sent. Anyone who can open your phone can read it.",
+    "toggle": "Text me my check-up summaries",
+    "needPhone": "Add your phone number in \"My details\" above to get these.",
+    "unavailable": "Text messages are not switched on yet.",
+    "saved": "Your choice was saved."
   }
 }

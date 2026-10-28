@@ -25,6 +25,10 @@
     "email.report.count.ok": "Looking good",
     "email.report.count.work": "To work on",
     "email.report.count.missing": "Not answered",
-    "email.report.footer": "Sent by Rinda Health Services"
+    "email.report.footer": "Sent by Rinda Health Services",
+    "sms.report.intro": "Rinda Health: your check-up summary ({date}).",
+    "sms.report.link": "See your full results and chat with Rinda: {link}",
+    "sms.report.footer": "Educational, not a diagnosis. To stop these texts, use your Rinda Profile.",
+    "sms.report.test": "Rinda Health: this is a test message. Text messages after check-ups are set up."
   }
 }

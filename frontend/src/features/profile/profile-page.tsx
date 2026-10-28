@@ -32,6 +32,7 @@ import {
   useUpdateMeMutation,
 } from '@/lib/api';
 import { PhoneHealthCard } from '@/features/profile/phone-health-card';
+import { SmsCard } from '@/features/profile/sms-card';
 import { formatDate } from '@/lib/format';
 
 function DetailsCard({ me }: { me: Me }) {
@@ -464,6 +465,7 @@ export function ProfilePage({ me, onSignOut }: { me: Me; onSignOut: () => void }
         <PasswordCard me={me} />
         {isParticipant ? <ConsentsCard /> : null}
         {isParticipant ? <EmailReportsCard /> : null}
+        {isParticipant ? <SmsCard /> : null}
         {isParticipant ? <AiCard /> : null}
         {isParticipant ? <PhoneHealthCard /> : null}
         <InstallCard />

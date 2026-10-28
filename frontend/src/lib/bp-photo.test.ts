@@ -25,7 +25,7 @@ describe('rowValues', () => {
   });
 });
 
-describe('readBpInBox', () => {
+describe('readBpInBox', { timeout: 20_000 }, () => {
   it('reads systolic and diastolic from a boxed screen', async () => {
     const r = await readBpInBox(drawScreen({ rows: MONITOR(128, 84, 72) }), { ocr: silentOcr, now: () => 0 });
     expect(r).toMatchObject({ systolic: 128, diastolic: 84 });

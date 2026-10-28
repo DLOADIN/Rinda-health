@@ -277,5 +277,8 @@ export type EmailReportPreference = z.infer<typeof EmailReportPreference>;
 export const EmailReportSend = z.strictObject({ assessmentId: z.uuid() });
 export type EmailReportSend = z.infer<typeof EmailReportSend>;
 
+export const SmsPreference = z.strictObject({ sms: z.boolean() });
+export type SmsPreference = z.infer<typeof SmsPreference>;
+
 export const AiPreference = z.strictObject({ ai: z.boolean() });
 export type AiPreference = z.infer<typeof AiPreference>;

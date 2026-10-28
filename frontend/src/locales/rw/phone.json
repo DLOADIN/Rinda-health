@@ -36,5 +36,13 @@
       "bloodGlucose": "Isukari mu maraso",
       "sleep": "Ibitotsi"
     }
+  },
+  "sms": {
+    "title": "Ubutumwa bugufi (SMS)",
+    "body": "Akira ubutumwa bugufi nyuma ya buri suzuma burimo ibisubizo n'imibare yawe, inama n'umurongo wa raporo yose. Ibisubizo by'imitekerereze n'umunaniro ntibijya byoherezwa. Umuntu wese ushobora gufungura telefoni yawe ashobora kubusoma.",
+    "toggle": "Nyoherereza incamake z'isuzuma ryanjye kuri SMS",
+    "needPhone": "Shyiramo nimero ya telefoni yawe muri \"Amakuru yanjye\" hejuru kugira ngo ububone.",
+    "unavailable": "Ubutumwa bugufi ntiburafungurwa.",
+    "saved": "Icyo wahisemo cyabitswe."
   }
 }

@@ -25,6 +25,10 @@
     "email.report.count.ok": "Bimeze neza",
     "email.report.count.work": "Ibyo kwitaho",
     "email.report.count.missing": "Bitashubijwe",
-    "email.report.footer": "Byoherejwe na Rinda Health Services"
+    "email.report.footer": "Byoherejwe na Rinda Health Services",
+    "sms.report.intro": "Rinda Health: incamake y'isuzuma ryawe ({date}).",
+    "sms.report.link": "Reba ibisubizo byawe byose kandi uganire na Rinda: {link}",
+    "sms.report.footer": "Ni iby'inyigisho, si isuzuma rya muganga. Kugira ngo uhagarike ubu butumwa, koresha Umwirondoro wawe kuri Rinda.",
+    "sms.report.test": "Rinda Health: ubu ni ubutumwa bwo kugerageza. Ubutumwa bugufi nyuma y'isuzuma bwateguwe."
   }
 }
