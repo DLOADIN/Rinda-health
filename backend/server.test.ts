@@ -881,6 +881,11 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     };
     const first = await ask({ question: 'How can I walk more?' });
     expect(first.body).toMatchObject({ status: 'answered', turnsLeft: 14 });
+    expect(first.body.requestId).toEqual(expect.any(String));
+    await agent
+      .post('/api/v1/guide/feedback')
+      .send({ requestId: first.body.requestId, helpful: true })
+      .expect(204);
     const sent = outbound.find((o) => o.url.includes('generativelanguage'))?.body ?? '';
     expect(sent).toContain('How can I walk more?');
     for (const secret of ['chat-user@example.com', 'phq9', 'gad7']) expect(sent).not.toContain(secret);

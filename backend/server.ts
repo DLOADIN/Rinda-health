@@ -3981,9 +3981,10 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     } catch {
       logger.warn({ reqId: req.id, event: 'chat_error' }, 'chat');
     }
-    await database.query(
+    const chatLog = await one<{ id: string }>(
+      database,
       `INSERT INTO guide_request_log (chip_id, source, validator_outcome, model, latency_ms, input_tokens, output_tokens)
-       VALUES ('chat', $1, $2, $3, $4, $5, $6)`,
+       VALUES ('chat', $1, $2, $3, $4, $5, $6) RETURNING id`,
       [
         result.answer ? 'generated' : 'template',
         result.outcome,
@@ -3997,6 +3998,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       status: result.answer ? 'answered' : result.outcome === 'off_topic' ? 'off_topic' : 'unavailable',
       paragraphs: result.answer?.paragraphs ?? [],
       turnsLeft: CHAT_TURNS_PER_DAY - counted.turns,
+      ...(result.answer && chatLog ? { requestId: chatLog.id } : {}),
     });
   });
   mount('/api/v1/chat', chat);

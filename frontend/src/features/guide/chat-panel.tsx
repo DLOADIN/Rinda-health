@@ -1,7 +1,7 @@
 import '@/features/guide/chat-strings';
 import { CHAT_MAX_CHARS, CHAT_TURNS_PER_DAY, checkChatQuestion } from '@rinda/rules/chat-guard';
 import type { ChatResponse, ChatTurn } from '@rinda/schemas';
-import { Bot, CircleAlert, House, SendHorizontal } from 'lucide-react';
+import { Bot, CircleAlert, House, SendHorizontal, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -22,19 +22,15 @@ interface Message {
   text: string;
 }
 
-const CHIPS = ['overview', 'tips', 'first_step', 'plan_week'] as const;
-
 export default function ChatPanel({
   assessmentId,
   staff,
   language,
-  chipLabel,
   onClose,
 }: {
   assessmentId: string | null;
   staff: boolean;
   language: 'en' | 'rw';
-  chipLabel: (id: string) => string;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -46,6 +42,8 @@ export default function ChatPanel({
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
+  const [rateable, setRateable] = useState<string | null>(null);
+  const [voted, setVoted] = useState(false);
   const end = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -110,12 +108,14 @@ export default function ChatPanel({
       } else if (res.ok) {
         const body = (await res.json()) as ChatResponse;
         setTurnsLeft(body.turnsLeft);
-        if (body.status === 'answered')
+        if (body.status === 'answered') {
           setMessages((m) => [
             ...m,
             { role: 'assistant', text: body.paragraphs.map((p) => p.text).join('\n\n') },
           ]);
-        else if (body.status === 'off_topic')
+          setRateable(body.requestId ?? null);
+          setVoted(false);
+        } else if (body.status === 'off_topic')
           setMessages((m) => [...m, { role: 'assistant', text: t('chat.offTopic') }]);
         else setNotice('unavailable');
       } else setNotice('unavailable');
@@ -124,6 +124,17 @@ export default function ChatPanel({
     } finally {
       setSending(false);
     }
+  };
+
+  const vote = (helpful: boolean) => {
+    if (!rateable) return;
+    void fetch('/api/v1/guide/feedback', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ requestId: rateable, helpful }),
+    }).catch(() => undefined);
+    setVoted(true);
   };
 
   const submit = (e: FormEvent) => {
@@ -151,7 +162,7 @@ export default function ChatPanel({
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-3">
         <div
-          className="flex max-h-[26rem] min-h-56 flex-col gap-3 overflow-y-auto rounded-lg border bg-muted/40 p-3"
+          className="flex max-h-[32rem] min-h-72 flex-col gap-3 overflow-y-auto rounded-lg border bg-muted/40 p-3 lg:min-h-[26rem]"
           role="log"
           aria-live="polite"
           aria-label={t('chat.title')}
@@ -206,24 +217,6 @@ export default function ChatPanel({
         {notice === 'off' ? <p className="text-sm text-muted-foreground">{t('chat.off')}</p> : null}
         {language === 'rw' ? <p className="text-sm text-muted-foreground">{t('chat.english')}</p> : null}
 
-        {!staff && assessmentId ? (
-          <div className="flex flex-wrap gap-2" role="group" aria-label={t('chat.suggestions')}>
-            {CHIPS.map((c) => (
-              <Button
-                key={c}
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="h-auto min-h-9 whitespace-normal"
-                disabled={blocked || sending}
-                onClick={() => void send({ chipId: c }, chipLabel(c))}
-              >
-                {chipLabel(c)}
-              </Button>
-            ))}
-          </div>
-        ) : null}
-
         <form onSubmit={submit} className="flex flex-col gap-1">
           <div className="flex gap-2">
             <Input
@@ -245,6 +238,25 @@ export default function ChatPanel({
           </div>
           <p className="text-xs text-muted-foreground">{t('chat.chars', { count: input.length })}</p>
         </form>
+        {!staff && rateable ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {voted ? (
+              <span className="text-sm text-muted-foreground">{t('guidePanel.thanks')}</span>
+            ) : (
+              <>
+                <span className="text-sm">{t('guidePanel.helpful')}</span>
+                <Button variant="outline" size="sm" onClick={() => vote(true)}>
+                  <ThumbsUp aria-hidden="true" data-icon="inline-start" />
+                  {t('guidePanel.yes')}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => vote(false)}>
+                  <ThumbsDown aria-hidden="true" data-icon="inline-start" />
+                  {t('guidePanel.no')}
+                </Button>
+              </>
+            )}
+          </div>
+        ) : null}
         <GetHelp />
       </CardContent>
     </Card>

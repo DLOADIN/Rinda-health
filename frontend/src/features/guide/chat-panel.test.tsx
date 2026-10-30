@@ -11,13 +11,7 @@ const setup = () => {
     .mockImplementation(async () => new Response(JSON.stringify({ available: true, turnsLeft: 15 })));
   render(
     <MemoryRouter>
-      <ChatPanel
-        assessmentId={null}
-        staff={false}
-        language="en"
-        chipLabel={(id) => id}
-        onClose={() => undefined}
-      />
+      <ChatPanel assessmentId={null} staff={false} language="en" onClose={() => undefined} />
     </MemoryRouter>,
   );
   return fetchSpy;
@@ -43,6 +37,41 @@ describe('ChatPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Send question' }));
     expect(screen.getByText(/I can only help with questions about Rinda Health/)).toBeTruthy();
     expect(posts(spy)).toHaveLength(0);
+    spy.mockRestore();
+  });
+});
+
+describe('ChatPanel feedback', () => {
+  it('asks whether a chat answer helped and sends the vote for that answer', async () => {
+    const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      if ((init as RequestInit | undefined)?.method !== 'POST')
+        return new Response(JSON.stringify({ available: true, turnsLeft: 15 }));
+      if (String(_url).includes('/guide/feedback')) return new Response(null, { status: 204 });
+      return new Response(
+        JSON.stringify({
+          status: 'answered',
+          paragraphs: [{ text: 'Short walks count.', sourceIds: ['guide.tpl.first_step'] }],
+          turnsLeft: 14,
+          requestId: 'req-1',
+        }),
+      );
+    });
+    render(
+      <MemoryRouter>
+        <ChatPanel assessmentId={null} staff={false} language="en" onClose={() => undefined} />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByText('Was this helpful?')).toBeNull();
+    await userEvent.type(screen.getByRole('textbox', { name: 'Your question' }), 'How can I walk more?');
+    await userEvent.click(screen.getByRole('button', { name: 'Send question' }));
+    await screen.findByText('Short walks count.');
+    await userEvent.click(screen.getByRole('button', { name: 'Yes' }));
+    const vote = posts(spy).find(([url]) => String(url).includes('/guide/feedback'));
+    expect(JSON.parse(String((vote?.[1] as RequestInit).body))).toEqual({
+      requestId: 'req-1',
+      helpful: true,
+    });
+    expect(screen.queryByRole('button', { name: 'Yes' })).toBeNull();
     spy.mockRestore();
   });
 });

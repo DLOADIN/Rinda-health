@@ -26,4 +26,5 @@ export interface ChatResponse {
   status: ChatStatus;
   paragraphs: Array<{ text: string; sourceIds: string[] }>;
   turnsLeft: number;
+  requestId?: string;
 }
