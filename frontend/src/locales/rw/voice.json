@@ -1,0 +1,29 @@
+{
+  "voice": {
+    "open": "TODO(content): Kinyarwanda translation",
+    "openHint": "TODO(content): Kinyarwanda translation",
+    "title": "TODO(content): Kinyarwanda translation",
+    "notice": "TODO(content): Kinyarwanda translation",
+    "start": "TODO(content): Kinyarwanda translation",
+    "englishOnly": "TODO(content): Kinyarwanda translation",
+    "noMic": "TODO(content): Kinyarwanda translation",
+    "progress": "TODO(content): Kinyarwanda translation",
+    "speaking": "TODO(content): Kinyarwanda translation",
+    "listening": "TODO(content): Kinyarwanda translation",
+    "waiting": "TODO(content): Kinyarwanda translation",
+    "heard": "TODO(content): Kinyarwanda translation",
+    "answer": "TODO(content): Kinyarwanda translation",
+    "noAnswer": "TODO(content): Kinyarwanda translation",
+    "skipped": "TODO(content): Kinyarwanda translation",
+    "skip": "TODO(content): Kinyarwanda translation",
+    "repeat": "TODO(content): Kinyarwanda translation",
+    "back": "TODO(content): Kinyarwanda translation",
+    "save": "TODO(content): Kinyarwanda translation",
+    "numberLabel": "TODO(content): Kinyarwanda translation",
+    "listen": "TODO(content): Kinyarwanda translation",
+    "tapOnly": "TODO(content): Kinyarwanda translation",
+    "send": "TODO(content): Kinyarwanda translation",
+    "done": "TODO(content): Kinyarwanda translation",
+    "close": "TODO(content): Kinyarwanda translation"
+  }
+}

@@ -28,3 +28,9 @@ export interface ChatResponse {
   turnsLeft: number;
   requestId?: string;
 }
+
+export const VoiceSpeechQuery = z.strictObject({
+  id: z.string().regex(/^[a-z0-9._]{3,40}$/),
+  language: z.literal('en'),
+});
+export type VoiceSpeechQuery = z.infer<typeof VoiceSpeechQuery>;

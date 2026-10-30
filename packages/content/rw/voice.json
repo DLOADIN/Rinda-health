@@ -1,0 +1,31 @@
+{
+  "contentType": "voice",
+  "key": "voice",
+  "version": "0.1.0",
+  "language": "rw",
+  "status": "draft",
+  "reviewers": ["supervisor", "language"],
+  "entries": {
+    "voice.intro": "TODO(content): Kinyarwanda translation",
+    "voice.got": "TODO(content): Kinyarwanda translation",
+    "voice.skipped": "TODO(content): Kinyarwanda translation",
+    "voice.again": "TODO(content): Kinyarwanda translation",
+    "voice.range": "TODO(content): Kinyarwanda translation",
+    "voice.yesno": "TODO(content): Kinyarwanda translation",
+    "voice.choose": "TODO(content): Kinyarwanda translation",
+    "voice.number.minutes": "TODO(content): Kinyarwanda translation",
+    "voice.number.servings": "TODO(content): Kinyarwanda translation",
+    "voice.source": "TODO(content): Kinyarwanda translation",
+    "voice.source.opt.0": "TODO(content): Kinyarwanda translation",
+    "voice.source.opt.1": "TODO(content): Kinyarwanda translation",
+    "voice.body.height": "TODO(content): Kinyarwanda translation",
+    "voice.body.weight": "TODO(content): Kinyarwanda translation",
+    "voice.body.waist": "TODO(content): Kinyarwanda translation",
+    "voice.bp.systolic": "TODO(content): Kinyarwanda translation",
+    "voice.bp.diastolic": "TODO(content): Kinyarwanda translation",
+    "voice.wellness.ask": "TODO(content): Kinyarwanda translation",
+    "voice.wellness.tap": "TODO(content): Kinyarwanda translation",
+    "voice.done": "TODO(content): Kinyarwanda translation",
+    "voice.sending": "TODO(content): Kinyarwanda translation"
+  }
+}

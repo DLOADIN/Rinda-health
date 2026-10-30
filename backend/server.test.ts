@@ -341,6 +341,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     BREVO_API_KEY: 'test-brevo-key',
     EMAIL_FROM: 'reports@rinda.test',
     PINDO_API_TOKEN: 'test-pindo-token',
+    ELEVENLABS_API_KEY: 'test-voice-key',
     SMS_ONLY_TO: '+250788555999, +250788555111',
     PUBLIC_URL: 'http://localhost:5173',
   });
@@ -363,6 +364,11 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       );
     }
     if (url.includes('api.brevo.com')) return new Response('{"messageId":"<test@brevo>"}', { status: 201 });
+    if (url.includes('api.elevenlabs.io'))
+      return new Response(new Uint8Array([73, 68, 51, 4]), {
+        status: 200,
+        headers: { 'content-type': 'audio/mpeg' },
+      });
     if (url.includes('api.pindo.io'))
       return new Response('{"status":"sent","sms_id":"out_sms_test"}', { status: 201 });
     return new Response(
@@ -1085,6 +1091,37 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       await new Promise((r) => setTimeout(r, 250));
     expect(calls()).toHaveLength(0);
     expect((await smsEvents()).rows).toEqual([{ status: 'skipped', error_code: 'not_allowed' }]);
+  });
+
+  it('voice check-up: speaks only approved lines, makes each clip once and never sends answers', async () => {
+    await request(app).get('/api/v1/voice').expect(401);
+    const { agent } = await signup('participant', 'voice-user@example.com');
+    expect((await agent.get('/api/v1/voice')).body).toEqual({ enabled: true, available: true });
+    const voiceCalls = () => outbound.filter((o) => o.url.includes('api.elevenlabs.io'));
+
+    outbound.length = 0;
+    const first = await agent.get('/api/v1/voice/speech?id=q.tobacco.current&language=en').expect(200);
+    expect(first.headers['content-type']).toContain('audio/mpeg');
+    expect(Buffer.from(first.body)).toEqual(Buffer.from([73, 68, 51, 4]));
+    expect(voiceCalls()).toHaveLength(1);
+    const sent = JSON.parse(voiceCalls()[0]?.body ?? '{}');
+    expect(sent.text).toContain('Do you currently use any tobacco');
+    expect(sent.text).toContain('Please say yes or no.');
+    expect(voiceCalls()[0]?.url).toContain('/v1/text-to-speech/');
+
+    await agent.get('/api/v1/voice/speech?id=q.tobacco.current&language=en').expect(200);
+    expect(voiceCalls()).toHaveLength(1);
+
+    const choice = await agent.get('/api/v1/voice/speech?id=q.auditc.2&language=en').expect(200);
+    expect(choice.body).toBeTruthy();
+    expect(JSON.parse(voiceCalls()[1]?.body ?? '{}').text).toContain('Your choices are: 1 or 2, 3 or 4');
+
+    await agent.get('/api/v1/voice/speech?id=q.unknown&language=en').expect(404);
+    await agent.get('/api/v1/voice/speech?id=I%20weigh%2090&language=en').expect(400);
+    await agent.get('/api/v1/voice/speech?id=q.tobacco.current&language=rw').expect(400);
+    await agent.get('/api/v1/voice/speech?id=q.tobacco.current&language=en&text=hi').expect(400);
+    const staff = await signup('facilitator', 'voice-staff@example.com');
+    await staff.agent.get('/api/v1/voice').expect(403);
   });
 
   it('consent comes first: no check-up without taking part, and choices can change later (FR-02, FR-44)', async () => {

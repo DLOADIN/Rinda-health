@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./guide-answers": "./src/guide-answers.ts",
     "./messages": "./src/messages.ts",
+    "./voice": "./src/voice.ts",
     "./rulesets/*": "./rulesets/*",
     "./en/*": "./en/*",
     "./rw/*": "./rw/*"

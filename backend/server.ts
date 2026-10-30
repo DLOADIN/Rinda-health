@@ -15,6 +15,7 @@ import { pathToFileURL } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { BUNDLED_CONTENT, RULESET_V1 } from '@rinda/content';
 import { GUIDE_ANSWERS } from '@rinda/content/guide-answers';
+import { spokenText, VOICE } from '@rinda/content/voice';
 import { MESSAGES } from '@rinda/content/messages';
 import {
   allowedNumbers,
@@ -54,6 +55,7 @@ import {
   FlagUpdateRequest,
   GuideAnswer,
   GuideExplainRequest,
+  VoiceSpeechQuery,
   ChatRequest,
   PhoneHealthShare,
   PhoneHealthUpload,
@@ -151,6 +153,15 @@ const EnvSchema = z
     GEMINI_PAID_TIER: z.preprocess(emptyAsUndefined, z.enum(['true', 'false']).default('false')),
     BREVO_API_KEY: optionalText,
     EMAIL_FROM: optionalText,
+    ELEVENLABS_API_KEY: optionalText,
+    ELEVENLABS_VOICE_ID: z
+      .string()
+      .regex(/^[A-Za-z0-9]{10,40}$/)
+      .default('EXAVITQu4vr4xnSDxMaL'),
+    ELEVENLABS_MODEL: z
+      .string()
+      .regex(/^[a-z0-9_]{3,40}$/)
+      .default('eleven_flash_v2_5'),
     PINDO_API_TOKEN: optionalText,
     PINDO_SENDER: z.string().min(1).max(11).default('PindoTest'),
     SMS_ONLY_TO: optionalText,
@@ -218,6 +229,7 @@ export const generativeGuideAllowed = (c: AppConfig) =>
   (c.APP_ENV === 'pilot'
     ? Boolean(c.GEMINI_API_KEY) && c.GEMINI_PAID_TIER === 'true'
     : guideChain(c).length > 0);
+const voiceConfigured = (c: AppConfig) => Boolean(c.ELEVENLABS_API_KEY);
 const smsConfigured = (c: AppConfig) => Boolean(c.PINDO_API_TOKEN);
 const smsOnlyTo = (c: AppConfig) =>
   (c.SMS_ONLY_TO ?? '')
@@ -1744,6 +1756,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
           scriptSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'blob:'],
+          mediaSrc: ["'self'", 'blob:'],
           fontSrc: ["'self'"],
           connectSrc: ["'self'"],
           workerSrc: ["'self'"],
@@ -4002,6 +4015,56 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     });
   });
   mount('/api/v1/chat', chat);
+
+  const voice = Router();
+  voice.use(requireAuth, requireRole('participant'));
+
+  voice.get('/', async (_req, res) => {
+    const enabled = (await currentFlags(needDb(), config)).readAloud;
+    res.json({ enabled, available: enabled && voiceConfigured(config) });
+  });
+
+  voice.get('/speech', async (req, res) => {
+    const query = VoiceSpeechQuery.parse(req.query);
+    const lookup = (id: string) =>
+      VOICE[query.language][id] ?? BUNDLED_CONTENT[query.language].text[id] ?? id;
+    const text = spokenText(query.id, lookup);
+    if (!text) throw new AppError(404, 'NOT_FOUND', 'There is no such voice line.');
+    const database = needDb();
+    if (!voiceConfigured(config) || !(await currentFlags(database, config)).readAloud)
+      throw new AppError(503, 'NOT_CONFIGURED', 'Voice is not set up.');
+    const key = sha256(`${config.ELEVENLABS_VOICE_ID}|${config.ELEVENLABS_MODEL}|${query.language}|${text}`);
+    const saved = await one<{ audio: Buffer }>(database, 'SELECT audio FROM voice_clips WHERE key = $1', [
+      key,
+    ]);
+    let audio = saved?.audio ?? null;
+    if (!audio) {
+      const made = await fetchFn(
+        `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(config.ELEVENLABS_VOICE_ID)}?output_format=mp3_44100_64`,
+        {
+          method: 'POST',
+          headers: {
+            'xi-api-key': config.ELEVENLABS_API_KEY ?? '',
+            'content-type': 'application/json',
+            accept: 'audio/mpeg',
+          },
+          signal: AbortSignal.timeout(20_000),
+          body: JSON.stringify({ text, model_id: config.ELEVENLABS_MODEL }),
+        },
+      ).catch(() => null);
+      if (!made?.ok) {
+        logger.warn({ reqId: req.id, event: 'voice_tts', status: made?.status ?? 'network' }, 'voice');
+        throw new AppError(503, 'NOT_CONFIGURED', 'Voice is not available right now.');
+      }
+      audio = Buffer.from(await made.arrayBuffer());
+      await database.query(
+        'INSERT INTO voice_clips (key, audio) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
+        [key, audio],
+      );
+    }
+    res.set('content-type', 'audio/mpeg').set('cache-control', 'private, max-age=604800').send(audio);
+  });
+  mount('/api/v1/voice', voice);
 
   const emailReports = Router();
   emailReports.use(requireAuth, requireRole('participant'));

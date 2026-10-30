@@ -1,0 +1,29 @@
+{
+  "voice": {
+    "open": "Talk with Rinda instead",
+    "openHint": "Rinda reads every question aloud and listens to your answer. You can still tap at any time.",
+    "title": "Voice check-up",
+    "notice": "Rinda speaks the questions and listens through your browser. Your browser’s speech service (Google or Apple) turns your voice into text. Rinda does not record or keep your voice.",
+    "start": "Start talking",
+    "englishOnly": "The voice check-up is in English for now.",
+    "noMic": "This browser cannot listen. You can still hear each question and tap your answer.",
+    "progress": "Question {{current}} of {{total}}",
+    "speaking": "Rinda is speaking…",
+    "listening": "Listening… speak now",
+    "waiting": "Tap an answer, or press Answer by voice.",
+    "heard": "Rinda heard: “{{text}}”",
+    "answer": "Your answer: {{answer}}",
+    "noAnswer": "Not answered yet",
+    "skipped": "Skipped",
+    "skip": "Skip",
+    "repeat": "Repeat",
+    "back": "Back",
+    "save": "Save and next",
+    "numberLabel": "Type your answer",
+    "listen": "Answer by voice",
+    "tapOnly": "Please tap your answer for this question.",
+    "send": "Send my check-up",
+    "done": "Every question has been asked. Send now, or stop to check your answers on the form.",
+    "close": "Stop and use the form"
+  }
+}

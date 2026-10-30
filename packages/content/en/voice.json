@@ -1,0 +1,31 @@
+{
+  "contentType": "voice",
+  "key": "voice",
+  "version": "0.1.0",
+  "language": "en",
+  "status": "draft",
+  "reviewers": ["supervisor", "language"],
+  "entries": {
+    "voice.intro": "Hello, I am Rinda. I will ask you the check-up questions out loud, one at a time. Answer in your own words. You can say skip to pass a question, repeat to hear it again, or back to change your last answer.",
+    "voice.got": "Got it.",
+    "voice.skipped": "Okay, we will leave that one.",
+    "voice.again": "Sorry, I did not catch that. Please say your answer again, or say skip.",
+    "voice.range": "That number looks outside the usual range. Please say it again, or say skip.",
+    "voice.yesno": "Please say yes or no.",
+    "voice.choose": "Your choices are:",
+    "voice.number.minutes": "Please say the number of minutes in a week.",
+    "voice.number.servings": "Please say the number of servings.",
+    "voice.source": "Were your body measurements taken today, or are they from memory or a recent reading?",
+    "voice.source.opt.0": "Taken today",
+    "voice.source.opt.1": "From memory or a recent reading",
+    "voice.body.height": "What is your height in centimetres?",
+    "voice.body.weight": "What is your weight in kilograms?",
+    "voice.body.waist": "What is your waist size in centimetres, measured around the belly button?",
+    "voice.bp.systolic": "What is the top number of your blood pressure reading?",
+    "voice.bp.diastolic": "What is the bottom number of your blood pressure reading?",
+    "voice.wellness.ask": "Would you like to answer these questions? Please say yes or no.",
+    "voice.wellness.tap": "For this question, please tap your answer on the screen.",
+    "voice.done": "That is every question. Thank you. Say send, or tap Send my check-up, to see your results.",
+    "voice.sending": "Sending your answers now."
+  }
+}

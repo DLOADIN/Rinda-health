@@ -1,7 +1,7 @@
 import { RULESET_V1 } from '@rinda/content';
 import { validateMeasurement, type MeasurementType } from '@rinda/rules';
 import type { CheckupAnswers, CheckupSubmission } from '@rinda/schemas';
-import { Camera, Smartphone, QrCode } from 'lucide-react';
+import { Camera, Mic, Smartphone, QrCode } from 'lucide-react';
 import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -15,7 +15,12 @@ import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Spinner } from '@/components/ui/spinner';
 import { Choice } from '@/features/participant/choice';
-import { SafetyScreen, WellnessSection, WELLNESS_START } from '@/features/participant/wellness-section';
+import {
+  SafetyScreen,
+  WellnessSection,
+  WELLNESS_START,
+  type WellnessState,
+} from '@/features/participant/wellness-section';
 import { ResultView } from '@/features/results/result-view';
 import {
   errorCode,
@@ -30,6 +35,8 @@ import { addToOutbox, queueSafetyEvent, scoreOnPhone } from '@/lib/offline';
 import { reportStep } from '@/lib/session-progress';
 import { useCached } from '@/lib/use-cached';
 import '@/features/profile/phone-strings';
+import '@/features/participant/voice-strings';
+import type { VoiceState } from '@/features/participant/voice-checkup';
 import type { PhoneHealthStatus } from '@rinda/schemas';
 import { toast } from 'sonner';
 import { isNativeApp } from '@/lib/phone-health';
@@ -37,8 +44,19 @@ import { useContent } from '@/lib/content';
 
 const BpCamera = lazy(() => import('@/features/participant/bp-camera'));
 const HandoverDialog = lazy(() => import('@/features/participant/handover-dialog'));
+const VoiceCheckup = lazy(() => import('@/features/participant/voice-checkup'));
 
 type Answers = CheckupAnswers;
+const NUMBER_KEYS = [
+  'moderateMinutes',
+  'vigorousMinutes',
+  'servingsPerDay',
+  'heightCm',
+  'weightKg',
+  'waistCm',
+  'systolic',
+  'diastolic',
+] as const;
 const MEASUREMENTS: readonly string[] = ['heightCm', 'weightKg', 'waistCm', 'systolic', 'diastolic'];
 type NumberKey =
   | 'moderateMinutes'
@@ -128,15 +146,25 @@ export function CheckupPage() {
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [handoverOpen, setHandoverOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const applyVoice = (next: VoiceState) => {
+    setAnswers(next.answers);
+    setWellness(next.wellness);
+    setRaw(
+      Object.fromEntries(
+        NUMBER_KEYS.map((k) => [k, typeof next.answers[k] === 'number' ? String(next.answers[k]) : '']),
+      ),
+    );
+  };
 
   const { data: me } = useMeQuery();
   const { data: profile } = useParticipantProfileQuery();
   const { data: liveConsents, error: consentError } = useConsentsQuery();
   const { data: consents } = useCached(me ? `consents:${me.id}` : null, liveConsents, consentError);
   const wellnessOffered = consents?.mental_wellness === true;
-  const wellnessAnswers = (): CheckupAnswers['wellness'] =>
-    wellnessOffered && (wellness.mode === 'answering' || wellness.mode === 'stopped')
-      ? { phq9: wellness.phq9, gad7: wellness.gad7 }
+  const wellnessAnswers = (w: WellnessState = wellness): CheckupAnswers['wellness'] =>
+    wellnessOffered && (w.mode === 'answering' || w.mode === 'stopped')
+      ? { phq9: w.phq9, gad7: w.gad7 }
       : 'declined';
   const onItem9Risk = () => {
     setSafetyOpen(true);
@@ -244,10 +272,14 @@ export function CheckupPage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    await send();
+  };
+
+  const send = async (voice?: VoiceState) => {
     const body: CheckupSubmission = {
       language: i18n.language === 'rw' ? 'rw' : 'en',
       startedAt,
-      answers: { ...answers, wellness: wellnessAnswers() },
+      answers: { ...(voice?.answers ?? answers), wellness: wellnessAnswers(voice?.wellness) },
     };
     if (!navigator.onLine) {
       await saveOffline(body);
@@ -299,6 +331,33 @@ export function CheckupPage() {
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4" noValidate>
       <PageHeader title={t('checkup.title')} description={t('checkup.intro')} />
+
+      <Card>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">{t('voice.openHint')}</p>
+          <Button type="button" onClick={() => setVoiceOpen(true)} className="shrink-0">
+            <Mic aria-hidden="true" data-icon="inline-start" />
+            {t('voice.open')}
+          </Button>
+        </CardContent>
+      </Card>
+      {voiceOpen ? (
+        <Suspense fallback={null}>
+          <VoiceCheckup
+            open={voiceOpen}
+            onOpenChange={setVoiceOpen}
+            state={{ answers, wellness }}
+            onChange={applyVoice}
+            wellnessOffered={wellnessOffered}
+            onItem9Risk={onItem9Risk}
+            onCrisis={() => {
+              setSafetyOpen(true);
+              window.scrollTo({ top: 0 });
+            }}
+            onSend={(v) => void send(v)}
+          />
+        </Suspense>
+      ) : null}
 
       <Section title={t('checkup.sections.tobacco')}>
         <Choice
