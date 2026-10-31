@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readChoice, readCommand, readNumber, readYesNo } from '@/lib/voice-parse';
+import { looksOffTopic, readChoice, readCommand, readNumber, readYesNo } from '@/lib/voice-parse';
 
 const drinksOften = [
   'Never',
@@ -85,5 +85,14 @@ describe('readChoice', () => {
   it('gives nothing when the answer is unclear', () => {
     expect(readChoice('hmm', howOften)).toBeNull();
     expect(readChoice('times', drinksOften)).toBeNull();
+  });
+});
+
+describe('looksOffTopic', () => {
+  it('spots questions and long talk that are not answers', () => {
+    expect(looksOffTopic('What is the weather in Kigali today?')).toBe(true);
+    expect(looksOffTopic('can you tell me a joke')).toBe(true);
+    expect(looksOffTopic('thirty minutes')).toBe(false);
+    expect(looksOffTopic('yes')).toBe(false);
   });
 });

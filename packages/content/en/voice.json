@@ -26,6 +26,7 @@
     "voice.wellness.ask": "Would you like to answer these questions? Please say yes or no.",
     "voice.wellness.tap": "For this question, please tap your answer on the screen.",
     "voice.done": "That is every question. Thank you. Say send, or tap Send my check-up, to see your results.",
-    "voice.sending": "Sending your answers now."
+    "voice.sending": "Sending your answers now.",
+    "voice.off_topic": "I can only help with the check-up questions right now. Please answer the question, or say skip."
   }
 }

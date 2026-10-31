@@ -23,6 +23,10 @@ import {
   loadConfig,
   maskIdentifier,
   numbersIn,
+  pcmToWav,
+  speechChunks,
+  voiceChain,
+  wavParts,
   migrate,
   type Db,
 } from './server.ts';
@@ -55,6 +59,36 @@ const geminiAnswer = (text = 'Small steps help.', sourceIds = ['guide.tip']) =>
     }),
     { status: 200 },
   );
+
+describe('voice helpers', () => {
+  it('wraps raw speech in a WAV file and reads it back', () => {
+    const pcm = Buffer.from([1, 0, 2, 0, 3, 0, 4, 0]);
+    const wav = pcmToWav(pcm, 24000);
+    expect(wav.toString('ascii', 0, 4)).toBe('RIFF');
+    expect(wavParts(wav)).toMatchObject({ sampleRate: 24000, channels: 1, bits: 16 });
+    expect(wavParts(wav)?.pcm).toEqual(pcm);
+    expect(wavParts(Buffer.from('not audio'))).toBeNull();
+  });
+
+  it('splits long text into short sentences without losing words', () => {
+    const text = 'Hello, I am Rinda. '.repeat(20);
+    const chunks = speechChunks(text, 60);
+    expect(chunks.every((c) => c.length <= 60)).toBe(true);
+    expect(chunks.join(' ').replace(/\s+/g, ' ')).toBe(text.trim().replace(/\s+/g, ' '));
+  });
+
+  it('only uses voice services that have a key, in the configured order', () => {
+    const base = loadConfig({ SESSION_SECRET: 'x'.repeat(40) });
+    expect(voiceChain(base)).toEqual([]);
+    expect(voiceChain({ ...base, GROQ_API_KEY: 'g', ELEVENLABS_API_KEY: 'e' })).toEqual([
+      'elevenlabs',
+      'groq',
+    ]);
+    expect(
+      voiceChain({ ...base, GROQ_API_KEY: 'g', GEMINI_API_KEY: 'm', VOICE_PROVIDERS: 'groq,gemini,unknown' }),
+    ).toEqual(['groq', 'gemini']);
+  });
+});
 
 describe('without a database', () => {
   it('moves to the next free Gemini model when one has used up its allowance, and skips it for the day', async () => {
@@ -342,16 +376,38 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     EMAIL_FROM: 'reports@rinda.test',
     PINDO_API_TOKEN: 'test-pindo-token',
     ELEVENLABS_API_KEY: 'test-voice-key',
+    GROQ_API_KEY: 'test-groq-key',
+    GUIDE_PROVIDERS: 'gemini',
     SMS_ONLY_TO: '+250788555999, +250788555111',
     PUBLIC_URL: 'http://localhost:5173',
   });
   const { logger, lines } = sinkLogger();
   let googleClaims: Record<string, unknown> = {};
   let geminiAnswer: unknown = null;
+  const voiceDown = new Set<string>();
   const outbound: Array<{ url: string; body: string }> = [];
   const fetchFn = (async (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
     outbound.push({ url, body: String(init?.body ?? '') });
+    if (url.includes('generativelanguage.googleapis.com') && url.includes('-tts')) {
+      if (voiceDown.has('gemini')) return new Response('{}', { status: 429 });
+      return new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [{ inlineData: { mimeType: 'audio/L16;codec=pcm;rate=24000', data: 'AQACAAMABAA=' } }],
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      );
+    }
+    if (url.includes('api.groq.com/openai/v1/audio/speech')) {
+      if (voiceDown.has('groq')) return new Response('{}', { status: 500 });
+      return new Response(pcmToWav(Buffer.from([9, 0, 9, 0]), 48000), { status: 200 });
+    }
     if (url.includes('generativelanguage.googleapis.com')) {
       return new Response(
         JSON.stringify({
@@ -364,6 +420,8 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       );
     }
     if (url.includes('api.brevo.com')) return new Response('{"messageId":"<test@brevo>"}', { status: 201 });
+    if (url.includes('api.elevenlabs.io') && voiceDown.has('elevenlabs'))
+      return new Response('{}', { status: 401 });
     if (url.includes('api.elevenlabs.io'))
       return new Response(new Uint8Array([73, 68, 51, 4]), {
         status: 200,
@@ -1122,6 +1180,47 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     await agent.get('/api/v1/voice/speech?id=q.tobacco.current&language=en&text=hi').expect(400);
     const staff = await signup('facilitator', 'voice-staff@example.com');
     await staff.agent.get('/api/v1/voice').expect(403);
+
+    const binary = (r: request.Response, done: (e: Error | null, body: Buffer) => void) => {
+      const parts: Buffer[] = [];
+      r.on('data', (c: Buffer) => parts.push(c));
+      r.on('end', () => done(null, Buffer.concat(parts)));
+    };
+    voiceDown.add('elevenlabs');
+    outbound.length = 0;
+    const fromGemini = await agent
+      .get('/api/v1/voice/speech?id=q.diet.salt&language=en')
+      .buffer(true)
+      .parse(binary)
+      .expect(200);
+    expect(fromGemini.headers['content-type']).toContain('audio/wav');
+    expect(wavParts(fromGemini.body as Buffer)).toMatchObject({ sampleRate: 24000 });
+    expect(outbound.map((o) => new URL(o.url).hostname)).toEqual([
+      'api.elevenlabs.io',
+      'generativelanguage.googleapis.com',
+    ]);
+    expect(JSON.parse(outbound[1]?.body ?? '{}').generationConfig.responseModalities).toEqual(['AUDIO']);
+
+    voiceDown.add('gemini');
+    outbound.length = 0;
+    const fromGroq = await agent
+      .get('/api/v1/voice/speech?id=voice.intro&language=en')
+      .buffer(true)
+      .parse(binary)
+      .expect(200);
+    expect(wavParts(fromGroq.body as Buffer)).toMatchObject({ sampleRate: 48000 });
+    const groqCalls = outbound.filter((o) => o.url.includes('api.groq.com'));
+    expect(groqCalls.length).toBeGreaterThan(1);
+    for (const call of groqCalls) {
+      const sent = JSON.parse(call.body);
+      expect(sent).toMatchObject({ model: 'canopylabs/orpheus-v1-english', response_format: 'wav' });
+      expect(sent.input.length).toBeLessThanOrEqual(180);
+    }
+
+    voiceDown.add('groq');
+    await agent.get('/api/v1/voice/speech?id=voice.got&language=en').expect(503);
+    await agent.get('/api/v1/voice/speech?id=q.diet.salt&language=en').expect(200);
+    voiceDown.clear();
   });
 
   it('consent comes first: no check-up without taking part, and choices can change later (FR-02, FR-44)', async () => {

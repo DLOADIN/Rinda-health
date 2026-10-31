@@ -24,7 +24,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/
 import { Spinner } from '@/components/ui/spinner';
 import type { WellnessState } from '@/features/participant/wellness-section';
 import { canListen, listen, prefetch, speak, stopSpeaking } from '@/lib/voice';
-import { readChoice, readCommand, readNumber, readYesNo } from '@/lib/voice-parse';
+import { looksOffTopic, readChoice, readCommand, readNumber, readYesNo } from '@/lib/voice-parse';
 
 export interface VoiceState {
   answers: CheckupAnswers;
@@ -343,7 +343,7 @@ export default function VoiceCheckup({
       const value = readSpoken(target, texts);
       setStatus('speaking');
       if (value === undefined || value === null) {
-        await say('voice.again');
+        await say(texts.some(looksOffTopic) ? 'voice.off_topic' : 'voice.again');
         if (token !== run.current) return;
         continue;
       }

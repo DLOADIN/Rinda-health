@@ -158,6 +158,20 @@ const EnvSchema = z
       .string()
       .regex(/^[A-Za-z0-9]{10,40}$/)
       .default('EXAVITQu4vr4xnSDxMaL'),
+    VOICE_PROVIDERS: z.string().default('elevenlabs,gemini,groq'),
+    GEMINI_TTS_MODELS: z.string().default('gemini-3.1-flash-tts-preview,gemini-2.5-flash-preview-tts'),
+    GEMINI_TTS_VOICE: z
+      .string()
+      .regex(/^[A-Za-z]{2,30}$/)
+      .default('Kore'),
+    GROQ_TTS_MODEL: z
+      .string()
+      .regex(/^[a-z0-9._/-]{3,80}$/)
+      .default('canopylabs/orpheus-v1-english'),
+    GROQ_TTS_VOICE: z
+      .string()
+      .regex(/^[a-z]{2,30}$/)
+      .default('hannah'),
     ELEVENLABS_MODEL: z
       .string()
       .regex(/^[a-z0-9_]{3,40}$/)
@@ -229,7 +243,6 @@ export const generativeGuideAllowed = (c: AppConfig) =>
   (c.APP_ENV === 'pilot'
     ? Boolean(c.GEMINI_API_KEY) && c.GEMINI_PAID_TIER === 'true'
     : guideChain(c).length > 0);
-const voiceConfigured = (c: AppConfig) => Boolean(c.ELEVENLABS_API_KEY);
 const smsConfigured = (c: AppConfig) => Boolean(c.PINDO_API_TOKEN);
 const smsOnlyTo = (c: AppConfig) =>
   (c.SMS_ONLY_TO ?? '')
@@ -1426,6 +1439,204 @@ function afterResponse(task: Promise<unknown>): void {
     Symbol.for('@vercel/request-context')
   ];
   context?.get?.()?.waitUntil?.(task);
+}
+
+type VoiceProvider = 'elevenlabs' | 'gemini' | 'groq';
+type Clip = { audio: Buffer; contentType: string; provider: VoiceProvider };
+
+export function voiceChain(c: AppConfig): VoiceProvider[] {
+  const keys: Record<VoiceProvider, string | undefined> = {
+    elevenlabs: c.ELEVENLABS_API_KEY,
+    gemini: c.GEMINI_API_KEY,
+    groq: c.GROQ_API_KEY,
+  };
+  return c.VOICE_PROVIDERS.split(',')
+    .map((p) => p.trim())
+    .filter((p): p is VoiceProvider => p in keys && Boolean(keys[p as VoiceProvider]));
+}
+
+const voiceConfigured = (c: AppConfig) => voiceChain(c).length > 0;
+
+export function pcmToWav(pcm: Buffer, sampleRate: number, channels = 1, bits = 16): Buffer {
+  const header = Buffer.alloc(44);
+  header.write('RIFF', 0);
+  header.writeUInt32LE(36 + pcm.length, 4);
+  header.write('WAVE', 8);
+  header.write('fmt ', 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(channels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE((sampleRate * channels * bits) / 8, 28);
+  header.writeUInt16LE((channels * bits) / 8, 32);
+  header.writeUInt16LE(bits, 34);
+  header.write('data', 36);
+  header.writeUInt32LE(pcm.length, 40);
+  return Buffer.concat([header, pcm]);
+}
+
+export function wavParts(
+  wav: Buffer,
+): { pcm: Buffer; sampleRate: number; channels: number; bits: number } | null {
+  if (wav.length < 12 || wav.toString('ascii', 0, 4) !== 'RIFF' || wav.toString('ascii', 8, 12) !== 'WAVE')
+    return null;
+  let offset = 12;
+  let format: { sampleRate: number; channels: number; bits: number } | null = null;
+  while (offset + 8 <= wav.length) {
+    const id = wav.toString('ascii', offset, offset + 4);
+    const size = wav.readUInt32LE(offset + 4);
+    const start = offset + 8;
+    if (id === 'fmt ' && start + 16 <= wav.length)
+      format = {
+        channels: wav.readUInt16LE(start + 2),
+        sampleRate: wav.readUInt32LE(start + 4),
+        bits: wav.readUInt16LE(start + 14),
+      };
+    if (id === 'data' && format) {
+      const end = size === 0xffffffff || start + size > wav.length ? wav.length : start + size;
+      return { pcm: wav.subarray(start, end), ...format };
+    }
+    offset = start + size + (size % 2);
+  }
+  return null;
+}
+
+export function speechChunks(text: string, max = 180): string[] {
+  const sentences = text.match(/[^.!?:]+[.!?:]*\s*/g) ?? [text];
+  const chunks: string[] = [];
+  let current = '';
+  for (const sentence of sentences) {
+    const pieces =
+      sentence.length > max
+        ? (sentence.match(new RegExp(`.{1,${max}}(\\s|$)`, 'g')) ?? [sentence])
+        : [sentence];
+    for (const piece of pieces) {
+      if ((current + piece).trim().length > max && current.trim()) {
+        chunks.push(current.trim());
+        current = '';
+      }
+      current += piece;
+    }
+  }
+  if (current.trim()) chunks.push(current.trim());
+  return chunks;
+}
+
+async function speakElevenLabs(config: AppConfig, fetchFn: typeof fetch, text: string): Promise<Clip | null> {
+  const res = await fetchFn(
+    `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(config.ELEVENLABS_VOICE_ID)}?output_format=mp3_44100_64`,
+    {
+      method: 'POST',
+      headers: {
+        'xi-api-key': config.ELEVENLABS_API_KEY ?? '',
+        'content-type': 'application/json',
+        accept: 'audio/mpeg',
+      },
+      signal: AbortSignal.timeout(20_000),
+      body: JSON.stringify({ text, model_id: config.ELEVENLABS_MODEL }),
+    },
+  );
+  if (!res.ok) return null;
+  return { audio: Buffer.from(await res.arrayBuffer()), contentType: 'audio/mpeg', provider: 'elevenlabs' };
+}
+
+async function speakGemini(config: AppConfig, fetchFn: typeof fetch, text: string): Promise<Clip | null> {
+  for (const model of modelListOf(config.GEMINI_TTS_MODELS)) {
+    const res = await fetchFn(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': config.GEMINI_API_KEY ?? '' },
+        signal: AbortSignal.timeout(30_000),
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `Read this aloud in a calm, warm, clear voice: ${text}` }] }],
+          generationConfig: {
+            responseModalities: ['AUDIO'],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: config.GEMINI_TTS_VOICE } } },
+          },
+        }),
+      },
+    ).catch(() => null);
+    if (!res?.ok) continue;
+    const body = z
+      .object({
+        candidates: z
+          .array(
+            z.object({
+              content: z.object({
+                parts: z.array(
+                  z.object({ inlineData: z.object({ mimeType: z.string(), data: z.string() }).optional() }),
+                ),
+              }),
+            }),
+          )
+          .min(1),
+      })
+      .safeParse(await res.json().catch(() => null));
+    const inline = body.success
+      ? body.data.candidates[0]?.content.parts.find((p) => p.inlineData)?.inlineData
+      : undefined;
+    if (!inline) continue;
+    const raw = Buffer.from(inline.data, 'base64');
+    if (raw.length === 0) continue;
+    if (/wav/i.test(inline.mimeType)) return { audio: raw, contentType: 'audio/wav', provider: 'gemini' };
+    const rate = Number(/rate=(\d+)/.exec(inline.mimeType)?.[1] ?? 24000);
+    return { audio: pcmToWav(raw, rate), contentType: 'audio/wav', provider: 'gemini' };
+  }
+  return null;
+}
+
+async function speakGroq(config: AppConfig, fetchFn: typeof fetch, text: string): Promise<Clip | null> {
+  const parts: Array<NonNullable<ReturnType<typeof wavParts>>> = [];
+  for (const chunk of speechChunks(text)) {
+    const res = await fetchFn('https://api.groq.com/openai/v1/audio/speech', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${config.GROQ_API_KEY ?? ''}` },
+      signal: AbortSignal.timeout(20_000),
+      body: JSON.stringify({
+        model: config.GROQ_TTS_MODEL,
+        voice: config.GROQ_TTS_VOICE,
+        input: chunk,
+        response_format: 'wav',
+      }),
+    }).catch(() => null);
+    if (!res?.ok) return null;
+    const part = wavParts(Buffer.from(await res.arrayBuffer()));
+    if (!part) return null;
+    parts.push(part);
+  }
+  const first = parts[0];
+  if (!first || parts.some((p) => p.sampleRate !== first.sampleRate || p.bits !== first.bits)) return null;
+  return {
+    audio: pcmToWav(Buffer.concat(parts.map((p) => p.pcm)), first.sampleRate, first.channels, first.bits),
+    contentType: 'audio/wav',
+    provider: 'groq',
+  };
+}
+
+const modelListOf = (list: string) =>
+  list
+    .split(',')
+    .map((m) => m.trim())
+    .filter((m) => /^[a-z0-9._:/-]{3,80}$/i.test(m));
+
+export async function speakWithProviders(
+  config: AppConfig,
+  fetchFn: typeof fetch,
+  logger: Logger,
+  text: string,
+): Promise<Clip | null> {
+  const speakers: Record<VoiceProvider, typeof speakGemini> = {
+    elevenlabs: speakElevenLabs,
+    gemini: speakGemini,
+    groq: speakGroq,
+  };
+  for (const provider of voiceChain(config)) {
+    const clip = await speakers[provider](config, fetchFn, text).catch(() => null);
+    if (clip) return clip;
+    logger.warn({ event: 'voice_tts', provider, status: 'failed' }, 'voice');
+  }
+  return null;
 }
 
 async function sendReportEmail(
@@ -4033,36 +4244,26 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     const database = needDb();
     if (!voiceConfigured(config) || !(await currentFlags(database, config)).readAloud)
       throw new AppError(503, 'NOT_CONFIGURED', 'Voice is not set up.');
-    const key = sha256(`${config.ELEVENLABS_VOICE_ID}|${config.ELEVENLABS_MODEL}|${query.language}|${text}`);
-    const saved = await one<{ audio: Buffer }>(database, 'SELECT audio FROM voice_clips WHERE key = $1', [
-      key,
-    ]);
-    let audio = saved?.audio ?? null;
-    if (!audio) {
-      const made = await fetchFn(
-        `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(config.ELEVENLABS_VOICE_ID)}?output_format=mp3_44100_64`,
-        {
-          method: 'POST',
-          headers: {
-            'xi-api-key': config.ELEVENLABS_API_KEY ?? '',
-            'content-type': 'application/json',
-            accept: 'audio/mpeg',
-          },
-          signal: AbortSignal.timeout(20_000),
-          body: JSON.stringify({ text, model_id: config.ELEVENLABS_MODEL }),
-        },
-      ).catch(() => null);
-      if (!made?.ok) {
-        logger.warn({ reqId: req.id, event: 'voice_tts', status: made?.status ?? 'network' }, 'voice');
-        throw new AppError(503, 'NOT_CONFIGURED', 'Voice is not available right now.');
-      }
-      audio = Buffer.from(await made.arrayBuffer());
+    const key = sha256(`v2|${query.language}|${text}`);
+    const saved = await one<{ audio: Buffer; content_type: string }>(
+      database,
+      'SELECT audio, content_type FROM voice_clips WHERE key = $1',
+      [key],
+    );
+    let clip = saved ? { audio: saved.audio, contentType: saved.content_type } : null;
+    if (!clip) {
+      const made = await speakWithProviders(config, fetchFn, logger, text);
+      if (!made) throw new AppError(503, 'NOT_CONFIGURED', 'Voice is not available right now.');
       await database.query(
-        'INSERT INTO voice_clips (key, audio) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
-        [key, audio],
+        'INSERT INTO voice_clips (key, audio, content_type, provider) VALUES ($1, $2, $3, $4) ON CONFLICT (key) DO NOTHING',
+        [key, made.audio, made.contentType, made.provider],
       );
+      clip = made;
     }
-    res.set('content-type', 'audio/mpeg').set('cache-control', 'private, max-age=604800').send(audio);
+    res
+      .set('content-type', clip.contentType)
+      .set('cache-control', 'private, max-age=604800')
+      .send(clip.audio);
   });
   mount('/api/v1/voice', voice);
 

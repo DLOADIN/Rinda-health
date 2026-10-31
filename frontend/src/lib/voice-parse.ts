@@ -56,6 +56,14 @@ export function readCommand(text: string): VoiceCommand | null {
   return null;
 }
 
+export function looksOffTopic(text: string): boolean {
+  const t = normaliseSpeech(text);
+  return (
+    /\b(what|why|who|where|when|how come|can you|could you|tell me|do you know|whats)\b/.test(t) ||
+    t.split(' ').length > 14
+  );
+}
+
 export function readYesNo(text: string): boolean | null {
   const t = normaliseSpeech(text);
   if (/\b(dont know|do not know|not sure|maybe)\b/.test(t)) return null;
