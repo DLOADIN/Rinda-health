@@ -6,6 +6,7 @@ import { AuditPage, DeletionsPage, FlagsPage } from '@/features/staff/admin-page
 import { CollectPage } from '@/features/staff/collect-page';
 import { ContentPage } from '@/features/staff/content-page';
 import { ParticipantsPage } from '@/features/staff/participants-page';
+import { QrSessionsPage } from '@/features/staff/qr-sessions-page';
 import { ResearchPage } from '@/features/staff/research-page';
 import { SafetyPage } from '@/features/staff/safety-page';
 import { SessionDetailPage, SessionsPage } from '@/features/staff/sessions-pages';
@@ -26,6 +27,7 @@ export default function StaffRoutes({ role }: { role: Role }) {
           <Route path="sessions" element={<SessionsPage />} />
           <Route path="sessions/:id" element={<SessionDetailPage />} />
           <Route path="collect" element={<CollectPage meId={me?.id ?? ''} />} />
+          <Route path="qr-sessions" element={<QrSessionsPage />} />
         </>
       ) : null}
       {role === 'researcher_admin' || role === 'reviewer' ? (

@@ -17,6 +17,8 @@ import type { AssessmentResult, Plan, SafetyAssessment } from '@rinda/rules';
 
 export interface Assessment {
   id: string;
+  key?: string | null;
+  viaQr?: boolean;
   createdAt: string;
   rulesetVersion: string;
   results: AssessmentResult;

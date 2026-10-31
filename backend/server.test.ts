@@ -80,10 +80,12 @@ describe('voice helpers', () => {
   it('only uses voice services that have a key, in the configured order', () => {
     const base = loadConfig({ SESSION_SECRET: 'x'.repeat(40) });
     expect(voiceChain(base)).toEqual([]);
-    expect(voiceChain({ ...base, GROQ_API_KEY: 'g', ELEVENLABS_API_KEY: 'e' })).toEqual([
-      'elevenlabs',
+    expect(voiceChain({ ...base, GROQ_API_KEY: 'g', ELEVENLABS_API_KEY: 'e', GEMINI_API_KEY: 'm' })).toEqual([
       'groq',
+      'elevenlabs',
+      'gemini',
     ]);
+    expect(voiceChain({ ...base, ELEVEN_LABS_API_KEY: 'e' })).toEqual(['elevenlabs']);
     expect(
       voiceChain({ ...base, GROQ_API_KEY: 'g', GEMINI_API_KEY: 'm', VOICE_PROVIDERS: 'groq,gemini,unknown' }),
     ).toEqual(['groq', 'gemini']);
@@ -378,6 +380,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     ELEVENLABS_API_KEY: 'test-voice-key',
     GROQ_API_KEY: 'test-groq-key',
     GUIDE_PROVIDERS: 'gemini',
+    VOICE_PROVIDERS: 'elevenlabs,gemini,groq',
     SMS_ONLY_TO: '+250788555999, +250788555111',
     PUBLIC_URL: 'http://localhost:5173',
   });
@@ -623,7 +626,7 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       .expect(400);
     expect((await agent.get('/api/v1/facilitator/safety-events')).body.length).toBeGreaterThan(0);
     await agent.delete(`/api/v1/facilitator/sessions/${id}`).expect(204);
-    expect((await agent.get('/api/v1/dashboard')).body.cards).toHaveLength(4);
+    expect((await agent.get('/api/v1/dashboard')).body.cards).toHaveLength(5);
   });
 
   it('researcher-admin: users CRUD, last-admin guard, flags guard, audit log (FR-48, FR-50, FR-54)', async () => {
@@ -1501,8 +1504,41 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       already: 2,
       invalid: 0,
     });
-    const mine = (await phone.get('/api/v1/participant/assessments').expect(200)).body as unknown[];
+    const mine = (await phone.get('/api/v1/participant/assessments').expect(200)).body as Array<{
+      key: string;
+      viaQr: boolean;
+    }>;
     expect(mine).toHaveLength(1);
+    expect(mine[0]).toMatchObject({ key, viaQr: true });
+
+    const uploads = (await fac.get('/api/v1/facilitator/handovers').expect(200)).body as Array<{
+      id: string;
+      byMe: boolean;
+      participantLabel: string;
+      checkups: number;
+    }>;
+    const ours = uploads.filter((u) => u.byMe);
+    expect(ours).toHaveLength(2);
+    expect(ours[1]).toMatchObject({ checkups: 1, safetyEvents: 1, saved: 2, already: 0, invalid: 0 });
+    expect(ours[0]).toMatchObject({ saved: 0, already: 2 });
+    expect(ours[0]?.participantLabel).toBe('h•••@example.com');
+    expect(JSON.stringify(uploads)).not.toContain('ho-p@example.com');
+    const seenByOther = (await other.get('/api/v1/facilitator/handovers').expect(200)).body as Array<{
+      id: string;
+      byMe: boolean;
+    }>;
+    expect(seenByOther.find((u) => u.id === ours[1]?.id)?.byMe).toBe(false);
+    const detail = await fac.get(`/api/v1/facilitator/handovers/${ours[1]?.id}`).expect(200);
+    expect(detail.body.checkupList).toEqual([
+      expect.objectContaining({ rulesetVersion: expect.any(String), newFromQr: true }),
+    ]);
+    expect(JSON.stringify(detail.body)).not.toMatch(/systolic|answers|results/);
+    await phone.get('/api/v1/facilitator/handovers').expect(403);
+    await fac.get(`/api/v1/facilitator/handovers/${randomUUID()}`).expect(404);
+    const dash = (await fac.get('/api/v1/dashboard').expect(200)).body as {
+      cards: Array<{ key: string; value: number }>;
+    };
+    expect(dash.cards.find((c) => c.key === 'qr_uploads')?.value).toBe(2);
     await phone
       .post('/api/v1/participant/assessments')
       .set('Idempotency-Key', key)

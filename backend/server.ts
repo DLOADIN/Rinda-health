@@ -154,11 +154,12 @@ const EnvSchema = z
     BREVO_API_KEY: optionalText,
     EMAIL_FROM: optionalText,
     ELEVENLABS_API_KEY: optionalText,
+    ELEVEN_LABS_API_KEY: optionalText,
     ELEVENLABS_VOICE_ID: z
       .string()
       .regex(/^[A-Za-z0-9]{10,40}$/)
       .default('EXAVITQu4vr4xnSDxMaL'),
-    VOICE_PROVIDERS: z.string().default('elevenlabs,gemini,groq'),
+    VOICE_PROVIDERS: z.string().default('groq,elevenlabs,gemini'),
     GEMINI_TTS_MODELS: z.string().default('gemini-3.1-flash-tts-preview,gemini-2.5-flash-preview-tts'),
     GEMINI_TTS_VOICE: z
       .string()
@@ -171,7 +172,7 @@ const EnvSchema = z
     GROQ_TTS_VOICE: z
       .string()
       .regex(/^[a-z]{2,30}$/)
-      .default('hannah'),
+      .default('autumn'),
     ELEVENLABS_MODEL: z
       .string()
       .regex(/^[a-z0-9_]{3,40}$/)
@@ -1444,9 +1445,11 @@ function afterResponse(task: Promise<unknown>): void {
 type VoiceProvider = 'elevenlabs' | 'gemini' | 'groq';
 type Clip = { audio: Buffer; contentType: string; provider: VoiceProvider };
 
+const elevenLabsKey = (c: AppConfig) => c.ELEVENLABS_API_KEY ?? c.ELEVEN_LABS_API_KEY;
+
 export function voiceChain(c: AppConfig): VoiceProvider[] {
   const keys: Record<VoiceProvider, string | undefined> = {
-    elevenlabs: c.ELEVENLABS_API_KEY,
+    elevenlabs: elevenLabsKey(c),
     gemini: c.GEMINI_API_KEY,
     groq: c.GROQ_API_KEY,
   };
@@ -1528,7 +1531,7 @@ async function speakElevenLabs(config: AppConfig, fetchFn: typeof fetch, text: s
     {
       method: 'POST',
       headers: {
-        'xi-api-key': config.ELEVENLABS_API_KEY ?? '',
+        'xi-api-key': elevenLabsKey(config) ?? '',
         'content-type': 'application/json',
         accept: 'audio/mpeg',
       },
@@ -2397,9 +2400,13 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     safety: unknown;
     input: AssessmentInput;
     created_at: Date;
+    idempotency_key?: string;
+    received_by_qr?: boolean;
   };
   const toAssessment = (r: AssessmentRow) => ({
     id: r.id,
+    key: r.idempotency_key ?? null,
+    viaQr: r.received_by_qr === true,
     createdAt: r.created_at.toISOString(),
     rulesetVersion: r.ruleset_version,
     results: r.results,
@@ -3033,6 +3040,7 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
     let saved = 0;
     let already = 0;
     let invalid = 0;
+    const assessmentIds: string[] = [];
     for (const event of payload.safetyEvents) {
       const created = await saveItem9Event(database, payload.userId, event).catch((e: unknown) => {
         if (e instanceof AppError) return null;
@@ -3050,9 +3058,30 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
         },
       );
       if (!result || 'issues' in result) invalid++;
-      else if (result.status === 201) saved++;
-      else already++;
+      else {
+        assessmentIds.push(result.row.id);
+        if (result.status === 201) {
+          saved++;
+          await database.query('UPDATE assessments SET received_by_qr = true WHERE id = $1', [result.row.id]);
+        } else already++;
+      }
     }
+    await database.query(
+      `INSERT INTO handover_uploads
+         (facilitator_id, participant_id, session_id, checkups, safety_events, saved, already, invalid, assessment_ids)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        me(req).id,
+        payload.userId,
+        linked.id,
+        payload.checkups.length,
+        payload.safetyEvents.length,
+        saved,
+        already,
+        invalid,
+        assessmentIds,
+      ],
+    );
     await audit(
       database,
       me(req),
@@ -3066,6 +3095,75 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       },
     );
     res.json({ saved, already, invalid });
+  });
+
+  type HandoverRow = {
+    id: string;
+    facilitator_id: string | null;
+    session_id: string | null;
+    checkups: number;
+    safety_events: number;
+    saved: number;
+    already: number;
+    invalid: number;
+    assessment_ids: string[];
+    uploaded_at: Date;
+    f_name: string | null;
+    f_email: string | null;
+    f_phone: string | null;
+    p_email: string | null;
+    p_phone: string | null;
+  };
+  const HANDOVER_SELECT = `SELECT h.*, f.display_name AS f_name, f.email AS f_email, f.phone AS f_phone,
+       p.email AS p_email, p.phone AS p_phone
+     FROM handover_uploads h
+     LEFT JOIN users f ON f.id = h.facilitator_id
+     JOIN users p ON p.id = h.participant_id`;
+  const toHandover = (h: HandoverRow, meId: string) => ({
+    id: h.id,
+    uploadedAt: h.uploaded_at.toISOString(),
+    byMe: h.facilitator_id === meId,
+    facilitatorLabel: h.f_name ?? (h.f_email || h.f_phone ? maskIdentifier(h.f_email, h.f_phone) : null),
+    participantLabel: maskIdentifier(h.p_email, h.p_phone),
+    sessionId: h.session_id,
+    checkups: h.checkups,
+    safetyEvents: h.safety_events,
+    saved: h.saved,
+    already: h.already,
+    invalid: h.invalid,
+  });
+
+  facilitator.get('/handovers', requireRole('facilitator', 'researcher_admin'), async (req, res) => {
+    const list = await rows<HandoverRow>(
+      needDb(),
+      `${HANDOVER_SELECT} ORDER BY h.uploaded_at DESC LIMIT 200`,
+    );
+    res.json(list.map((h) => toHandover(h, me(req).id)));
+  });
+
+  facilitator.get('/handovers/:id', requireRole('facilitator', 'researcher_admin'), async (req, res) => {
+    const database = needDb();
+    const found = await one<HandoverRow>(database, `${HANDOVER_SELECT} WHERE h.id = $1`, [uuidParam(req)]);
+    if (!found) throw notFound();
+    const checkups = await rows<{
+      id: string;
+      created_at: Date;
+      ruleset_version: string;
+      received_by_qr: boolean;
+    }>(
+      database,
+      'SELECT id, created_at, ruleset_version, received_by_qr FROM assessments WHERE id = ANY($1::uuid[]) ORDER BY created_at',
+      [found.assessment_ids],
+    );
+    await audit(database, me(req), 'handover.view', { type: 'handover', id: found.id });
+    res.json({
+      ...toHandover(found, me(req).id),
+      checkupList: checkups.map((c) => ({
+        createdAt: c.created_at.toISOString(),
+        rulesetVersion: c.ruleset_version,
+        newFromQr: c.received_by_qr,
+      })),
+    });
   });
 
   facilitator.post('/sessions/:id/device-link', requireRole('facilitator'), async (req, res) => {
@@ -3772,6 +3870,12 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
               'SELECT count(*)::int AS n FROM facilitator_sessions WHERE facilitator_id = $1 AND ended_at IS NULL',
               [user.id],
             ),
+          },
+          {
+            key: 'qr_uploads',
+            value: await count('SELECT count(*)::int AS n FROM handover_uploads WHERE facilitator_id = $1', [
+              user.id,
+            ]),
           },
           {
             key: 'safety_events_7d',

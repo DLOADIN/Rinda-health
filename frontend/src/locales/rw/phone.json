@@ -61,5 +61,68 @@
     "phone": "Nimero ya telefoni yawe",
     "needEmail": "Andika aderesi ya imeri yawe kugira ngo ubone imeri.",
     "needPhone": "Andika nimero ya telefoni yawe kugira ngo ubone ubutumwa bugufi."
+  },
+  "profile": {
+    "title": "Umwirondoro",
+    "details": "Amakuru yanjye",
+    "displayName": "Izina",
+    "email": "Imeyili",
+    "phone": "Nimero ya telefoni",
+    "language": "Ururimi nkunda",
+    "save": "Bika impinduka",
+    "saved": "Byabitswe.",
+    "methodPassword": "Ijambo ry'ibanga",
+    "methodGoogle": "Google",
+    "passwordTitle": "Hindura ijambo ry'ibanga",
+    "setPasswordTitle": "Shyiraho ijambo ry'ibanga",
+    "currentPassword": "Ijambo ry'ibanga risanzwe",
+    "newPassword": "Ijambo ry'ibanga rishya",
+    "changePassword": "Vugurura ijambo ry'ibanga",
+    "passwordChanged": "Ijambo ry'ibanga ryahinduwe. Izindi telefoni na mudasobwa byasohowe.",
+    "about": "Ibinyerekeye (mu byiciro gusa)",
+    "aboutHint": "Bifasha porogaramu gusobanura bimwe mu bisubizo. Ushobora kubireka uko biri.",
+    "ageBand": "Icyiciro cy'imyaka",
+    "sex": "Igitsina",
+    "sexes": {
+      "female": "Gore",
+      "male": "Gabo",
+      "not_stated": "Sinshaka kubivuga"
+    },
+    "district": "Akarere",
+    "notSet": "Ntibyashyizweho",
+    "deleteTitle": "Kuva mu bushakashatsi no gusiba amakuru yanjye",
+    "deleteBody": "Ushobora kuva mu bushakashatsi igihe icyo ari cyo cyose. Tuzasiba amasuzuma yawe n'amakuru yawe mu masaha 72.",
+    "deleteRequest": "Saba ko amakuru yanjye asibwa",
+    "deleteConfirm": "Urashaka ko dusiba amakuru yawe? Nimara gusibwa ntibishobora gusubizwaho.",
+    "deleteRequested": "Ubusabe bwakiriwe ku wa {{date}}.",
+    "signOut": "Sohoka muri konti",
+    "districts": {
+      "gasabo": "Gasabo",
+      "kicukiro": "Kicukiro",
+      "nyarugenge": "Nyarugenge",
+      "other": "Akandi karere"
+    },
+    "consentsTitle": "Ibyo nemeye",
+    "consentsBody": "Hindura ibi byemezo igihe icyo ari cyo cyose. Buri gihinduka kibikwa nk'inyandiko nshya. Kugira ngo uve mu bushakashatsi burundu, saba ko amakuru yawe asibwa hepfo.",
+    "consentSaved": "Icyemezo cyawe cyabitswe.",
+    "deleteDue": "Amakuru yawe azasibwa bitarenze {{date}}."
+  },
+  "emailReports": {
+    "title": "Raporo kuri imeri",
+    "body": "Akira incamake ya buri suzuma kuri imeri: ibisubizo n'imibare yawe, inama na gahunda y'icyumweru. Ibisubizo by'imitekerereze n'umunaniro ntibijya byoherezwa. Umuntu wese ushobora gufungura imeri yawe ashobora kuyisoma.",
+    "toggle": "Nyoherereza incamake z'isuzuma ryanjye kuri imeri",
+    "needEmail": "Shyiramo aderesi ya imeri yawe muri \"Amakuru yanjye\" hejuru kugira ngo uzibone.",
+    "unavailable": "Kohereza byahagaze by’agateganyo. Icyo wahisemo kirabitswe kandi kizakoreshwa nibyongera gutangira.",
+    "saved": "Icyemezo cyawe cyabitswe.",
+    "send": "Nyoherereza iyi ncamake kuri imeri",
+    "sent": "Incamake yoherejwe kuri imeri yawe.",
+    "sendFailed": "Imeri ntiyashoboye koherezwa. Ongera ugerageze nyuma."
+  },
+  "aiOptIn": {
+    "title": "Ibisobanuro bya AI",
+    "body": "Emerera serivisi ya AI gusubiramo mu yandi magambo ibisobanuro byemejwe by'ibisubizo byawe. Yakira gusa amagambo n'imibare by'ibisubizo byawe, ntijya yakira izina ryawe, aho twakubona cyangwa ibisubizo by'ubuzima bwo mu mutwe. Ushobora kubihagarika igihe icyo ari cyo cyose.",
+    "toggle": "Koresha AI gusobanura ibisubizo byanjye",
+    "unavailable": "Ibisobanuro bya AI ntibiratangira gukora. Uzakomeza kubona ibisobanuro byemejwe.",
+    "saved": "Icyemezo cyawe cyabitswe."
   }
 }

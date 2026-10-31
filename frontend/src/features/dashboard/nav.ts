@@ -45,6 +45,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { to: '/app/participants', labelKey: 'nav.participants', icon: Users },
     { to: '/app/sessions', labelKey: 'nav.sessions', icon: CalendarClock },
     { to: '/app/collect', labelKey: 'nav.collect', icon: ScanLine },
+    { to: '/app/qr-sessions', labelKey: 'nav.qrSessions', icon: FileCheck },
     { to: '/app/safety', labelKey: 'nav.safety', icon: ShieldCheck },
     profile,
   ],

@@ -259,5 +259,30 @@
     "switchCamera": "Hindura kamera",
     "zoom": "Egereza kamera",
     "uploadedToast": "Byarangiye: ibyakiriwe byoherejwe ({{saved}} bishya). Ubu biragaragara ku kibaho."
+  },
+  "qrSessions": {
+    "title": "QR code sessions",
+    "intro": "Every offline check-up handed over by QR code and uploaded by a facilitator, newest first.",
+    "empty": "No check-ups have been received by QR code yet.",
+    "when": "Uploaded",
+    "by": "Uploaded by",
+    "you": "You",
+    "unknown": "A former staff member",
+    "participant": "Participant",
+    "checkups": "Check-ups",
+    "safetyEvents": "Safety events",
+    "result": "Result",
+    "newCount": "{{count}} new",
+    "alreadyCount": "{{count}} already saved",
+    "invalidCount": "{{count}} could not be saved",
+    "details": "Details",
+    "detailsTitle": "QR code session",
+    "checkupOn": "Check-up from {{date}}",
+    "newFromQr": "Saved from this QR code",
+    "alreadyThere": "Already sent from the phone",
+    "session": "Open the session",
+    "mineOnly": "Only mine",
+    "all": "Everyone",
+    "loadFailed": "The list could not be loaded. Please try again."
   }
 }

@@ -1,3 +1,4 @@
+import '@/features/dashboard/dashboard-strings';
 import type { Me, Role } from '@rinda/schemas';
 import { CirclePlus, CloudUpload, DoorOpen, EllipsisVertical, LogOut, UserRound } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react';

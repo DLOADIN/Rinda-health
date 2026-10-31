@@ -1,3 +1,4 @@
+import '@/features/profile/phone-strings';
 import type { Me, ParticipantProfile } from '@rinda/schemas';
 import { BellRing, Download, LogOut, Mail, Smartphone, Sparkles } from 'lucide-react';
 import { useState, type FormEvent } from 'react';

@@ -1,3 +1,4 @@
+import '@/features/profile/phone-strings';
 import { ArrowRight, Mail, QrCode, Trash2 } from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -50,8 +51,18 @@ export function ResultsPage() {
   }, [meId]);
   const waitingCheckups = me ? pendingFor(me.id).length : 0;
   const waiting = waitingCheckups + safetyWaiting;
+  const savedKeys = new Set((saved ?? []).map((a) => a.key).filter(Boolean));
   const data =
-    saved || me ? [...(me ? pendingFor(me.id).map((i) => i.provisional) : []), ...(saved ?? [])] : undefined;
+    saved || me
+      ? [
+          ...(me
+            ? pendingFor(me.id)
+                .filter((i) => !savedKeys.has(i.key))
+                .map((i) => i.provisional)
+            : []),
+          ...(saved ?? []),
+        ]
+      : undefined;
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -106,6 +117,7 @@ export function ResultsPage() {
               <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
                 {t('results.checkupOn', { date: formatDate(a.createdAt, true) })}
                 {a.provisional ? <Badge variant="outline">{t('offline.savedOnPhone')}</Badge> : null}
+                {a.viaQr ? <Badge variant="secondary">{t('results.viaQr')}</Badge> : null}
               </CardTitle>
               <CardDescription>{t('results.version', { version: a.rulesetVersion })}</CardDescription>
             </CardHeader>
