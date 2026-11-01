@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rinda Health: Technical Report</title>
+<style>
+  @page { size: A4; margin: 13mm 14mm 13mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; font-size: 9.1pt; line-height: 1.36; color: #1d2a24; margin: 0; }
+  h1 { font-size: 17pt; margin: 0 0 2px; color: #14532d; }
+  h2 { font-size: 11.5pt; margin: 11px 0 4px; color: #14532d; border-bottom: 1.5px solid #bbd8c4; padding-bottom: 2px; }
+  h3 { font-size: 9.8pt; margin: 8px 0 3px; color: #1d2a24; }
+  p { margin: 0 0 5px; }
+  ul { margin: 0 0 5px; padding-left: 16px; }
+  li { margin: 0 0 1px; }
+  table { width: 100%; border-collapse: collapse; margin: 3px 0 6px; font-size: 8.2pt; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid #cfdcd3; padding: 2.5px 4px; vertical-align: top; text-align: left; }
+  th { background: #e8f3ec; font-weight: 600; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 7.9pt; background: #f2f5f3; padding: 0 2px; border-radius: 2px; }
+  .meta { color: #4a5a52; font-size: 8.6pt; margin-bottom: 6px; }
+  .meta a { color: #14532d; }
+  .ok { color: #166534; font-weight: 600; }
+  .part { color: #92400e; font-weight: 600; }
+  .no { color: #991b1b; font-weight: 600; }
+  .arch { display: flex; gap: 6px; align-items: stretch; margin: 4px 0 6px; font-size: 8pt; }
+  .box { border: 1px solid #9cc5aa; border-radius: 4px; padding: 4px 6px; background: #f6fbf8; flex: 1; }
+  .box b { display: block; color: #14532d; }
+  .arrow { align-self: center; color: #4a5a52; font-weight: 700; }
+  .shared { border: 1px dashed #9cc5aa; border-radius: 4px; padding: 3px 6px; font-size: 8pt; text-align: center; margin-bottom: 6px; }
+  .two { display: flex; gap: 10px; }
+  .two > div { flex: 1; }
+  .small { font-size: 8pt; color: #4a5a52; }
+</style>
+</head>
+<body>
+
+<h1>Rinda Health: Technical Report</h1>
+<div class="meta">
+  Final Version of the Product, BSc Software Engineering capstone, African Leadership University ·
+  Mugemanyi Manzi David · Supervisor: Emmanuel Annor · November 2026<br>
+  Live app: <a href="https://rinda-health.vercel.app">rinda-health.vercel.app</a> ·
+  Repository: <a href="https://github.com/DLOADIN/Rinda-health">github.com/DLOADIN/Rinda-health</a>
+</div>
+
+<h2>1. Product overview and architecture</h2>
+<p>
+  Rinda Health is a bilingual (English and Kinyarwanda), offline-first progressive web app (PWA). It helps Rwandan adults aged 18–35 screen six
+  non-communicable disease (NCD) risk factors: tobacco, alcohol, physical activity, fruit and vegetables, body size and blood pressure. People can also take
+  an optional mental-wellness check (PHQ-9, GAD-7). Each area gets its own explained, educational result, with a short weekly plan and links to real
+  services. The product is <b>educational, not diagnostic</b>, and it is not an emergency service. Four roles share one app: participant, facilitator,
+  researcher-admin and reviewer.
+</p>
+<div class="arch">
+  <div class="box"><b>Phone or laptop (PWA)</b><code>frontend/</code> React 19, TypeScript, shadcn/ui, RTK Query, i18next; Workbox service worker; encrypted IndexedDB outbox</div>
+  <div class="arrow">HTTPS /api&nbsp;→</div>
+  <div class="box"><b>API on Vercel (serverless)</b><code>backend/server.ts</code> Express 5, Zod, sessions, Argon2id, one Router per area; Brevo email, Pindo SMS, AI and voice providers</div>
+  <div class="arrow">SQL&nbsp;→</div>
+  <div class="box"><b>Neon PostgreSQL</b>plain parameterised SQL through <code>pg</code>; numbered SQL migrations; audit log</div>
+</div>
+<div class="shared">Both sides import the same shared packages: <code>packages/rules</code> (pure scoring, safety, planner) · <code>packages/schemas</code> (Zod contracts) · <code>packages/content</code> (approved wording and versioned ruleset)</div>
+
+<h2>2. Scope alignment and feature validation</h2>
+<p>The approved scope is the capstone proposal (18 September 2026): 20 functional requirements (its Table 14), 12 non-functional requirements (Table 15) and the evaluation metrics (Table 13). Each is mapped below to its status and evidence in the repository. Status key: <span class="ok">Done</span> · <span class="part">Partial</span> · <span class="no">Not done</span>.</p>
+<h3>2.1 Functional requirements from the proposal</h3>
+<table>
+  <tr><th style="width:6%">ID</th><th style="width:27%">Requirement (purpose)</th><th style="width:8%">Status</th><th>Evidence (repository)</th></tr>
+  <tr><td>FR-01</td><td>Show non-diagnostic, non-emergency purpose first</td><td class="ok">Done</td><td><code>features/landing/</code>, consent screen; disclaimer on every result</td></tr>
+  <tr><td>FR-02</td><td>Age eligibility and versioned consent</td><td class="ok">Done</td><td><code>consent-page.tsx</code> (18–35 check); <code>consent_events</code> table stores <code>consent_doc_version</code>, never updated</td></tr>
+  <tr><td>FR-03</td><td>Pseudonymous access, minimal profile</td><td class="part">Changed</td><td>Email/phone + password or Google sign-in (see 2.4); staff see only <code>maskIdentifier()</code> labels</td></tr>
+  <tr><td>FR-04</td><td>Versioned questionnaire; encrypted draft</td><td class="part">Partial</td><td>Versioned ruleset JSON; finished check-ups saved AES-GCM encrypted offline (<code>lib/offline.ts</code>). Resuming a half-finished form is not built</td></tr>
+  <tr><td>FR-05</td><td>Skip any sensitive question or the wellness module</td><td class="ok">Done</td><td>"Skip" on every sensitive item, stored as a missingness code (<code>Answer&lt;T&gt;</code> in <code>types.ts</code>), never as 0</td></tr>
+  <tr><td>FR-06</td><td>Immediate pause/exit to a neutral screen</td><td class="ok">Done</td><td><code>features/exit/neutral-screen.tsx</code>; Exit in every participant header; <code>e2e/shell.spec.ts</code></td></tr>
+  <tr><td>FR-07</td><td>Validate biomarkers with units and ranges</td><td class="ok">Done</td><td><code>packages/rules/src/validate.ts</code> and Zod schemas, on phone and server</td></tr>
+  <tr><td>FR-08</td><td>Idempotent submit; tolerate lost connection</td><td class="ok">Done</td><td><code>Idempotency-Key</code> + SHA-256 body hash; encrypted outbox; QR hand-over</td></tr>
+  <tr><td>FR-09</td><td>Deterministic, versioned, per-domain results</td><td class="ok">Done</td><td><code>packages/rules/src/score.ts</code>; 79 golden cases; no combined score</td></tr>
+  <tr><td>FR-10</td><td>Factors, completeness, source, limits, advice</td><td class="ok">Done</td><td><code>DomainResult.completeness</code>; "Why this result"; "How results are calculated" page</td></tr>
+  <tr><td>FR-11</td><td>On-device PHQ-9 item-9 check, safety screen</td><td class="ok">Done</td><td><code>checkItem9()</code> in <code>safety.ts</code> runs before any fetch; a component test proves it</td></tr>
+  <tr><td>FR-12</td><td>"Get help now" on every screen, offline too</td><td class="ok">Done</td><td><code>components/get-help.tsx</code> bundled in the app shell; e2e offline test</td></tr>
+  <tr><td>FR-13</td><td>Safety events without response content</td><td class="ok">Done</td><td><code>safety_events</code> table (tier, time, action); queued offline, then sent</td></tr>
+  <tr><td>FR-14</td><td>History marked with ruleset version</td><td class="ok">Done</td><td><code>features/results/</code> history and charts; <code>ruleset_version</code> stored on every assessment</td></tr>
+  <tr><td>FR-15</td><td>No answers or results in logs or analytics</td><td class="ok">Done</td><td>pino redaction; no analytics SDK; <code>scripts/check-logs.mjs</code> sentinel search in CI</td></tr>
+  <tr><td>FR-16</td><td>English and Kinyarwanda, switch any time</td><td class="part">Done*</td><td><code>packages/content/{en,rw}</code> with a key parity check. *Bilingual review pending</td></tr>
+  <tr><td>FR-17</td><td>Usability and baseline-comparison feedback</td><td class="part">Partial</td><td>SUS form (<code>sus-page.tsx</code>) and the facilitator task-completion log are built; the non-personalised baseline page is not</td></tr>
+  <tr><td>FR-18</td><td>Withdrawal and deletion requests</td><td class="ok">Done</td><td><code>POST /participant/deletion-requests</code>; admin queue and <code>/complete</code> route</td></tr>
+  <tr><td>FR-19</td><td>De-identified research export with versions</td><td class="part">Partial</td><td><code>GET /admin/research-report</code>: task completion, SUS bands, bands per domain, safety tiers, languages (aggregate only)</td></tr>
+  <tr><td>FR-20</td><td>Serve only approved content (approver, date)</td><td class="ok">Done</td><td>Content workflow with two approvals; approver and date stored; only published versions served</td></tr>
+</table>
+<p><b>Built beyond the proposal</b> (after ethics approval, behind feature flags): the Ask Rinda AI guide and chat (validated, crisis-guarded, 15 questions a day); the voice check-up; email and SMS result summaries; blood pressure read from a photo; QR hand-over with a facilitator QR-session page; and dashboards for four roles.</p>
+
+<h3>2.2 Non-functional requirements from the proposal</h3>
+<table>
+  <tr><th style="width:15%">Category</th><th style="width:8%">Status</th><th>Evidence</th></tr>
+  <tr><td>Security</td><td class="ok">Done</td><td>HTTPS only with Helmet headers and CSP; Argon2id; HttpOnly SameSite sessions; <code>requireRole()</code> on staff routes; sign-in rate limits; secrets in Vercel env; <code>npm audit</code> in CI</td></tr>
+  <tr><td>Privacy</td><td class="ok">Done</td><td>Data minimisation, masked staff view, consent switches, deletion workflow, no third-party analytics</td></tr>
+  <tr><td>Installability, offline</td><td class="ok">Done</td><td>Web manifest and Workbox service worker; the live site reloads with the network off (measured, 4.3)</td></tr>
+  <tr><td>Compatibility</td><td class="part">Partial</td><td>Chromium and WebKit at 360 px pass in CI; Samsung Internet (Chromium engine) still to be checked on a real phone</td></tr>
+  <tr><td>Reliability</td><td class="part">Partial</td><td>Idempotent retry and an ordered outbox; Neon backups exist, but a restore drill is still to be run</td></tr>
+  <tr><td>Performance</td><td class="ok">Done</td><td>Cached app opens in 0.13–0.32 s (target &lt; 1 s); first visit 1.3–2.7 s (4.3)</td></tr>
+  <tr><td>Accessibility</td><td class="ok">Done</td><td>axe-core scans, 52 contrast checks, word + icon bands, 44 px targets, labelled controls</td></tr>
+  <tr><td>Localization</td><td class="part">Done*</td><td>All text in resource files in both languages; *Kinyarwanda review and Kinyarwanda voice audio pending</td></tr>
+  <tr><td>Explainability</td><td class="ok">Done</td><td>Each assessment stores its answers and ruleset version, so its result can be reproduced exactly</td></tr>
+  <tr><td>Maintainability</td><td class="ok">Done</td><td>Typed Zod contracts, numbered SQL migrations, ESLint/Prettier, golden tests (Section 5)</td></tr>
+  <tr><td>Observability</td><td class="ok">Done</td><td><code>x-request-id</code> correlation ID on every request; structured pino logs without health data</td></tr>
+  <tr><td>Research integrity</td><td class="part">Partial</td><td>Missingness codes and ruleset versions stored; a row-level export with a data dictionary is not built</td></tr>
+</table>
+
+<h3>2.3 Evaluation metrics (proposal Table 13)</h3>
+<table>
+  <tr><th style="width:30%">Metric and target</th><th>Result so far</th></tr>
+  <tr><td>Scoring reproducibility: 100% identical</td><td class="ok">Met: 79 golden cases identical in Node, Chromium and WebKit</td></tr>
+  <tr><td>Duplicate prevention: zero duplicates</td><td class="ok">Met: same-key replay and 409-mismatch integration tests</td></tr>
+  <tr><td>Restricted data logging: zero sensitive values</td><td class="ok">Met: the log sentinel search after the e2e run finds none</td></tr>
+  <tr><td>Skip, pause and exit control success: 100%</td><td class="ok">Met: Exit and Get help e2e tests, online and offline</td></tr>
+  <tr><td>Core flow on Chrome, Safari and Samsung Internet</td><td class="part">Chromium and WebKit met; the Samsung Internet device check is pending</td></tr>
+  <tr><td>Task completion ≥ 80%, SUS ≥ 68, comprehension ≥ 80%, relevance, usefulness, cultural fit</td><td class="part">To be measured in the November pilot (15 participants, 5 key informants); the SUS form, task log and research report that collect them are built</td></tr>
+</table>
+
+<h3>2.4 Deviations from the proposal and justification</h3>
+<table>
+  <tr><th style="width:34%">Change</th><th>Reason</th></tr>
+  <tr><td>Study code sign-in became email/phone + password or Google (FR-03)</td><td>Testers and staff needed self-service accounts and password recovery. Email and phone are used only to sign in and for opted-in result messages, and staff never see them unmasked.</td></tr>
+  <tr><td>Generative AI, which the proposal left out of the MVP, was added</td><td>Allowed after ethics approval. It sits behind flags, receives only structured result codes, is validated against approved content, and never sets a result or writes safety or referral text (proposal 1.10.7).</td></tr>
+  <tr><td>Render → Vercel; Flyway/Alembic → plain SQL migrations; React 18 → 19; Node 20 → 24</td><td>Vercel gives free serverless hosting with preview deploys. Alembic needs Python, which the project excludes. Newer LTS versions keep security support.</td></tr>
+  <tr><td>Draft resume, baseline page and row-level export deferred</td><td>Time went first to safety, offline sync and testing. All three are planned before the pilot.</td></tr>
+</table>
+
+<h2>3. Technical functionality</h2>
+<table>
+  <tr><th style="width:17%">Feature</th><th>How it works (technical logic)</th></tr>
+  <tr><td>Accounts and roles</td><td>Routes in the <code>auth</code> router. Passwords are hashed with Argon2id; Google sign-in uses OpenID Connect with PKCE. Session cookies are HttpOnly and SameSite, with 8 h idle and 12 h absolute limits. <code>requireRole()</code> guards every staff route, and each staff action is written to the audit log.</td></tr>
+  <tr><td>Check-up and scoring</td><td>React Hook Form validates with Zod schemas from <code>packages/schemas</code>. A skipped answer is stored as a missingness code, never as 0. <code>scoreAssessment()</code> is a pure function: it runs on the phone for instant and offline results, and again on the server, which stores the authoritative copy with its ruleset version.</td></tr>
+  <tr><td>Safety</td><td><code>checkItem9()</code> runs on the phone before any network call and opens the safety screen. <code>checkChatQuestion()</code> blocks crisis phrases and personal data before any AI call. In the voice check-up, item 9 can only be answered by tapping, to avoid mis-hearing.</td></tr>
+  <tr><td>Offline and sync</td><td>The service worker precaches the app shell. Offline check-ups are encrypted with AES-GCM 256 (Web Crypto, a non-exportable device key, <code>lib/storage/vault.ts</code>) in IndexedDB, then sent in order when online with an <code>Idempotency-Key</code>. The server stores a SHA-256 hash of the canonical body, so a resend returns the first result.</td></tr>
+  <tr><td>AI guide and chat</td><td>A provider chain (Gemini → Groq → OpenRouter) is tried in order. Every answer passes <code>validateGuideAnswer</code>, which accepts only approved source IDs and numbers taken from the person's own results; otherwise the approved template is shown. Each person can ask 15 questions a day.</td></tr>
+  <tr><td>Voice check-up</td><td>Each question is spoken by a text-to-speech chain (Groq → ElevenLabs → Gemini → browser voice). Clips are cached in <code>voice_clips</code> under a SHA-256 key, and only approved content IDs can be spoken. Answers are heard with the browser's speech recognition and parsed by a deterministic parser (<code>voice-parse.ts</code>) into the same form.</td></tr>
+  <tr><td>Email and SMS</td><td>After a check-up is saved, <code>sendReportEmail</code> (Brevo) and <code>sendSmsReport</code> (Pindo) run after the response through Vercel <code>waitUntil</code>. Each respects the person's on/off switch. Outcomes are logged to <code>message_events</code> as status only, with no content.</td></tr>
+</table>
+<p><b>Frontend–backend–data flow.</b> RTK Query (<code>lib/api.ts</code>) calls <code>/api/v1/…</code>. Express parses each body with a strict Zod schema (unknown fields → 400 with a stable error code). Plain parameterised SQL (<code>$1</code>) writes to Neon, and schema changes are numbered SQL migrations. RTK Query cache tags refresh the affected screens. Logs (pino) never contain answers, results, passwords or tokens, and a sentinel test enforces this.</p>
+
+<h2>4. Testing, validation and performance</h2>
+<h3>4.1 Testing strategies</h3>
+<table>
+  <tr><th style="width:15%">Strategy</th><th style="width:20%">Why chosen</th><th style="width:30%">How it was conducted</th><th style="width:14%">Result</th><th>Improvement made</th></tr>
+  <tr><td>Unit + golden tests (Vitest)</td><td>Scoring must be exact and identical on every device</td><td>79 scoring and 7 planner golden fixtures plus rule, wellness, guide and chat-guard tests in <code>packages/rules/test</code></td><td class="ok">207 passed</td><td>BMI compared as an integer (<code>bmiTimesTen</code>) so floating-point rounding can never move a value across a band edge</td></tr>
+  <tr><td>Integration tests (Supertest + real Postgres)</td><td>Routes, database and rules must work together</td><td><code>backend/server.test.ts</code>: every test runs in a throwaway Neon schema with mocked Brevo, Pindo and AI providers</td><td class="ok">44 passed</td><td>Found that emails never sent on Vercel (fixed with <code>waitUntil</code>); fixed consent defaults</td></tr>
+  <tr><td>Component tests (Testing Library)</td><td>UI logic such as safety screens and voice flow</td><td><code>frontend/src/**/*.test.tsx</code>, e.g. the item-9 screen opens before any fetch; voice answers fill the form</td><td class="ok">69 passed</td><td>Fixed stale answers in the voice flow; item 9 made tap-only after a safety review</td></tr>
+  <tr><td>End-to-end + compatibility (Playwright)</td><td>Real browser behaviour on phones</td><td><code>e2e/*.spec.ts</code> on Pixel 7 (Chromium) and iPhone 14 (WebKit): golden parity, Exit and Get help online and offline, privacy</td><td class="ok">Pass in CI</td><td>Get help made reachable inside the chat drawer</td></tr>
+  <tr><td>Accessibility</td><td>WCAG 2.2 AA for all users</td><td>axe-core scans in Playwright; <code>check-contrast.mjs</code> tests 52 colour pairs</td><td class="ok">0 violations</td><td>Bands show a word and an icon, never colour alone; 44 px tap targets</td></tr>
+  <tr><td>Performance budget</td><td>Low-end phones on slow data</td><td><code>check-size.mjs</code> fails the build above 250 KB gzip first-load JS</td><td class="ok">249.8 KB</td><td>Lazy-loaded chat, charts, staff pages, OCR and translation bundles</td></tr>
+  <tr><td>Live service tests</td><td>Real delivery cannot be mocked away</td><td><code>npm run sms:check</code>, Brevo send, <code>models:check</code>; voice round-trip (TTS → speech-to-text → parser)</td><td class="ok">All delivered; voice 10/10</td><td>Corrected provider variable names; reordered voice providers by speed</td></tr>
+</table>
+<p class="small">Continuous integration (<code>.github/workflows/ci.yml</code>) runs lint, typecheck, all tests, content validation, build, size and contrast checks, Playwright on Chromium and WebKit, a log sentinel search and <code>npm audit</code> on every push.</p>
+
+<h3>4.2 Testing with different inputs</h3>
+<table>
+  <tr><th style="width:33%">Input</th><th>Expected and observed behaviour</th></tr>
+  <tr><td>Complete normal check-up</td><td>A separate result per area, a plan, and an email/SMS if switched on</td></tr>
+  <tr><td>Blood pressure skipped</td><td>BP shows "Not answered"; the other areas still score (missing ≠ 0)</td></tr>
+  <tr><td>BP 300/40 or systolic below diastolic</td><td>Field validation message; the reading is refused on phone and server</td></tr>
+  <tr><td>PHQ-9 item 9 answered 1–3</td><td>Safety screen opens immediately, before any network call</td></tr>
+  <tr><td>Chat: crisis phrase / phone number / football question</td><td><code>CHAT_SAFETY</code> safety message / <code>CHAT_PERSONAL</code> refusal / polite off-topic reply; nothing is sent to the AI for the first two</td></tr>
+  <tr><td>16th chat question or 6th check-up in a day</td><td>HTTP 429 <code>CHAT_LIMIT</code> / <code>DAILY_LIMIT</code> with a calm message</td></tr>
+  <tr><td>Same check-up sent twice / same key, different body</td><td>Second request returns the first result / HTTP 409 <code>IDEMPOTENCY_MISMATCH</code></td></tr>
+  <tr><td>Airplane mode during a check-up</td><td>"Saved on this phone"; sent automatically when back online, no duplicate</td></tr>
+  <tr><td>Request body with an extra field; repeated wrong passwords</td><td>HTTP 400 validation error that does not echo values; sign-in rate-limited</td></tr>
+</table>
+
+<h3>4.3 Performance and compatibility</h3>
+<p>The live site was measured with a Playwright script: cold load, median of 3 runs, on 1 November 2026. The low-end profile emulates a mid-range Android on Slow 4G (1.6 Mbps, 150 ms latency) with a 4× CPU slowdown.</p>
+<table>
+  <tr><th>Environment (engine, device, network)</th><th>First paint</th><th>Largest paint</th><th>Page loaded</th><th>Transferred</th><th>JS heap</th></tr>
+  <tr><td>Chromium (Chrome/Edge), Windows laptop 1366×768, fast</td><td>1.49 s</td><td>1.82 s</td><td>1.34 s</td><td>365 KB</td><td>9.5 MB</td></tr>
+  <tr><td>Chromium, Pixel 7 (Android), fast</td><td>1.65 s</td><td>2.21 s</td><td>1.49 s</td><td>365–607 KB</td><td>9.5 MB</td></tr>
+  <tr><td>Chromium, Pixel 7, <b>low-end: Slow 4G + 4× CPU</b></td><td>3.03 s</td><td>3.95 s</td><td>2.68 s</td><td>365 KB</td><td>9.5 MB</td></tr>
+  <tr><td>WebKit (Safari engine), iPhone 14 (iOS), fast</td><td>2.09 s</td><td>3.32 s</td><td>2.47 s</td><td>373 KB</td><td>n/a</td></tr>
+</table>
+<p><b>Analysis.</b> Even on the low-end profile the first content shows in about 3 s, under the 4 s "poor" Largest Contentful Paint line; on fast networks it is 1.8–2.2 s on Chromium, close to the 2.5 s "good" target. The page stays light (about 365 KB transferred, 9.5 MB JavaScript heap) because heavy features load only when opened. On a repeat visit the service worker serves the app from its cache: it loaded in 0.13 s on the fast phone profile and 0.32 s on the low-end one (median of 3), well inside the proposal’s 1 s target, and it reloaded fully with the network switched off. Compatibility is covered by running the same end-to-end suite on Chromium (Chrome, Edge and Samsung Internet on Android and Windows) and WebKit (iPhone and iPad Safari) at 360 px phone width and on laptop screens. Remaining limits: speech recognition is not available in every browser (the voice check-up hides itself and the form stays usable), and Kinyarwanda voice is not available yet.</p>
+
+<h2>5. Code quality and technical implementation</h2>
+<h3>5.1 Structure and separation of concerns</h3>
+<p>The code is an npm-workspaces monorepo. <code>frontend/src/features/*</code> holds one folder per area (auth, consent, participant, results, guide, profile, dashboard, staff, sync). <code>components/</code> holds reusable compositions (AppShell, GetHelp, BandBadge, ConfirmAction), and <code>lib/</code> holds infrastructure (API client, offline outbox, encrypted storage, i18n, BP reader, voice). The most important logic, scoring, safety and planning, is not in the UI or the API. It lives in <code>packages/rules</code> as pure, framework-free functions, so it has one source of truth, works offline and is easy to test. <code>packages/schemas</code> owns every data contract, and <code>packages/content</code> owns every participant-facing word. The API is a single deployable file for simple serverless hosting. Inside it, each area is its own Express <code>Router</code> (15 routers: auth, account, participant, facilitator, admin, content, dashboard, guide, chat, voice, messaging and others), built by <code>createApp()</code> from injected dependencies.</p>
+
+<h3>5.2 Object-oriented principles applied</h3>
+<table>
+  <tr><th style="width:17%">Principle</th><th>Where and how</th></tr>
+  <tr><td>Abstraction</td><td><code>Ruleset</code>, <code>DomainResult</code>, <code>AssessmentResult</code>, <code>Plan</code> types (<code>packages/rules/src/types.ts</code>). Callers use <code>scoreAssessment()</code> without knowing any per-area rule.</td></tr>
+  <tr><td>Encapsulation</td><td><code>lib/offline.ts</code> keeps the outbox queue private and exposes only <code>addToOutbox</code>, <code>flushOutbox</code> and <code>useOutbox</code>; <code>lib/storage/vault.ts</code> hides the non-exportable AES key behind encrypt/decrypt calls.</td></tr>
+  <tr><td>Inheritance</td><td><code>AppError extends Error</code> carries an HTTP status and a stable code, so one error handler serves every route. <code>GuideBoundary extends React.Component</code> isolates guide failures.</td></tr>
+  <tr><td>Polymorphism</td><td>AI and voice providers share one interface: the chain calls <code>askGemini</code>, <code>askOpenAiStyle</code> (Groq, OpenRouter, Cerebras, Mistral) or <code>speakGroq</code>/<code>speakElevenLabs</code>/<code>speakGemini</code> the same way and falls back on failure. The seven per-area scorers share one signature in a <code>SCORERS</code> strategy map, so <code>scoreDomain()</code> treats them alike.</td></tr>
+  <tr><td>Dependency injection</td><td><code>createApp({ config, logger, db, fetchFn })</code>, so tests inject a fake <code>fetch</code> and a throwaway database schema with no code changes.</td></tr>
+  <tr><td>Reuse and single responsibility</td><td>Shared packages are imported by both web and API. Schemas only validate, rules only compute, content only holds text. shadcn/ui components are themed once in <code>rinda-theme.css</code>.</td></tr>
+</table>
+
+<h3>5.3 Algorithms and problem solving</h3>
+<table>
+  <tr><th style="width:23%">Problem</th><th>Solution</th></tr>
+  <tr><td>Identical results on every device</td><td>Pure, versioned rules with integer arithmetic (BMI × 10, ages and minutes as integers). 79 golden cases run in Node, Chromium and WebKit to prove client–server parity.</td></tr>
+  <tr><td>Reading a BP monitor from a photo</td><td>A pipeline that runs in the browser: grayscale, Otsu thresholding, morphological filtering with the van Herk/Gil-Werman sliding min/max (O(n) per row, whatever the window size), line and speckle removal, projection profiles to find digit rows, shear estimation for slanted digits, rotation for tilted photos, then seven-segment decoding. Several frames must agree before a value is accepted.</td></tr>
+  <tr><td>Choosing next steps</td><td>A priority planner: urgent areas first, then a fixed order, at most 3 focus areas. Targets are rounded to practical steps, e.g. "+20 minutes on 3 days".</td></tr>
+  <tr><td>Moving data with no internet (QR)</td><td>The phone seals the check-up for the server only: ECDH P-256 key agreement, then HKDF, then AES-GCM 256, compressed to fit in a QR code. The facilitator relays it without being able to read it.</td></tr>
+  <tr><td>No duplicates on bad networks</td><td>Idempotency key plus a SHA-256 hash of the canonical, key-sorted JSON body. Same key with the same body → replay; with a different body → 409.</td></tr>
+  <tr><td>Safe AI output</td><td>A validator whitelists source IDs and checks every number against the person's own results. The provider chain falls back on errors and time-outs, and a crisis and personal-data guard runs first.</td></tr>
+  <tr><td>Understanding spoken answers</td><td>A deterministic parser normalises text, maps number words to digits, matches yes/no and choice synonyms, detects commands (skip, repeat, stop) and flags off-topic speech. A crisis check runs on every utterance.</td></tr>
+  <tr><td>Cheap, reliable SMS</td><td>Typographic characters (curly quotes, dashes, ellipses) are replaced so the text stays in the GSM-7 alphabet and each part is billed at the lowest rate. An optional allow-list (<code>SMS_ONLY_TO</code>) limits sends during testing.</td></tr>
+</table>
+
+<h3>5.4 Quality practices, limitations and future work</h3>
+<ul>
+  <li>TypeScript strict mode with no <code>any</code>; ESLint and Prettier enforced; kebab-case files and named exports; Zod at every boundary with stable error codes; no hard-coded participant text (all via i18n, both languages).</li>
+  <li>Privacy by design: data minimisation, encrypted local storage, masked identifiers for staff, audit log, consent switches, and no third-party analytics.</li>
+  <li>Over 200 commits with short conventional messages, plus CI on every push.</li>
+  <li><b>Limitations and next steps:</b> split the API file's routers into separate modules after the pilot; build the What-if screen and clinic card; record and review Kinyarwanda audio; complete native-speaker and clinician content review; run the November pilot (15 participants, 5 key informants) with SUS usability scoring.</li>
+</ul>
+
+</body>
+</html>
