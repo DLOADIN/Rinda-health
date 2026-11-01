@@ -10,7 +10,7 @@ ALU BSc Software Engineering capstone by Mugemanyi Manzi David, supervised by Em
 | --- | --- |
 | Live app | https://rinda-health.vercel.app |
 | Walkthrough video | **ADD VIDEO LINK HERE** |
-| Technical report (PDF, 5 pages) | [report/Rinda-Health-Technical-Report.pdf](report/Rinda-Health-Technical-Report.pdf) |
+| Technical report (PDF, 5 pages) | **ADD REPORT LINK HERE** |
 | Repository | https://github.com/DLOADIN/Rinda-health |
 
 ## The problem it solves
@@ -117,7 +117,6 @@ packages/
   content/                 approved wording (en, rw) and the versioned ruleset
 e2e/                       Playwright browser tests (golden parity, safety, privacy, axe)
 scripts/                   size, contrast and log checks (Node only)
-report/                    the technical report (PDF and its HTML source)
 .github/workflows/ci.yml   CI: checks, e2e on Chromium and WebKit, log check, npm audit
 ```
 

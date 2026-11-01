@@ -15,6 +15,7 @@ apps/web/dev-dist/
 *.tsbuildinfo
 .vite/
 .vscode/
+SUBMISSION.md
 
 # Design reference copy of github.com/Codehagen/Badget (not part of this app)
 Badget-main/
@@ -24,3 +25,4 @@ vercel.md
 Pictures/
 docs/
 plan.md
+report/
