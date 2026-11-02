@@ -14,7 +14,7 @@ ALU BSc Software Engineering capstone by Mugemanyi Manzi David, supervised by Em
 | Repository | https://github.com/DLOADIN/Rinda-health |
 
 ## The problem it solves
-
+ 
 NCDs such as hypertension, diabetes and heart disease are rising among young Rwandans, but most screening happens late, in clinics, and on paper. Young adults rarely get an early, private picture of their own risk factors, in their own language, with clear next steps. Mobile data is also patchy, and many phones are shared.
 
 Rinda Health gives a short, private check-up that works on any phone, even offline. It explains each result in plain language, with a practical next step and real services to contact.
