@@ -9,8 +9,8 @@ ALU BSc Software Engineering capstone by Mugemanyi Manzi David, supervised by Em
 | | |
 | --- | --- |
 | Live app | https://rinda-health.vercel.app |
-| Walkthrough video | **ADD VIDEO LINK HERE** |
-| Technical report (PDF, 5 pages) | **ADD REPORT LINK HERE** |
+| Walkthrough video | https://youtu.be/wKDEsNN1Ep4 |
+| Technical report (PDF, 5 pages) | https://docs.google.com/document/d/1zbBbaQLzkrVKINQaLGhBCyxlatvr2zvOFQs_XyVmvqU/edit?tab=t.0 |
 | Repository | https://github.com/DLOADIN/Rinda-health |
 
 ## The problem it solves
