@@ -256,23 +256,6 @@
   "format": {
     "months": "January,February,March,April,May,June,July,August,September,October,November,December"
   },
-  "charts": {
-    "activityTitle": "Weekly activity",
-    "activityAlt": "{{value}} of {{target}} minutes a week",
-    "activityUnit": "of {{target}} min",
-    "bpTitle": "Blood pressure over time",
-    "bpAlt": "Blood pressure readings, oldest first: {{list}}",
-    "bpEmpty": "Add a blood pressure reading in your next check-up to see it here.",
-    "dietTitle": "Fruit and vegetables over time",
-    "dietAlt": "Servings a day, oldest first: {{list}}",
-    "dietEmpty": "Your fruit and vegetable servings will appear here.",
-    "servings": "Servings",
-    "checkupsTitle": "Check-ups, last 14 days",
-    "signupsTitle": "New accounts, last 14 days",
-    "sessionsTitle": "My sessions, last 14 days",
-    "seriesAlt": "{{total}} in the last 14 days",
-    "count": "Count"
-  },
   "home": {
     "heroTitle": "Let's look after your everyday health",
     "lastCheckup": "Last check-up {{date}}",

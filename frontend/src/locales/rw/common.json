@@ -256,23 +256,6 @@
   "format": {
     "months": "Mutarama,Gashyantare,Werurwe,Mata,Gicurasi,Kamena,Nyakanga,Kanama,Nzeri,Ukwakira,Ugushyingo,Ukuboza"
   },
-  "charts": {
-    "activityTitle": "Imyitozo y'icyumweru",
-    "activityAlt": "Iminota {{value}} kuri {{target}} mu cyumweru",
-    "activityUnit": "kuri {{target}} min",
-    "bpTitle": "Umuvuduko w'amaraso uko wagiye uhinduka",
-    "bpAlt": "Ibipimo by'umuvuduko w'amaraso, uhereye ku bya kera: {{list}}",
-    "bpEmpty": "Ongeraho igipimo cy'umuvuduko w'amaraso mu isuzuma rikurikira kugira ngo ukibone hano.",
-    "dietTitle": "Imbuto n'imboga uko byagiye bihinduka",
-    "dietAlt": "Ibipimo ku munsi, uhereye ku bya kera: {{list}}",
-    "dietEmpty": "Ibipimo by'imbuto n'imboga urya bizagaragara hano.",
-    "servings": "Ibipimo",
-    "checkupsTitle": "Amasuzuma, iminsi 14 ishize",
-    "signupsTitle": "Konti nshya, iminsi 14 ishize",
-    "sessionsTitle": "Ibikorwa byanjye, iminsi 14 ishize",
-    "seriesAlt": "{{total}} mu minsi 14 ishize",
-    "count": "Umubare"
-  },
   "home": {
     "heroTitle": "Reka twite ku buzima bwawe bwa buri munsi",
     "lastCheckup": "Isuzuma riheruka {{date}}",
