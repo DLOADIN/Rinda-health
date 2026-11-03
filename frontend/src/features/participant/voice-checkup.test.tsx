@@ -20,6 +20,7 @@ vi.mock('@/lib/voice', () => ({
     spoken.push(id);
   },
   stopSpeaking: () => undefined,
+  micBlocked: () => false,
   listen: () => ({
     heard: Promise.resolve(replies.length ? [replies.shift() ?? ''] : []),
     stop: () => undefined,

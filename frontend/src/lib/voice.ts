@@ -10,7 +10,7 @@ interface Recognition {
   maxAlternatives: number;
   continuous: boolean;
   onresult: ((event: RecognitionEvent) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event?: { error?: string }) => void) | null;
   onend: (() => void) | null;
   start: () => void;
   abort: () => void;
@@ -97,40 +97,78 @@ export function stopSpeaking(): void {
   if ('speechSynthesis' in globalThis) speechSynthesis.cancel();
 }
 
-export function listen(timeoutMs = 9000): { heard: Promise<string[]>; stop: () => void } {
+let blocked = false;
+
+// True when the browser refused the microphone, so asking again will not help.
+export function micBlocked(): boolean {
+  return blocked;
+}
+
+// This is where one answer is heard. Browsers stop listening after a short pause or a
+// moment of silence, so a fresh listener is started until the time runs out, and words
+// heard so far are kept even if the browser never marks them as final.
+export function listen(timeoutMs = 12000): { heard: Promise<string[]>; stop: () => void } {
   const Klass = recognitionClass();
   if (!Klass) return { heard: Promise.resolve([]), stop: () => undefined };
-  const recognition = new Klass();
-  recognition.lang = LANG;
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 3;
-  recognition.continuous = false;
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = Date.now() + timeoutMs;
+  let current: Recognition | null = null;
+  let finish: (texts: string[]) => void = () => undefined;
   const heard = new Promise<string[]>((resolve) => {
     let done = false;
-    const finish = (texts: string[]) => {
+    let partial: string[] = [];
+    let fatal = false;
+    const timer = setTimeout(() => finish(partial), timeoutMs);
+    finish = (texts: string[]) => {
       if (done) return;
       done = true;
-      if (timer) clearTimeout(timer);
-      resolve(texts);
+      clearTimeout(timer);
+      try {
+        current?.abort();
+      } catch {
+        // Already stopped.
+      }
+      resolve(texts.map((x) => x.trim()).filter(Boolean));
     };
-    recognition.onresult = (event) => {
-      const first = event.results[0];
-      const texts: string[] = [];
-      if (first) for (let i = 0; i < first.length; i++) texts.push(first[i]?.transcript ?? '');
-      finish(texts.filter(Boolean));
+    const startOne = () => {
+      if (done) return;
+      const recognition = new Klass();
+      current = recognition;
+      recognition.lang = LANG;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 3;
+      recognition.continuous = false;
+      recognition.onresult = (event) => {
+        const last = event.results[event.results.length - 1];
+        if (!last) return;
+        const texts: string[] = [];
+        for (let i = 0; i < last.length; i++) texts.push(last[i]?.transcript ?? '');
+        if (last.isFinal) finish(texts);
+        else partial = texts;
+      };
+      recognition.onerror = (event) => {
+        const error = event?.error ?? '';
+        if (error === 'not-allowed' || error === 'service-not-allowed' || error === 'audio-capture') {
+          blocked = true;
+          fatal = true;
+        }
+      };
+      recognition.onend = () => {
+        if (done) return;
+        if (partial.some(Boolean)) return finish(partial);
+        if (fatal || Date.now() > deadline - 800) return finish([]);
+        setTimeout(startOne, 250);
+      };
+      try {
+        recognition.start();
+        blocked = false;
+      } catch {
+        // The previous listener may still be closing; try again in a moment.
+        if (Date.now() < deadline - 800) setTimeout(startOne, 300);
+        else finish([]);
+      }
     };
-    recognition.onerror = () => finish([]);
-    recognition.onend = () => finish([]);
-    timer = setTimeout(() => {
-      recognition.abort();
-      finish([]);
-    }, timeoutMs);
-    try {
-      recognition.start();
-    } catch {
-      finish([]);
-    }
+    // A short pause first, so the microphone does not pick up the end of Rinda's own voice.
+    setTimeout(startOne, 300);
   });
-  return { heard, stop: () => recognition.abort() };
+  return { heard, stop: () => finish([]) };
 }

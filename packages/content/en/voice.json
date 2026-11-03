@@ -10,6 +10,7 @@
     "voice.got": "Got it.",
     "voice.skipped": "Okay, we will leave that one.",
     "voice.again": "Sorry, I did not catch that. Please say your answer again, or say skip.",
+    "voice.unclear": "I heard you, but I could not match that to one of the answers. Please try again in a few words, tap your answer on the screen, or say skip.",
     "voice.range": "That number looks outside the usual range. Please say it again, or say skip.",
     "voice.yesno": "Please say yes or no.",
     "voice.choose": "Your choices are:",

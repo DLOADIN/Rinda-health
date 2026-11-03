@@ -7,6 +7,7 @@
     "start": "Start talking",
     "englishOnly": "The voice check-up is in English for now.",
     "noMic": "This browser cannot listen. You can still hear each question and tap your answer.",
+    "micBlocked": "Your browser blocked the microphone. Allow the microphone for this site in your browser settings, then press Answer by voice. You can also tap your answer.",
     "progress": "Question {{current}} of {{total}}",
     "speaking": "Rinda is speaking…",
     "listening": "Listening… speak now",

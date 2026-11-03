@@ -23,8 +23,15 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/components/ui/input-group';
 import { Spinner } from '@/components/ui/spinner';
 import type { WellnessState } from '@/features/participant/wellness-section';
-import { canListen, listen, prefetch, speak, stopSpeaking } from '@/lib/voice';
-import { looksOffTopic, readChoice, readCommand, readNumber, readYesNo } from '@/lib/voice-parse';
+import { canListen, listen, micBlocked, prefetch, speak, stopSpeaking } from '@/lib/voice';
+import {
+  looksOffTopic,
+  readBloodPressure,
+  readCommand,
+  readNumber,
+  readQuestionChoice,
+  readYesNo,
+} from '@/lib/voice-parse';
 
 export interface VoiceState {
   answers: CheckupAnswers;
@@ -169,10 +176,10 @@ export function readSpoken(step: VoiceStep, heard: readonly string[]): Value | u
       const v = readYesNo(text);
       if (v !== null) return v;
     } else if (step.kind === 'number') {
-      const v = readNumber(text, step.minutes ? 'minutes' : 'plain');
+      const v = readNumber(text, step.minutes ? 'minutes' : step.measure === 'height' ? 'height' : 'plain');
       if (v !== null) return v;
     } else {
-      const v = readChoice(text, (step.options ?? []).map(textEn));
+      const v = readQuestionChoice(step.id, text, (step.options ?? []).map(textEn));
       if (v !== null) return v;
     }
   }
@@ -207,6 +214,7 @@ export default function VoiceCheckup({
   const [heard, setHeard] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
+  const [noMic, setNoMic] = useState(false);
   const listening = canListen();
   const run = useRef(0);
   const stopListening = useRef<() => void>(() => undefined);
@@ -305,6 +313,7 @@ export default function VoiceCheckup({
     setCurrentId(id);
     setHeard(null);
     setDraft('');
+    setNoMic(false);
     const target = stepsNow().find((s) => s.id === id);
     if (!target) return finish(token);
     setStatus('speaking');
@@ -315,14 +324,19 @@ export default function VoiceCheckup({
       if (token === run.current) setStatus('waiting');
       return;
     }
-    for (let tries = 0; tries < 3; tries++) {
+    let unclear = 0;
+    for (let tries = 0; tries < 4; tries++) {
       setStatus('listening');
       const attempt = listen();
       stopListening.current = attempt.stop;
       const texts = await attempt.heard;
       if (token !== run.current) return;
       if (texts.length === 0) {
-        if (tries === 2) break;
+        if (micBlocked()) {
+          setNoMic(true);
+          break;
+        }
+        if (tries === 3) break;
         setStatus('speaking');
         await say('voice.again');
         if (token !== run.current) return;
@@ -340,10 +354,29 @@ export default function VoiceCheckup({
       }
       if (command === 'repeat') return ask(id, token);
       if (command === 'back') return back(id, token);
+      if (target.id === 'voice.bp.systolic') {
+        const both = texts.map(readBloodPressure).find((x) => x !== null);
+        const diastolicStep = stepsNow().find((s) => s.id === 'voice.bp.diastolic');
+        if (both && diastolicStep && !rangeIssue(target, both.systolic)) {
+          if (!commit(target, both.systolic)) return;
+          if (!rangeIssue(diastolicStep, both.diastolic)) {
+            if (!commit(diastolicStep, both.diastolic)) return;
+            setStatus('speaking');
+            await say('voice.got');
+            if (token === run.current) goNext(diastolicStep.id, token);
+            return;
+          }
+        }
+      }
       const value = readSpoken(target, texts);
       setStatus('speaking');
       if (value === undefined || value === null) {
-        await say(texts.some(looksOffTopic) ? 'voice.off_topic' : 'voice.again');
+        if (texts.some(looksOffTopic)) await say('voice.off_topic');
+        else if (++unclear >= 2) {
+          // After a second miss, read the question and its choices again.
+          unclear = 0;
+          await say(id);
+        } else await say('voice.unclear');
         if (token !== run.current) return;
         continue;
       }
@@ -466,6 +499,7 @@ export default function VoiceCheckup({
             {heard ? (
               <p className="text-sm text-muted-foreground">{t('voice.heard', { text: heard })}</p>
             ) : null}
+            {noMic ? <p className="text-sm">{t('voice.micBlocked')}</p> : null}
             <p className="text-sm">{t('voice.answer', { answer: shown(step) })}</p>
 
             {step.kind === 'yesno' ? (
