@@ -104,30 +104,56 @@ export function micBlocked(): boolean {
   return blocked;
 }
 
-// This is where one answer is heard. Browsers stop listening after a short pause or a
-// moment of silence, so a fresh listener is started until the time runs out, and words
-// heard so far are kept even if the browser never marks them as final.
-export function listen(timeoutMs = 12000): { heard: Promise<string[]>; stop: () => void } {
+export interface ListenOptions {
+  timeoutMs?: number;
+  // Says whether the words heard so far already make a full answer, so listening can stop early.
+  complete?: (texts: string[]) => boolean;
+}
+
+// This is where one answer is heard. Browsers end a listening session at the first short
+// pause, so "um... about thirty minutes" arrives in pieces. The pieces are joined and a new
+// session is started after each pause, until the words make a full answer, the person has
+// been quiet for a moment after speaking, or the time runs out.
+export function listen(options: ListenOptions = {}): { heard: Promise<string[]>; stop: () => void } {
   const Klass = recognitionClass();
   if (!Klass) return { heard: Promise.resolve([]), stop: () => undefined };
+  const timeoutMs = options.timeoutMs ?? 15000;
   const deadline = Date.now() + timeoutMs;
   let current: Recognition | null = null;
   let finish: (texts: string[]) => void = () => undefined;
   const heard = new Promise<string[]>((resolve) => {
     let done = false;
-    let partial: string[] = [];
+    const pieces: string[][] = [];
+    let partial = '';
     let fatal = false;
-    const timer = setTimeout(() => finish(partial), timeoutMs);
+    let quiet: ReturnType<typeof setTimeout> | undefined;
+    const sofar = (): string[] => {
+      const before = pieces
+        .slice(0, -1)
+        .map((alts) => alts[0] ?? '')
+        .join(' ');
+      const last = pieces.at(-1) ?? [''];
+      const whole = last.map((alt) => `${before} ${alt} ${partial}`.replace(/\s+/g, ' ').trim());
+      // The latest piece on its own too, in case the first piece was only "um" or a cough.
+      const latest = last.map((alt) => `${alt} ${partial}`.trim());
+      return [...new Set([...whole, ...latest])].filter(Boolean);
+    };
+    const timer = setTimeout(() => finish(sofar()), timeoutMs);
     finish = (texts: string[]) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
+      if (quiet) clearTimeout(quiet);
       try {
         current?.abort();
       } catch {
         // Already stopped.
       }
       resolve(texts.map((x) => x.trim()).filter(Boolean));
+    };
+    const waitForQuiet = (ms: number) => {
+      if (quiet) clearTimeout(quiet);
+      quiet = setTimeout(() => finish(sofar()), ms);
     };
     const startOne = () => {
       if (done) return;
@@ -140,10 +166,18 @@ export function listen(timeoutMs = 12000): { heard: Promise<string[]>; stop: () 
       recognition.onresult = (event) => {
         const last = event.results[event.results.length - 1];
         if (!last) return;
-        const texts: string[] = [];
-        for (let i = 0; i < last.length; i++) texts.push(last[i]?.transcript ?? '');
-        if (last.isFinal) finish(texts);
-        else partial = texts;
+        const alts: string[] = [];
+        for (let i = 0; i < last.length; i++) alts.push((last[i]?.transcript ?? '').trim());
+        if (last.isFinal) {
+          if (alts.some(Boolean)) pieces.push(alts);
+          partial = '';
+          // A full answer still gets a moment for "...three times a week" to follow.
+          waitForQuiet(options.complete?.(sofar()) ? 1200 : 2200);
+        } else {
+          partial = alts[0] ?? '';
+          // Still talking: wait a little longer before deciding they have finished.
+          waitForQuiet(3000);
+        }
       };
       recognition.onerror = (event) => {
         const error = event?.error ?? '';
@@ -154,9 +188,15 @@ export function listen(timeoutMs = 12000): { heard: Promise<string[]>; stop: () 
       };
       recognition.onend = () => {
         if (done) return;
-        if (partial.some(Boolean)) return finish(partial);
-        if (fatal || Date.now() > deadline - 800) return finish([]);
-        setTimeout(startOne, 250);
+        // Words the browser never marked as final are kept as their own piece.
+        if (partial) {
+          pieces.push([partial]);
+          partial = '';
+          waitForQuiet(options.complete?.(sofar()) ? 1200 : 2200);
+        }
+        if (fatal || Date.now() > deadline - 800) return finish(sofar());
+        // Keep listening for the rest of the answer.
+        setTimeout(startOne, 150);
       };
       try {
         recognition.start();

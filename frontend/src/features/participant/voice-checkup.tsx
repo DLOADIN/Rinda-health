@@ -186,6 +186,21 @@ export function readSpoken(step: VoiceStep, heard: readonly string[]): Value | u
   return undefined;
 }
 
+// This is where listening decides it has heard a full answer and can stop early. A bare
+// number ("two") is not enough on its own, because "hours" or "kilos" may still follow.
+export function heardFullAnswer(step: VoiceStep, texts: readonly string[]): boolean {
+  if (texts.some((x) => readCommand(x) !== null || checkChatQuestion(x) === 'crisis')) return true;
+  if (step.id === 'voice.bp.systolic' && texts.some((x) => readBloodPressure(x) !== null)) return true;
+  const value = readSpoken(step, texts);
+  if (value === undefined || value === null) return false;
+  if (step.kind !== 'number') return true;
+  return texts.some((x) =>
+    /\b(minutes?|mins?|hours?|hrs?|kilos?|kg|kilograms?|centimet(er|re)s?|cm|met(er|re)s?|servings?|portions?|none|nothing|zero|no)\b/i.test(
+      x,
+    ),
+  );
+}
+
 type Status = 'speaking' | 'listening' | 'waiting';
 
 export default function VoiceCheckup({
@@ -276,7 +291,10 @@ export default function VoiceCheckup({
     if (token !== run.current) return;
     if (!listening) return setStatus('waiting');
     setStatus('listening');
-    const attempt = listen();
+    const attempt = listen({
+      complete: (heardSoFar) =>
+        heardSoFar.some((x) => readCommand(x) === 'send' || checkChatQuestion(x) === 'crisis'),
+    });
     stopListening.current = attempt.stop;
     const texts = await attempt.heard;
     if (token !== run.current) return;
@@ -327,7 +345,7 @@ export default function VoiceCheckup({
     let unclear = 0;
     for (let tries = 0; tries < 4; tries++) {
       setStatus('listening');
-      const attempt = listen();
+      const attempt = listen({ complete: (heardSoFar) => heardFullAnswer(target, heardSoFar) });
       stopListening.current = attempt.stop;
       const texts = await attempt.heard;
       if (token !== run.current) return;
