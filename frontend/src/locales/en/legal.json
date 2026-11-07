@@ -16,7 +16,7 @@
         "collect": {
           "title": "What we keep",
           "items": [
-            "Your account: your email address or phone number, and your password. We never store the password itself, only a one-way scrambled version (an Argon2id hash). If you sign in with Google, we keep the ID Google gives us, never your Google password.",
+            "Your account: your email address or phone number, and your password. We never store the password itself, only a one-way scrambled version (an Argon2id hash). If you sign in with Google, we keep the ID Google gives us, never your Google password. A name is optional: we only keep one if you type it into Profile.",
             "Your check-up answers and measurements, the results Rinda worked out, and the version of the rules that was used.",
             "Your answers to the optional mood and stress questions (PHQ-9 and GAD-7), only if you agreed to them. You can skip any question.",
             "Each consent choice you make, with the date and the version of the consent text you saw.",
@@ -26,7 +26,7 @@
         "notCollect": {
           "title": "What we do not keep",
           "items": [
-            "Your name, national ID number, location, contacts or photos.",
+            "Your national ID number, location, contacts or photos. Rinda never asks for them.",
             "Recordings of your voice. In the voice check-up, your browser's own speech service (Google or Apple) turns your voice into text. Rinda only receives the text.",
             "Photos of your blood pressure monitor. The photo is read on your phone and is never uploaded.",
             "Advertising or tracking data. Rinda has no ads, no trackers and no analytics tools."
