@@ -1,0 +1,101 @@
+{
+  "legal": {
+    "privacy": {
+      "title": "Privacy policy",
+      "version": "Version 1.0 · 8 November 2026",
+      "intro": "This page explains, in plain words, what Rinda Health keeps about you, why we keep it, who else handles it, and what you can do about it. Rinda is a student research project at African Leadership University. It is educational, not a diagnosis, and not an emergency service.",
+      "back": "Back to the home page",
+      "sections": {
+        "who": {
+          "title": "Who is responsible",
+          "items": [
+            "Rinda Health is built and run by Mugemanyi Manzi David, a BSc Software Engineering student at African Leadership University in Kigali, supervised by Emmanuel Annor.",
+            "For any question about your data, or to use any of the rights below, email {{email}} or call {{phone}}."
+          ]
+        },
+        "collect": {
+          "title": "What we keep",
+          "items": [
+            "Your account: your email address or phone number, and your password. We never store the password itself, only a one-way scrambled version (an Argon2id hash). If you sign in with Google, we keep the ID Google gives us, never your Google password.",
+            "Your check-up answers and measurements, the results Rinda worked out, and the version of the rules that was used.",
+            "Your answers to the optional mood and stress questions (PHQ-9 and GAD-7), only if you agreed to them. You can skip any question.",
+            "Each consent choice you make, with the date and the version of the consent text you saw.",
+            "Your feedback on the app (the SUS questionnaire), if you choose to give it."
+          ]
+        },
+        "notCollect": {
+          "title": "What we do not keep",
+          "items": [
+            "Your name, national ID number, location, contacts or photos.",
+            "Recordings of your voice. In the voice check-up, your browser's own speech service (Google or Apple) turns your voice into text. Rinda only receives the text.",
+            "Photos of your blood pressure monitor. The photo is read on your phone and is never uploaded.",
+            "Advertising or tracking data. Rinda has no ads, no trackers and no analytics tools."
+          ]
+        },
+        "why": {
+          "title": "Why we use it",
+          "items": [
+            "To score your check-up and show you your results, your plan and your history.",
+            "For the Rinda Health study, without your name, to learn whether the app is useful, clear and safe.",
+            "To keep you safe. If your answers show you may be at risk, Rinda shows you where to get help straight away.",
+            "We never sell your data, and we never use it to train AI models."
+          ]
+        },
+        "share": {
+          "title": "Who else handles your data",
+          "items": [
+            "Vercel (hosting) and Neon (database) run and store Rinda for us.",
+            "Brevo sends your check-up summary by email, only if you switch it on. Pindo sends a short SMS summary to accounts with a phone number, and you can switch it off in Profile. Mood and stress results are never sent by email or SMS.",
+            "If you use Ask Rinda, your question and your check-up result bands are sent to an AI service (Google Gemini, Groq or OpenRouter) so it can write a plain explanation. Your name, contact details and mood answers are never sent. A question with personal details or crisis words is stopped before anything leaves Rinda.",
+            "The voice services (Groq and ElevenLabs) only receive Rinda's own approved question text so they can read it aloud. Nothing about you is sent to them.",
+            "Google, only if you choose to sign in with Google."
+          ]
+        },
+        "phone": {
+          "title": "On your phone",
+          "items": [
+            "A check-up saved without internet is encrypted on your phone (AES-GCM) until it is sent.",
+            "The Exit button leaves at once to a neutral screen. Signing out clears your personal data from the phone."
+          ]
+        },
+        "safety": {
+          "title": "If you may be at risk",
+          "items": [
+            "If you answer that you have had thoughts of hurting yourself, Rinda shows a safety screen with free helplines straight away, even without internet.",
+            "Rinda then notes that a safety screen was shown, with its level and the time. That note never contains your answers.",
+            "In a study session, the facilitator may check in with you and offer to connect you with a mental-health professional, as explained in the consent form."
+          ]
+        },
+        "rights": {
+          "title": "Your choices and your rights",
+          "items": [
+            "You can change your optional consents at any time in Profile, and switch email and SMS summaries on or off.",
+            "You can ask for your data to be deleted from Profile. Deletion is completed within 72 hours. Data that is already part of anonymous study totals cannot be picked out again.",
+            "These rights come from Rwanda's Law No. 058/2021 on the protection of personal data and privacy, including consent (Article 6), withdrawing consent (Article 8) and erasure (Article 23).",
+            "If you are not happy with how we handle your data, you can complain to the National Cyber Security Authority, which supervises data protection in Rwanda."
+          ]
+        },
+        "keep": {
+          "title": "How long we keep it",
+          "items": [
+            "We keep your data while your account is open and for as long as the study needs it. When your deletion is completed, your answers, results and contact details are removed.",
+            "Server logs never contain your answers, measurements or results."
+          ]
+        },
+        "security": {
+          "title": "How we protect it",
+          "items": [
+            "All traffic uses HTTPS. Staff can only open the pages their role allows, and staff actions are written to an audit log.",
+            "Staff see you only by a masked label, never your full email address or phone number."
+          ]
+        },
+        "changes": {
+          "title": "Changes to this policy",
+          "items": [
+            "If this policy changes, we will update the version and date at the top of this page and tell you in the app before the change applies to you."
+          ]
+        }
+      }
+    }
+  }
+}

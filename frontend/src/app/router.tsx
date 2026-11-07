@@ -13,6 +13,9 @@ const LandingPage = lazy(() =>
 const SetupPage = lazy(() => import('@/features/setup/setup-page').then((m) => ({ default: m.SetupPage })));
 const LoginPage = lazy(() => import('@/features/auth/login-page').then((m) => ({ default: m.LoginPage })));
 const SignupPage = lazy(() => import('@/features/auth/signup-page').then((m) => ({ default: m.SignupPage })));
+const PrivacyPage = lazy(() =>
+  import('@/features/landing/landing-page').then((m) => ({ default: m.PrivacyPage })),
+);
 const DashboardLayout = lazy(() =>
   import('@/features/dashboard/dashboard-layout').then((m) => ({ default: m.DashboardLayout })),
 );
@@ -41,6 +44,7 @@ export const router = createBrowserRouter([
           { path: '/login', element: wait(<LoginPage />) },
           { path: '/signup', element: wait(<SignupPage />) },
           { path: '/setup/:code', element: wait(<SetupPage />) },
+          { path: '/privacy', element: wait(<PrivacyPage />) },
         ],
       },
     ],

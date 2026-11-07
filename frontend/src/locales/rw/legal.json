@@ -1,0 +1,87 @@
+{
+  "legal": {
+    "privacy": {
+      "title": "TODO(content): Kinyarwanda translation",
+      "version": "TODO(content): Kinyarwanda translation",
+      "intro": "TODO(content): Kinyarwanda translation",
+      "back": "TODO(content): Kinyarwanda translation",
+      "sections": {
+        "who": {
+          "title": "TODO(content): Kinyarwanda translation",
+          "items": ["TODO(content): Kinyarwanda translation", "TODO(content): Kinyarwanda translation"]
+        },
+        "collect": {
+          "title": "TODO(content): Kinyarwanda translation",
+          "items": [
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation"
+          ]
+        },
+        "notCollect": {
+          "title": "TODO(content): Kinyarwanda translation",
+          "items": [
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation"
+          ]
+        },
+        "why": {
+          "title": "TODO(content): Kinyarwanda translation",
+          "items": [
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation"
+          ]
+        },
+        "share": {
+          "title": "TODO(content): Kinyarwanda translation",
+          "items": [
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation"
+          ]
+        },
+        "phone": {
+          "title": "TODO(content): Kinyarwanda translation",
+          "items": ["TODO(content): Kinyarwanda translation", "TODO(content): Kinyarwanda translation"]
+        },
+        "safety": {
+          "title": "TODO(content): Kinyarwanda translation",
+          "items": [
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation"
+          ]
+        },
+        "rights": {
+          "title": "TODO(content): Kinyarwanda translation",
+          "items": [
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation",
+            "TODO(content): Kinyarwanda translation"
+          ]
+        },
+        "keep": {
+          "title": "TODO(content): Kinyarwanda translation",
+          "items": ["TODO(content): Kinyarwanda translation", "TODO(content): Kinyarwanda translation"]
+        },
+        "security": {
+          "title": "TODO(content): Kinyarwanda translation",
+          "items": ["TODO(content): Kinyarwanda translation", "TODO(content): Kinyarwanda translation"]
+        },
+        "changes": {
+          "title": "TODO(content): Kinyarwanda translation",
+          "items": ["TODO(content): Kinyarwanda translation"]
+        }
+      }
+    }
+  }
+}

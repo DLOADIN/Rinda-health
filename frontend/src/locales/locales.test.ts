@@ -7,6 +7,8 @@ import enStaff from './en/staff.json';
 import rwStaff from './rw/staff.json';
 import enCamera from './en/camera.json';
 import rwCamera from './rw/camera.json';
+import enLegal from './en/legal.json';
+import rwLegal from './rw/legal.json';
 
 const keys = (obj: object, prefix = ''): string[] =>
   Object.entries(obj).flatMap(([k, v]) =>
@@ -19,6 +21,7 @@ describe('interface strings', () => {
     expect(keys(rwLanding).sort()).toEqual(keys(enLanding).sort());
     expect(keys(rwStaff).sort()).toEqual(keys(enStaff).sort());
     expect(keys(rwCamera).sort()).toEqual(keys(enCamera).sort());
+    expect(keys(rwLegal).sort()).toEqual(keys(enLegal).sort());
   });
 
   it('every English string is filled in', () => {

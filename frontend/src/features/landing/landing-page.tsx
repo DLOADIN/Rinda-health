@@ -31,12 +31,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PhoneMockup } from '@/features/landing/phone-mockup';
+import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_PHONE_SHOWN } from '@/features/landing/contact';
 import { RindaLogo } from '@/features/landing/public-shell';
 import { cn } from '@/lib/utils';
 
-const CONTACT_EMAIL = 'm.david@alustudent.com';
-const CONTACT_PHONE = '+250791291003';
-const CONTACT_PHONE_SHOWN = '+250 791 291 003';
 const AREAS = ['tobacco', 'alcohol', 'activity', 'diet', 'bmi', 'waist', 'bp', 'phq9', 'gad7'] as const;
 
 function SectionHeading({
@@ -536,6 +534,12 @@ function Footer() {
             <Languages aria-hidden="true" className="size-4" />
             {`${t('language.en')} · ${t('language.rw')}`}
           </p>
+          <Link
+            to="/privacy"
+            className="min-h-11 content-center underline-offset-4 hover:text-foreground hover:underline"
+          >
+            {t('landing.footer.privacy')}
+          </Link>
           <p>{t('landing.footer.rights')}</p>
           <p>{t('landing.footer.photos')}</p>
         </div>
@@ -562,3 +566,6 @@ export function LandingPage() {
     </>
   );
 }
+
+// The privacy policy loads with the landing page, so the first download stays the same size.
+export { default as PrivacyPage } from '@/features/legal/privacy-page';

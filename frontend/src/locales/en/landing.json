@@ -129,7 +129,8 @@
     },
     "footer": {
       "rights": "© 2026 Rinda Health",
-      "photos": "Photos from Unsplash"
+      "photos": "Photos from Unsplash",
+      "privacy": "Privacy policy"
     }
   },
   "authPanel": {
