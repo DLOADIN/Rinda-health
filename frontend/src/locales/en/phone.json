@@ -35,6 +35,24 @@
       "bodyTemperature": "Body temperature",
       "bloodGlucose": "Blood sugar",
       "sleep": "Sleep"
+    },
+    "fillTitle": "Use your phone's health data",
+    "fillBody": "Rinda can fill your blood pressure, weight, height and this week's exercise from the health data your phone already keeps in Health Connect. You check every number before you continue.",
+    "consentTitle": "Let Rinda read your phone's health data?",
+    "consentBody": "Rinda will read your blood pressure, weight, height, exercise sessions, steps and heart rate from Health Connect. It only reads, it never changes anything, and it keeps one summary per day. You can turn this off at any time in Profile, and the saved readings are then deleted.",
+    "consentYes": "Yes, read my phone",
+    "consentNo": "Not now",
+    "fromPhone": "From your phone",
+    "notOnPhone": "Your phone does not record tobacco, alcohol, food, waist size or mood, so please answer those yourself below.",
+    "denied": "Rinda could not read your phone's health data. Allow Rinda in Health Connect, or fill in the answers by hand.",
+    "item": {
+      "bp": "Blood pressure {{systolic}}/{{diastolic}} mmHg ({{date}})",
+      "weight": "Weight {{value}} kg ({{date}})",
+      "height": "Height {{value}} cm ({{date}})",
+      "activity": "Exercise in the last 7 days: {{moderate}} minutes moderate and {{vigorous}} minutes vigorous, from {{count}} sessions",
+      "noActivity": "No exercise sessions on your phone in the last 7 days, so please answer the exercise questions yourself.",
+      "steps": "{{steps}} steps in the last 7 days (for your information, not scored)",
+      "heart": "Resting heart rate {{value}} beats a minute ({{date}}) (for your information, not scored)"
     }
   },
   "sms": {

@@ -150,6 +150,196 @@ export async function readPhoneHealth(days = 30): Promise<PhoneHealthUpload> {
   return { platform, readings };
 }
 
+// Workouts the WHO activity guidance treats as vigorous. Everything else counts as moderate,
+// except the calm ones below, which are not counted as exercise at all.
+const VIGOROUS: ReadonlySet<string> = new Set([
+  'running',
+  'runningTreadmill',
+  'highIntensityIntervalTraining',
+  'soccer',
+  'basketball',
+  'rugby',
+  'americanFootball',
+  'australianFootball',
+  'handball',
+  'hockey',
+  'iceHockey',
+  'lacrosse',
+  'tennis',
+  'squash',
+  'racquetball',
+  'boxing',
+  'kickboxing',
+  'martialArts',
+  'jumpRope',
+  'rowing',
+  'rowingMachine',
+  'swimming',
+  'swimmingPool',
+  'swimmingOpenWater',
+  'waterPolo',
+  'stairClimbing',
+  'stairClimbingMachine',
+  'stairs',
+  'crossCountrySkiing',
+  'burpee',
+  'bootCamp',
+]);
+const NOT_EXERCISE: ReadonlySet<string> = new Set([
+  'meditation',
+  'guidedBreathing',
+  'mindAndBody',
+  'preparationAndRecovery',
+  'transition',
+  'cooldown',
+  'fishing',
+  'hunting',
+  'sailing',
+]);
+
+export interface PhoneWorkout {
+  workoutType: string;
+  duration: number;
+}
+
+export interface PhoneActivity {
+  moderate: number;
+  vigorous: number;
+  sessions: number;
+}
+
+export function summariseWorkouts(workouts: readonly PhoneWorkout[]): PhoneActivity {
+  let moderate = 0;
+  let vigorous = 0;
+  let sessions = 0;
+  for (const w of workouts) {
+    const minutes = w.duration / 60;
+    if (!Number.isFinite(minutes) || minutes <= 0 || minutes > 1_440 || NOT_EXERCISE.has(w.workoutType))
+      continue;
+    sessions += 1;
+    if (VIGOROUS.has(w.workoutType)) vigorous += minutes;
+    else moderate += minutes;
+  }
+  return { moderate: Math.round(moderate), vigorous: Math.round(vigorous), sessions };
+}
+
+interface Dated {
+  value: number;
+  day: string;
+}
+
+export interface PhoneCheckup {
+  bloodPressure: { systolic: number; diastolic: number | null; day: string } | null;
+  weight: Dated | null;
+  height: Dated | null;
+  restingHeartRate: Dated | null;
+  activity: PhoneActivity | null;
+  steps: number | null;
+}
+
+export interface PhoneFill {
+  answers: {
+    systolic?: number;
+    diastolic?: number | null;
+    weightKg?: number;
+    heightCm?: number;
+    moderateMinutes?: number;
+    vigorousMinutes?: number;
+    measurementSource?: 'recalled';
+  };
+  filled: number;
+}
+
+// This is where readings from the phone become check-up answers. Exercise is only filled when
+// the phone has at least one session, because "no sessions" usually means nothing was logged.
+export function phoneAnswers(data: PhoneCheckup, today: string): PhoneFill {
+  const answers: PhoneFill['answers'] = {};
+  const bp = data.bloodPressure;
+  if (bp) {
+    answers.systolic = Math.round(bp.systolic);
+    answers.diastolic = bp.diastolic === null ? null : Math.round(bp.diastolic);
+  }
+  if (data.weight) answers.weightKg = Math.round(data.weight.value * 10) / 10;
+  if (data.height) answers.heightCm = Math.round(data.height.value * 10) / 10;
+  if (data.activity && data.activity.sessions > 0) {
+    answers.moderateMinutes = data.activity.moderate;
+    answers.vigorousMinutes = data.activity.vigorous;
+  }
+  const measured = [bp?.day, data.weight?.day, data.height?.day].filter((d): d is string => Boolean(d));
+  if (measured.some((d) => d !== today)) answers.measurementSource = 'recalled';
+  const filled = Object.keys(answers).filter((k) => k !== 'measurementSource').length;
+  return { answers, filled };
+}
+
+const latestOf = (readings: PhoneHealthReading[]) => readings.at(-1) ?? null;
+
+export async function readCheckupFromPhone(): Promise<PhoneCheckup> {
+  const { Health } = await import('@capgo/capacitor-health');
+  const availability = await Health.isAvailable();
+  if (!availability.available) throw new Error(availability.reason ?? 'unavailable');
+  const platform = availability.platform === 'ios' ? 'ios' : 'android';
+  const types = PHONE_HEALTH_TYPES.filter((t) => platform === 'ios' || t !== 'exerciseTime');
+  // One permission screen covers this fill and the daily summaries saved afterwards.
+  await Health.requestAuthorization({ read: [...types, 'workouts'], write: [] });
+  const now = Date.now();
+  const endDate = new Date(now).toISOString();
+  const monthAgo = new Date(now - 30 * 86_400_000).toISOString();
+  const weekAgo = new Date(now - 7 * 86_400_000).toISOString();
+
+  const latest = async (type: PhoneHealthType) => {
+    try {
+      const { samples } = await Health.readSamples({
+        dataType: type,
+        startDate: monthAgo,
+        endDate,
+        limit: 500,
+      });
+      return latestOf(summariseSamples(type, samples));
+    } catch {
+      return null;
+    }
+  };
+
+  const [bp, weight, height, resting] = await Promise.all([
+    latest('bloodPressure'),
+    latest('weight'),
+    latest('height'),
+    latest('restingHeartRate'),
+  ]);
+
+  let activity: PhoneActivity | null = null;
+  try {
+    const { workouts } = await Health.queryWorkouts({ startDate: weekAgo, endDate, limit: 200 });
+    activity = summariseWorkouts(workouts);
+  } catch {
+    activity = null;
+  }
+
+  let steps: number | null = null;
+  try {
+    const { samples } = await Health.queryAggregated({
+      dataType: 'steps',
+      startDate: weekAgo,
+      endDate,
+      bucket: 'day',
+      aggregation: ['sum'],
+    });
+    const total = samples.reduce((sum, s) => sum + (s.values?.sum ?? s.value ?? 0), 0);
+    steps = total > 0 ? Math.round(total) : null;
+  } catch {
+    steps = null;
+  }
+
+  return {
+    bloodPressure: bp ? { systolic: bp.value, diastolic: bp.value2, day: bp.day } : null,
+    weight: weight ? { value: weight.value, day: weight.day } : null,
+    height: height ? { value: height.value, day: height.day } : null,
+    restingHeartRate: resting ? { value: resting.value, day: resting.day } : null,
+    activity,
+    steps,
+  };
+}
+
 export async function openPhoneHealthSettings(): Promise<void> {
   const { Health } = await import('@capgo/capacitor-health');
   await Health.openHealthConnectSettings().catch(() => undefined);

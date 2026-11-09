@@ -35,6 +35,24 @@
       "bodyTemperature": "Ubushyuhe bw'umubiri",
       "bloodGlucose": "Isukari mu maraso",
       "sleep": "Ibitotsi"
+    },
+    "fillTitle": "TODO(content): Kinyarwanda translation",
+    "fillBody": "TODO(content): Kinyarwanda translation",
+    "consentTitle": "TODO(content): Kinyarwanda translation",
+    "consentBody": "TODO(content): Kinyarwanda translation",
+    "consentYes": "TODO(content): Kinyarwanda translation",
+    "consentNo": "TODO(content): Kinyarwanda translation",
+    "fromPhone": "TODO(content): Kinyarwanda translation",
+    "notOnPhone": "TODO(content): Kinyarwanda translation",
+    "denied": "TODO(content): Kinyarwanda translation",
+    "item": {
+      "bp": "TODO(content): Kinyarwanda translation",
+      "weight": "TODO(content): Kinyarwanda translation",
+      "height": "TODO(content): Kinyarwanda translation",
+      "activity": "TODO(content): Kinyarwanda translation",
+      "noActivity": "TODO(content): Kinyarwanda translation",
+      "steps": "TODO(content): Kinyarwanda translation",
+      "heart": "TODO(content): Kinyarwanda translation"
     }
   },
   "sms": {

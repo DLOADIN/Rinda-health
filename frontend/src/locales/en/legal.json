@@ -2,7 +2,7 @@
   "legal": {
     "privacy": {
       "title": "Privacy policy",
-      "version": "Version 1.0 · 8 November 2026",
+      "version": "Version 1.1 · 9 November 2026",
       "intro": "This page explains, in plain words, what Rinda Health keeps about you, why we keep it, who else handles it, and what you can do about it. Rinda is a student research project at African Leadership University. It is educational, not a diagnosis, and not an emergency service.",
       "back": "Back to the home page",
       "sections": {
@@ -20,7 +20,8 @@
             "Your check-up answers and measurements, the results Rinda worked out, and the version of the rules that was used.",
             "Your answers to the optional mood and stress questions (PHQ-9 and GAD-7), only if you agreed to them. You can skip any question.",
             "Each consent choice you make, with the date and the version of the consent text you saw.",
-            "Your feedback on the app (the SUS questionnaire), if you choose to give it."
+            "Your feedback on the app (the SUS questionnaire), if you choose to give it.",
+            "In the Rinda Android app, and only if you switch on phone health readings: one summary per day of the health data your phone keeps in Health Connect, such as blood pressure, weight, height, exercise sessions, steps and heart rate. Rinda only reads this data and never changes it. Turning the switch off deletes the saved readings."
           ]
         },
         "notCollect": {

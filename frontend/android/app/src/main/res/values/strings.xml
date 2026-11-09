@@ -4,5 +4,5 @@
     <string name="title_activity_main">Rinda Health</string>
     <string name="package_name">rw.rinda.health</string>
     <string name="custom_url_scheme">rw.rinda.health</string>
-    <string name="health_connect_privacy_policy_url">https://rinda-health.vercel.app/#privacy</string>
+    <string name="health_connect_privacy_policy_url">https://rinda-health.vercel.app/privacy</string>
 </resources>

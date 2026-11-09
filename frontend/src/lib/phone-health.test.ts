@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { summariseAggregates, summariseSamples } from '@/lib/phone-health';
+import {
+  phoneAnswers,
+  summariseAggregates,
+  summariseSamples,
+  summariseWorkouts,
+  type PhoneCheckup,
+} from '@/lib/phone-health';
 
 const at = (day: string, hour: number) =>
   new Date(`${day}T${String(hour).padStart(2, '0')}:00:00`).toISOString();
@@ -57,5 +63,75 @@ describe('summariseAggregates', () => {
       },
     ]);
     expect(hr).toMatchObject({ value: 71.46, min: 52, max: 140 });
+  });
+});
+
+describe('summariseWorkouts', () => {
+  it('sorts a week of workouts into moderate and vigorous minutes', () => {
+    expect(
+      summariseWorkouts([
+        { workoutType: 'walking', duration: 40 * 60 },
+        { workoutType: 'running', duration: 30 * 60 },
+        { workoutType: 'soccer', duration: 45 * 60 },
+        { workoutType: 'yoga', duration: 20 * 60 },
+      ]),
+    ).toEqual({ moderate: 60, vigorous: 75, sessions: 4 });
+  });
+
+  it('leaves out calm sessions and impossible durations', () => {
+    expect(
+      summariseWorkouts([
+        { workoutType: 'meditation', duration: 15 * 60 },
+        { workoutType: 'walking', duration: -5 },
+        { workoutType: 'cycling', duration: 2 * 24 * 3600 },
+      ]),
+    ).toEqual({ moderate: 0, vigorous: 0, sessions: 0 });
+  });
+});
+
+describe('phoneAnswers', () => {
+  const empty: PhoneCheckup = {
+    bloodPressure: null,
+    weight: null,
+    height: null,
+    restingHeartRate: null,
+    activity: null,
+    steps: null,
+  };
+
+  it('fills blood pressure, body size and exercise from the phone', () => {
+    const r = phoneAnswers(
+      {
+        ...empty,
+        bloodPressure: { systolic: 128, diastolic: 82, day: '2026-11-09' },
+        weight: { value: 72.04, day: '2026-11-09' },
+        height: { value: 175, day: '2026-11-09' },
+        activity: { moderate: 40, vigorous: 75, sessions: 3 },
+      },
+      '2026-11-09',
+    );
+    expect(r.answers).toEqual({
+      systolic: 128,
+      diastolic: 82,
+      weightKg: 72,
+      heightCm: 175,
+      moderateMinutes: 40,
+      vigorousMinutes: 75,
+    });
+    expect(r.filled).toBe(6);
+  });
+
+  it('marks older measurements as remembered, not taken today', () => {
+    const r = phoneAnswers({ ...empty, weight: { value: 70, day: '2026-11-01' } }, '2026-11-09');
+    expect(r.answers).toEqual({ weightKg: 70, measurementSource: 'recalled' });
+  });
+
+  it('does not turn a week with no logged workouts into zero minutes', () => {
+    const r = phoneAnswers(
+      { ...empty, activity: { moderate: 0, vigorous: 0, sessions: 0 }, steps: 30_000 },
+      '2026-11-09',
+    );
+    expect(r.answers).toEqual({});
+    expect(r.filled).toBe(0);
   });
 });
