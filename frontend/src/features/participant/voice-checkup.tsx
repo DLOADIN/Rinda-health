@@ -1,6 +1,6 @@
 import '@/features/participant/voice-strings';
 import { BUNDLED_CONTENT, RULESET_V1 } from '@rinda/content';
-import { spokenText, VOICE, VOICE_CHOICES, VOICE_LINES } from '@rinda/content/voice';
+import { spokenText, VOICE, VOICE_CHOICES, VOICE_LINES, VOICE_RANGES } from '@rinda/content/voice';
 import { checkItem9, validateMeasurement, type MeasurementType } from '@rinda/rules';
 import { checkChatQuestion } from '@rinda/rules/chat-guard';
 import type { CheckupAnswers } from '@rinda/schemas';
@@ -30,7 +30,9 @@ import {
   readCommand,
   readNumber,
   readQuestionChoice,
+  readRange,
   readYesNo,
+  type SpokenRange,
 } from '@/lib/voice-parse';
 
 export interface VoiceState {
@@ -52,6 +54,7 @@ export interface VoiceStep {
   id: string;
   kind: 'yesno' | 'choice' | 'number';
   options?: readonly string[];
+  ranges?: readonly SpokenRange[];
   measure?: MeasurementType;
   minutes?: boolean;
   unit?: string;
@@ -77,6 +80,8 @@ function numberStep(
   return {
     id,
     kind: 'number',
+    options: VOICE_CHOICES[id],
+    ranges: VOICE_RANGES[id],
     measure,
     unit,
     minutes,
@@ -176,7 +181,11 @@ export function readSpoken(step: VoiceStep, heard: readonly string[]): Value | u
       const v = readYesNo(text);
       if (v !== null) return v;
     } else if (step.kind === 'number') {
-      const v = readNumber(text, step.minutes ? 'minutes' : step.measure === 'height' ? 'height' : 'plain');
+      const unit = step.minutes ? 'minutes' : step.measure === 'height' ? 'height' : 'plain';
+      const v =
+        step.ranges && step.options
+          ? readRange(text, step.options.map(textEn), step.ranges, unit)
+          : readNumber(text, unit);
       if (v !== null) return v;
     } else {
       const v = readQuestionChoice(step.id, text, (step.options ?? []).map(textEn));
@@ -194,6 +203,16 @@ export function heardFullAnswer(step: VoiceStep, texts: readonly string[]): bool
   const value = readSpoken(step, texts);
   if (value === undefined || value === null) return false;
   if (step.kind !== 'number') return true;
+  // A range answer ("30 to 60 minutes", "under 120", "the third one") is complete as it stands.
+  if (
+    step.ranges &&
+    texts.some((x) =>
+      /\b(to|under|over|more|less|below|above|none|nothing|option|first|second|third|fourth|fifth|sixth|seventh|last)\b/i.test(
+        x,
+      ),
+    )
+  )
+    return true;
   return texts.some((x) =>
     /\b(minutes?|mins?|hours?|hrs?|kilos?|kg|kilograms?|centimet(er|re)s?|cm|met(er|re)s?|servings?|portions?|none|nothing|zero|no)\b/i.test(
       x,
@@ -541,6 +560,23 @@ export default function VoiceCheckup({
                     variant={step.read(state) === i ? 'default' : 'outline'}
                     className="h-auto min-h-11 justify-start text-left whitespace-normal"
                     onClick={() => tap(i)}
+                  >
+                    {textEn(o)}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
+            {step.kind === 'number' && step.options && step.ranges ? (
+              <div className="flex flex-col gap-2">
+                {step.options.map((o, i) => (
+                  <Button
+                    key={o}
+                    variant={step.read(state) === step.ranges?.[i]?.value ? 'default' : 'outline'}
+                    className="h-auto min-h-11 justify-start text-left whitespace-normal"
+                    onClick={() => {
+                      const v = step.ranges?.[i]?.value;
+                      if (v !== undefined) tap(v);
+                    }}
                   >
                     {textEn(o)}
                   </Button>

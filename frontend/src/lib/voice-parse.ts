@@ -34,7 +34,16 @@ const TENS: Record<string, number> = {
   eighty: 80,
   ninety: 90,
 };
-const ORDINALS: Record<string, number> = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5, last: -1 };
+const ORDINALS: Record<string, number> = {
+  first: 1,
+  second: 2,
+  third: 3,
+  fourth: 4,
+  fifth: 5,
+  sixth: 6,
+  seventh: 7,
+  last: -1,
+};
 const TIMES: Record<string, string> = { once: '1 time', twice: '2 time', thrice: '3 time' };
 const SINGULAR: Record<string, string> = {
   days: 'day',
@@ -367,6 +376,59 @@ function namedChoice(text: string, labels: readonly string[]): number | null {
   const spoken = digitise(t);
   const exact = labels.findIndex((l) => digitise(l) === spoken);
   return exact >= 0 ? exact : null;
+}
+
+export interface SpokenRange {
+  min: number | null;
+  max: number | null;
+  value: number;
+}
+
+// This is where a number question answered with one of its ranges gets its value. It accepts
+// the range's own words ("30 to 60 minutes"), "under 120", "more than 300", "none", "option 3",
+// and still keeps an exact number ("175", "one twenty") when that is what was said.
+export function readRange(
+  text: string,
+  labels: readonly string[],
+  ranges: readonly SpokenRange[],
+  unit: NumberUnit = 'plain',
+): number | null {
+  const named = namedChoice(text, labels);
+  if (named !== null) return ranges[named]?.value ?? null;
+  // "between one and two" must stay two numbers, not become "one hundred and two" style sums.
+  const t = normaliseSpeech(text).replace(/\bbetween (.+?) and /, 'between $1 to ');
+  const d = digitise(t);
+  const zero = ranges.find((r) => r.min === 0 && r.max === 1);
+  if (zero && /\b(none|nothing|zero|no exercise|not at all|i do not|i don't|never)\b/.test(d))
+    return zero.value;
+
+  const numbers = numbersIn(d);
+  const below = /\b(under|less than|below|fewer than|not more than)\b/.test(d);
+  const above = /\b(over|more than|above|at least|or more|plus)\b/.test(d);
+
+  const [first, second] = numbers;
+  if (first !== undefined && second !== undefined && /\b(to|and|or|between)\b/.test(d)) {
+    const scale = unit === 'minutes' && /\bhours?\b/.test(d) && !/\bminutes?\b/.test(d) ? 60 : 1;
+    const [a, b] = [Math.min(first, second) * scale, Math.max(first, second) * scale];
+    const same = ranges.find(
+      (r) => r.min !== null && r.max !== null && r.min === a && (r.max === b || r.max - 1 === b),
+    );
+    if (same) return same.value;
+    // Their own range, not one of ours: keep its middle, which is closer than snapping.
+    return Math.round((a + b) / 2);
+  }
+
+  const exact = readNumber(text, unit);
+  if (exact === null) return null;
+  if (below) {
+    const capped = ranges.find((r) => r.max !== null && r.max === exact);
+    if (capped) return capped.value;
+  }
+  if (above) {
+    const floor = ranges.find((r) => r.min !== null && r.min === exact);
+    if (floor) return floor.value;
+  }
+  return exact;
 }
 
 export function readChoice(text: string, labels: readonly string[]): number | null {

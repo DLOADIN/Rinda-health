@@ -6,8 +6,10 @@ import {
   readCommand,
   readNumber,
   readQuestionChoice,
+  readRange,
   readYesNo,
 } from '@/lib/voice-parse';
+import { VOICE, VOICE_CHOICES, VOICE_RANGES } from '@rinda/content/voice';
 
 const drinksOften = [
   'Never',
@@ -242,5 +244,69 @@ describe('looksOffTopic', () => {
     expect(looksOffTopic('can you tell me a joke')).toBe(true);
     expect(looksOffTopic('thirty minutes')).toBe(false);
     expect(looksOffTopic('yes')).toBe(false);
+  });
+});
+
+describe('readRange: number questions answered with a range', () => {
+  const at = (id: string) => {
+    const ranges = VOICE_RANGES[id] ?? [];
+    const labels = (VOICE_CHOICES[id] ?? []).map((o) => VOICE.en[o] ?? o);
+    return (text: string, unit: 'minutes' | 'plain' | 'height' = 'plain') =>
+      readRange(text, labels, ranges, unit);
+  };
+
+  it('every number question has a spoken label for each range', () => {
+    for (const [id, ranges] of Object.entries(VOICE_RANGES)) {
+      const labels = VOICE_CHOICES[id] ?? [];
+      expect(labels).toHaveLength(ranges.length);
+      for (const o of labels) expect(VOICE.en[o]).toBeTruthy();
+    }
+  });
+
+  it('moderate activity: the range words, ordinals, none, hours and exact numbers', () => {
+    const moderate = at('q.activity.moderate');
+    expect(moderate('thirty to sixty minutes', 'minutes')).toBe(45);
+    expect(moderate('150 to 300 minutes', 'minutes')).toBe(225);
+    expect(moderate('more than three hundred minutes', 'minutes')).toBe(330);
+    expect(moderate('under 30 minutes', 'minutes')).toBe(15);
+    expect(moderate('none', 'minutes')).toBe(0);
+    expect(moderate('I do not exercise', 'minutes')).toBe(0);
+    expect(moderate('the third one', 'minutes')).toBe(45);
+    expect(moderate('option 5', 'minutes')).toBe(120);
+    expect(moderate('between one and two hours', 'minutes')).toBe(90);
+    expect(moderate('about thirty minutes a day', 'minutes')).toBe(210);
+  });
+
+  it('vigorous activity and servings', () => {
+    expect(at('q.activity.vigorous')('sixty to seventy five minutes', 'minutes')).toBe(68);
+    expect(at('q.activity.vigorous')('the last one', 'minutes')).toBe(180);
+    expect(at('q.diet.servings')('one or two servings')).toBe(1.5);
+    expect(at('q.diet.servings')('three or four')).toBe(3.5);
+    expect(at('q.diet.servings')('five or more servings')).toBe(5);
+    expect(at('q.diet.servings')('none')).toBe(0);
+  });
+
+  it('height, weight and waist', () => {
+    expect(at('voice.body.height')('one seventy to one eighty centimetres', 'height')).toBe(175);
+    expect(at('voice.body.height')('170 to 180', 'height')).toBe(175);
+    expect(at('voice.body.height')('over one ninety', 'height')).toBe(195);
+    expect(at('voice.body.height')('one seventy five', 'height')).toBe(175);
+    expect(at('voice.body.weight')('seventy to eighty kilos')).toBe(75);
+    expect(at('voice.body.weight')('under fifty kilos')).toBe(45);
+    expect(at('voice.body.weight')('72 kilos')).toBe(72);
+    expect(at('voice.body.waist')('eighty to eighty seven centimetres')).toBe(84);
+    expect(at('voice.body.waist')('102 centimetres or more')).toBe(106);
+  });
+
+  it('blood pressure ranges keep the same result band', () => {
+    const top = at('voice.bp.systolic');
+    const bottom = at('voice.bp.diastolic');
+    expect(top('one twenty to one twenty nine')).toBe(125);
+    expect(top('130 to 139')).toBe(135);
+    expect(top('180 or more')).toBe(185);
+    expect(top('under 120')).toBe(115);
+    expect(bottom('eighty five to eighty nine')).toBe(87);
+    expect(bottom('110 or more')).toBe(115);
+    expect(bottom('82')).toBe(82);
   });
 });
