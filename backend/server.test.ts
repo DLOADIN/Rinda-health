@@ -1492,7 +1492,6 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     };
     const sealed = await sealHandover(payload, pass.publicKey, pass.kid);
 
-    await other.post('/api/v1/facilitator/handover').send(sealed).expect(403);
     await phone.post('/api/v1/facilitator/handover').send(sealed).expect(403);
     expect((await fac.post('/api/v1/facilitator/handover').send(sealed).expect(200)).body).toEqual({
       saved: 2,
@@ -1504,6 +1503,18 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
       already: 2,
       invalid: 0,
     });
+    // A facilitator who never started a session with this participant can still carry the package;
+    // a closed session is opened for them so the upload stays traceable.
+    expect((await other.post('/api/v1/facilitator/handover').send(sealed).expect(200)).body).toEqual({
+      saved: 0,
+      already: 2,
+      invalid: 0,
+    });
+    const otherSessions = (await other.get('/api/v1/facilitator/sessions').expect(200)).body as Array<{
+      participantId?: string;
+      deviceLabel?: string | null;
+    }>;
+    expect(otherSessions.some((s) => s.deviceLabel === 'QR hand-over')).toBe(true);
     const mine = (await phone.get('/api/v1/participant/assessments').expect(200)).body as Array<{
       key: string;
       viaQr: boolean;

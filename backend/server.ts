@@ -3029,14 +3029,32 @@ export function createApp({ config, logger, db, fetchFn = fetch }: AppDeps): Exp
       )
     )
       throw refused();
-    const linked = await one<{ id: string }>(
+    const participantOk = await one<{ id: string }>(
       database,
-      `SELECT s.id FROM facilitator_sessions s JOIN users u ON u.id = s.participant_id
-        WHERE s.participant_id = $1 AND s.facilitator_id = $2 AND u.role = 'participant' AND u.active
-          AND s.started_at > now() - interval '14 days' LIMIT 1`,
+      "SELECT id FROM users WHERE id = $1 AND role = 'participant' AND active AND deleted_at IS NULL",
+      [payload.userId],
+    );
+    if (!participantOk) throw refused();
+    // The package is sealed by the participant's own phone and carries their signed pass, so any
+    // facilitator may carry it to the server. Without a recent session, one is opened and closed
+    // here so the hand-over still shows up in the session history and the audit log.
+    let linked = await one<{ id: string }>(
+      database,
+      `SELECT id FROM facilitator_sessions
+        WHERE participant_id = $1 AND facilitator_id = $2 AND started_at > now() - interval '14 days'
+        ORDER BY started_at DESC LIMIT 1`,
       [payload.userId, me(req).id],
     );
-    if (!linked) throw refused();
+    if (!linked) {
+      linked = await one<{ id: string }>(
+        database,
+        `INSERT INTO facilitator_sessions (participant_id, facilitator_id, device_label, ended_at)
+         VALUES ($1, $2, 'QR hand-over', now()) RETURNING id`,
+        [payload.userId, me(req).id],
+      );
+      if (!linked) throw new Error('session not created');
+      await audit(database, me(req), 'session.start', { type: 'facilitator_session', id: linked.id });
+    }
     let saved = 0;
     let already = 0;
     let invalid = 0;
