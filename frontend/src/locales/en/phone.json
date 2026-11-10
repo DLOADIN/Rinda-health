@@ -49,10 +49,11 @@
       "bp": "Blood pressure {{systolic}}/{{diastolic}} mmHg ({{date}})",
       "weight": "Weight {{value}} kg ({{date}})",
       "height": "Height {{value}} cm ({{date}})",
-      "activity": "Exercise in the last 7 days: {{moderate}} minutes moderate and {{vigorous}} minutes vigorous, from {{count}} sessions",
       "noActivity": "No exercise sessions on your phone in the last 7 days, so please answer the exercise questions yourself.",
       "steps": "{{steps}} steps in the last 7 days (for your information, not scored)",
-      "heart": "Resting heart rate {{value}} beats a minute ({{date}}) (for your information, not scored)"
+      "heart": "Resting heart rate {{value}} beats a minute ({{date}}) (for your information, not scored)",
+      "activity_one": "Exercise in the last 7 days: {{moderate}} minutes moderate and {{vigorous}} minutes vigorous, from 1 session",
+      "activity_other": "Exercise in the last 7 days: {{moderate}} minutes moderate and {{vigorous}} minutes vigorous, from {{count}} sessions"
     }
   },
   "sms": {

@@ -49,10 +49,11 @@
       "bp": "TODO(content): Kinyarwanda translation",
       "weight": "TODO(content): Kinyarwanda translation",
       "height": "TODO(content): Kinyarwanda translation",
-      "activity": "TODO(content): Kinyarwanda translation",
       "noActivity": "TODO(content): Kinyarwanda translation",
       "steps": "TODO(content): Kinyarwanda translation",
-      "heart": "TODO(content): Kinyarwanda translation"
+      "heart": "TODO(content): Kinyarwanda translation",
+      "activity_one": "TODO(content): Kinyarwanda translation",
+      "activity_other": "TODO(content): Kinyarwanda translation"
     }
   },
   "sms": {
