@@ -178,7 +178,7 @@ const EnvSchema = z
       .regex(/^[a-z0-9_]{3,40}$/)
       .default('eleven_flash_v2_5'),
     PINDO_API_TOKEN: optionalText,
-    PINDO_SENDER: z.string().min(1).max(11).default('PindoTest'),
+    PINDO_SENDER: z.preprocess(emptyAsUndefined, z.string().max(11).optional()),
     SMS_ONLY_TO: optionalText,
     EMAIL_FROM_NAME: z.string().default('Rinda Health Services'),
     MESSAGING_APPROVAL_REF: optionalText,
@@ -1396,7 +1396,7 @@ export async function sendSmsReport(
           `${config.PUBLIC_URL}/app/results/${assessmentId}`,
           row.created_at,
         ),
-        sender: config.PINDO_SENDER,
+        ...(config.PINDO_SENDER ? { sender: config.PINDO_SENDER } : {}),
       }),
     });
   } catch {
@@ -4725,17 +4725,26 @@ async function main() {
     const res = await fetch('https://api.pindo.io/v1/sms/', {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${config.PINDO_API_TOKEN}` },
-      body: JSON.stringify({ to, text: MESSAGES.en['sms.report.test'] ?? '', sender: config.PINDO_SENDER }),
+      body: JSON.stringify({
+        to,
+        text: MESSAGES.en['sms.report.test'] ?? '',
+        ...(config.PINDO_SENDER ? { sender: config.PINDO_SENDER } : {}),
+      }),
     }).catch(() => null);
-    const body = (await res?.json().catch(() => null)) as {
-      status?: string;
-      remaining_balance?: number;
-    } | null;
+    const raw = (await res?.text().catch(() => '')) ?? '';
+    const body = ((): { status?: string; remaining_balance?: number } | null => {
+      try {
+        return JSON.parse(raw) as { status?: string; remaining_balance?: number };
+      } catch {
+        return null;
+      }
+    })();
     console.log(
       res
-        ? `HTTP ${res.status} ${body?.status ?? ''} (balance ${body?.remaining_balance ?? 'unknown'})`
+        ? `HTTP ${res.status} ${body?.status ?? ''} (balance ${body?.remaining_balance ?? 'unknown'}, sender ${config.PINDO_SENDER ?? 'account default'})`
         : 'network error',
     );
+    if (res && !res.ok) console.log(`Pindo said: ${raw.slice(0, 500)}`);
     return;
   }
 

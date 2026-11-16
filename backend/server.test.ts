@@ -1120,7 +1120,8 @@ describe.skipIf(!dbUrl)('with a database (throwaway schema)', () => {
     const call = calls()[0];
     expect(call?.url).toBe('https://api.pindo.io/v1/sms/');
     const body = JSON.parse(call?.body ?? '{}');
-    expect(body).toMatchObject({ to: '+250788555999', sender: 'PindoTest' });
+    expect(body).toMatchObject({ to: '+250788555999' });
+    expect(body).not.toHaveProperty('sender');
     expect(body.text).toContain('Blood pressure: Confirm at a health centre');
     expect(body.text).toContain(
       'Physical activity: Below recommended (60 minutes a week, 40% of the healthy target)',
